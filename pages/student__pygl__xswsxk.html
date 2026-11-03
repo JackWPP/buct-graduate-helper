@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>xswsxk</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript">
+    $(function() {
+        $.ajax({
+            type: 'get',
+            dataType: 'json',
+            url: '../default/bindyxsh',
+            cache: false,
+            success: function(json) {
+
+                $('#searchyxsh').combobox({
+                    data: json,
+                    method: 'get',
+                    editable: false,
+                    valueField: 'xsbh',
+                    textField: 'xsmc',
+                    multiple: false,
+                    onLoadSuccess:function() {
+                        GetList_dx();
+                    }
+                });
+            }
+        });
+//        GetList();
+//        $.ajax({
+//            type: 'get',
+//            dataType: 'json',
+//            url: 'xswsxk_load',
+//            cache: false,
+//            success: function(json) {
+//                $('#dg_jhn').datagrid('loadData', json.jhnkc);
+//                $('#dg_jhw').datagrid('loadData', json.jhwkc);
+//            }
+        //        });
+
+     
+    });
+
+    function getcolumn() {
+        var columns = new Array();
+        columns.push({ field: 'bjid', title: 'bjid', hidden: true });
+        columns.push({ field: 'xsmc', title: '开课院系', width: 100 });
+        columns.push({ field: 'kcbh', title: '课程编号', width: 100 });
+        columns.push({ field: 'kcmc', title: '课程名称', width: 120 });
+        columns.push({ field: 'bjmc', title: '班级名称', width: 120 });
+        columns.push({ field: 'dz', title: '教室', width: 100 });
+        columns.push({ field: 'rkjsxm', title: '任课教师', width: 60 });
+        columns.push({ field: 'ksz', title: '开始周', align: 'center', width: 30 });
+        columns.push({ field: 'jsz', title: '结束周', align: 'center', width: 30 });
+        columns.push({ field: 'sjms', title: '上课时间', width: 120 });
+        columns.push({ field: 'kczxs', title: '课时', align: 'center', width: 30 });
+        columns.push({ field: 'kcxf', title: '学分', align: 'center', width: 30 });
+//        columns.push({ field: 'xwk', title: '选课类型', align: 'center', width: 60,
+//            formatter: function (value, row, index) {
+//                return value == '1' ? xwknames.xwk : xwknames.fxwk;
+//            }
+//        });
+//        columns.push({ field: 'rnrs', title: '容纳人数', align: 'center', width: 60 });
+//        columns.push({ field: 'xkrs', title: '选课人数', align: 'center', width: 60 });
+        columns.push({ field: 'kkfs', title: '开课方式', align: 'center', width: 60,
+            formatter: function (value, row, index) {
+                if (row.bjid)
+                    return value == '1' ? "人工安排" : "网上选课";
+                else
+                    return "未开课";
+            }
+        });
+        return columns;
+    }
+
+    function GetList() {
+        var columns = getcolumn();
+        columns.push({ field: 'action', title: '操作', width: 60, align: 'center', formatter: function (value, row, index) {
+            var a = "";
+            if (!row.bjid) {
+                return '';
+            }
+            if (row.dqxqkc && row.dqxqkc == "1") {
+                //当前学期班级
+                if (row.kkfs == "2") {
+                    if (row.yxkc == "0") {
+                        a = '<input id="btntx" type="button" value="选课" onclick="wsxk(this)"/>';
+                    }
+                    else if (row.yxkc == "1") {
+                        if (row.xkfs)
+                            a = '<input id="btnxk" type="button" value="退选" onclick="wstx(this)"/>';
+                        else
+                            a = '已选课程';
+                    }
+                    else if (row.yxkc == "2") {
+                        a = '<input id="btntx" type="button" value="重修" onclick="wsxk(this)"/>';
+                    }
+                }
+                else {
+                    if (row.xkfs)
+                        a = '已安排';
+                }
+            }
+            else {
+                //之前学期开的课程
+                return '已修';
+            }
+
+            return a;
+        }
+        });
+
+        $('#dg_jhn').datagrid({
+            width: '100%',
+            height: '300',
+            queryParams: {},
+            loadMsg: '正在加载....',
+            columns: [ columns ],
+            pagination: false, //分页控件 
+            fitColumns: true,
+            striped: true,
+            rownumbers: false, //行号
+            singleSelect: true, //是否单选 
+            onLoadSuccess: function (data) {
+                var s = $("#dg_jhn").datagrid('getPanel');
+                var rows = s.find('tr.datagrid-row');
+                rows.unbind('click').bind('click', function (e) {
+                    return false;
+                });
+                var cellcomp = 'bjmc';
+                var cells = ['xsmc', 'kcbh', 'kcmc', 'bjmc', 'kcxf', 'kczxs','xwk', 'rnrs', 'xkrs', 'kkfs', 'action'];
+                mergeCells_one('dg_jhn', data, cellcomp, cells);
+            }
+        });
+
+        var columns = getcolumn();
+        columns.push({ field: 'action', title: '操作', width: 60, align: 'center',
+            formatter: function (value, row, index) {
+                var a = '<input id="btnxk" type="button" value="退选" onclick="wstx_jhw(this)"/>';
+                return a;
+            }
+        });
+        $('#dg_jhw').datagrid({
+            width: '100%',
+            height: 'auto',
+            queryParams: {},
+            loadMsg: '正在加载....',
+            columns: [columns],
+            pagination: false, //分页控件 
+            fitColumns: true,
+            striped: true,
+            rownumbers: false, //行号
+            singleSelect: true, //是否单选 
+            onLoadSuccess: function (data) {
+                var s = $("#dg_jhw").datagrid('getPanel');
+                var rows = s.find('tr.datagrid-row');
+                rows.unbind('click').bind('click', function (e) {
+                    return false;
+                });
+                var cellcomp = 'bjmc';
+                var cells = ['xsmc', 'kcbh', 'kcmc', 'bjmc', 'kcxf', 'kczxs', 'xwk', 'rnrs', 'xkrs', 'kkfs', 'action'];
+                mergeCells_one('dg_jhw', data, cellcomp, cells);
+            }
+        });
+    }
+
+    function GetList_dx() {
+        var columns = getcolumn();
+//        columns.push({ field: 'action', title: '操作', width: 60, align: 'center', formatter: function (value, row, index) {
+//            if (row.rnrs <= row.xkrs) {
+//                return '';
+//            }
+//            var a = '<input id="btnxk" type="button" value="选课" onclick="wsxk_jhw(this)"/>';
+//            return a;
+//        }
+//        });
+        var yxsh=$("#searchyxsh").combobox("getValue");
+        var kcbh = $("#txtkcbh").val();
+//        $("#btnsearch").linkbutton('disable');
+//        var kcs = [];
+//        var rows = $('#dg_jhn').datagrid('getRows');
+//        for (var i = 0; i < rows.length; i++) {
+//            var row = rows[i];
+//            kcs.push(row.kcbh);
+//        }
+//        var jsonObject = JSON.stringify(kcs);
+        $('#dg_jhw_dx').datagrid({
+            width: '100%',
+            height: 'auto',
+            url: 'xswsxk_all',
+            queryParams: { 'yxsh': yxsh, 'kcbh': kcbh },
+            loadMsg: '正在加载....',
+            columns: [columns],
+            pagination: true, //分页控件 
+            pageSize: 15,
+            pageList: [15, 20, 30, 50],
+            fitColumns: true,
+            striped: false,
+            rownumbers: true, //行号
+            singleSelect: true, //是否单选 
+            onLoadSuccess: function (data) {
+                var s = $("#dg_jhw_dx").datagrid('getPanel');
+                var rows = s.find('tr.datagrid-row');
+                rows.unbind('click').bind('click', function (e) {
+                    return false;
+                });
+                var cellcomp = 'bjmc';
+                var cells = ['xsmc', 'kcbh', 'kcmc', 'bjmc', 'kcxf', 'kczxs', 'xwk', 'rnrs', 'xkrs', 'kkfs', 'action'];
+                mergeCells_one('dg_jhw_dx', data, cellcomp, cells);
+                $("#btnsearch").linkbutton('enable');
+            },
+            onLoadError: function () {
+                $("#btnsearch").linkbutton('enable');
+            }
+        });
+//        dgpageInit('dg_jhw_dx');
+//        $.ajax({
+//            type: 'post',
+//            dataType: "json", //返回json格式的数据
+//            url: "xswsxk_dx",
+//            data: { 'yxsh': yxsh, 'kcbh': kcbh },
+//            cache: false,
+//            success: function (json) {
+//                $('#dg_jhw_dx').datagrid('loadData', json.jhwkc_dx);
+//                $("#btnsearch").linkbutton('enable');
+//            },
+//            error: function (e) {
+//                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+//                $("#btnsearch").linkbutton('enable');
+//            }
+//        });
+    }
+
+    function wsxk(target) {
+        var thisindex = getRowIndex(target);
+        var row = $('#dg_jhn').datagrid('getRows')[thisindex];
+        var bjid = row.bjid;
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "xswsxk_jhnxk",
+            data: { 'bjid': bjid },
+            cache: false,
+            success: function (json) {
+                if (json.msg) {
+                    $.messager.alert("提示", "选课失败:" + json.msg, "error");
+                }
+                else {
+                    $('#dg_jhn').datagrid('loadData', json.jhnkc);
+                }
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+
+    function wstx(target) {
+        $.messager.confirm("提示", "你确定要退选该课程吗?", function (r) {
+            if (r) {
+                var thisindex = getRowIndex(target);
+                var row = $('#dg_jhn').datagrid('getRows')[thisindex];
+                var bjid = row.bjid;
+                $.ajax({
+                    type: 'post',
+                    dataType: "json", //返回json格式的数据
+                    url: "xswsxk_jhn_tx",
+                    data: { 'bjid': bjid },
+                    cache: false,
+                    success: function (json) {
+                        if (json.msg) {
+                            $.messager.alert("提示", "退选失败:" + json.msg, "error");
+                        }
+                        else {
+                            $('#dg_jhn').datagrid('loadData', json.jhnkc);
+                        }
+                    },
+                    error: function (e) {
+                        var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+                    }
+                });
+            }
+        });
+
+    }
+
+    function wsxk_jhw(target) {
+        var thisindex = getRowIndex(target);
+        var row = $('#dg_jhw_dx').datagrid('getRows')[thisindex];
+        var bjid = row.bjid;
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "xswsxk_jhwxk",
+            data: { 'bjid': bjid },
+            cache: false,
+            success: function (json) {
+                if (json.msg) {
+                    $.messager.alert("提示", "选课失败:" + json.msg, "error");
+                }
+                else {
+                    $('#dg_jhw').datagrid('loadData', json.jhwkc);
+                    GetList_dx();
+                }
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+
+    function wstx_jhw(target) {
+        $.messager.confirm("提示", "你确定要退选该课程吗?", function (r) {
+            if (r) {
+                var thisindex = getRowIndex(target);
+                var row = $('#dg_jhw').datagrid('getRows')[thisindex];
+                var bjid = row.bjid;
+                $.ajax({
+                    type: 'post',
+                    dataType: "json", //返回json格式的数据
+                    url: "xswsxk_jhw_tx",
+                    data: { 'bjid': bjid },
+                    cache: false,
+                    success: function (json) {
+                        if (json.msg) {
+                            $.messager.alert("提示", "退选失败:" + json.msg, "error");
+                        }
+                        else {
+                            $('#dg_jhw').datagrid('loadData', json.jhwkc);
+                            GetList_dx();
+                        }
+                    },
+                    error: function (e) {
+                        var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+                    }
+                });
+            }
+        });
+
+    }
+
+    function getRowIndex(target) {
+        var tr = $(target).closest('tr.datagrid-row');
+        return parseInt(tr.attr('datagrid-row-index'));
+    }
+    //    计划内课程：
+    //    本学期课程--未选-->选课
+    //    本学期课程--（已选本学期）-->退选（非本班，不可操作）
+    //    本学期课程--（已选前学期）-->重修
+    //    前学期课程-->不可操作
+
+    //    计划外课程：
+    //    本学期课程-->退选
+    //    前学期课程-->不可操作
+</script>
+<div style="width:99%;">
+
+    <div style="margin-top: 5px;">
+        <div class="easyui-panel" title="开课一览" data-options="collapsible:true" style="width:100%;">
+            <div id="searchdiv">
+                <table cellpadding="0" cellspacing="0" class="table_toolbar">
+                    <tr>
+                        <td>
+                            &nbsp;开课院系：<input id="searchyxsh" name="searchyxsh" />&nbsp; 
+                            课程编号(名称)：<input id="txtkcbh" type="text" class="easyui-textbox" />
+                            <a id="btnsearch" href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-search'" onclick="GetList_dx()">查询</a>
+                        </td>
+                        <td align="right">
+                        </td>
+                    </tr>
+                </table>
+            </div>
+            <table id="dg_jhw_dx">
+            </table>
+        </div>
+    </div>
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

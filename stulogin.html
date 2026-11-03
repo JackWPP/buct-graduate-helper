@@ -1,0 +1,153 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>研究生管理信息系统登录</title>
+    <link rel="stylesheet" href="/Content/themes/gray/login.css" />
+    <script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jsencrypt.min.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script src="http://pv.sohu.com/cityjson"></script>
+    <script>
+        var p = window;
+        if (p != p.parent) {
+            p = p.parent;
+            p.location.href = document.URL;
+        }
+    </script>
+</head>
+
+	<body>
+        <div class="loginlogo">
+            <div class="logo"><img src="../images/loginlogo.png"></div>
+            <div class="logo-word">
+                研究生管理信息系统
+                <span class="EN">Graduate Management Information System</span>
+            </div>
+        </div>
+        <div class="layout1">
+            <form id="ff">
+                <input id="hfgoto" type="hidden" />
+                <input id="hfcity" type="hidden" name="city" />
+                <div class="loginlayout">
+                    <div class="from">
+                        <div class="from-group">
+                            <label class="label">学号</label>
+                            <input type="text" class="inputtext" id="UserId" name="UserId" placeholder="请输入学号" style="width:200px" />
+                        </div>
+                        <div class="from-group">
+                            <label class="label">密码</label>
+                            <input type="password" class="inputtext" id="Password" name="Password" placeholder="请输入密码" style="width:200px" />
+                        </div>
+                        <div class="from-group">
+                            <input type="text" class="inputtext width160" id="VeriCode" name="VeriCode" placeholder="请输入验证码" />
+                            <img id="imgVerifi" title="单击换一张验证码" class="inputimage" src="verificationcode?codetype=stucode" onclick="changecode()" />
+                        </div>
+                        <div class="from-group">
+                            <a class="links-word" href="forgotpwd?f=stulogin">忘记密码？</a>
+                        </div>
+                        <div class="from-group">
+                            <button class="btn" onclick="loginform(); return false">登 录</button>
+                        </div>
+                    </div>
+                    <div class="from-info">
+                        <div class="icon">
+                            <ul>
+                                <li>
+                                    <span><img src="../images/icon1.png" /></span>
+                                    <span>云智能 慧感知 优服务</span>
+                                </li>
+                                <li>
+                                    <span><img src="../images/icon2.png" /></span>
+                                    <span>流程化 规范化 一体化</span>
+                                </li>
+                                <li>
+                                    <span><img src="../images/icon3.png" /></span>
+                                    <span>轻办公 高效率 全过程</span>
+                                </li>
+                            </ul>
+                            <div class="clear"></div>
+                        </div>
+                        <div class="tip">
+                            <div class="tip-title">友情提示</div>
+                            <p>学生用学号和密码登录系统。</p>
+                            <p>新生的初始密码是buct@本人身份证后六位,留学生为Buct@护照后六位(例如：Buct@123456)，老生使用原系统的登陆密码。</p>
+                        </div>
+                    </div>
+                </div>
+            </form>
+            <input id="pubkey" type="hidden" value='-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCMh0To1fb8e70G4OIRAk67jrUa
+XDiV/L0lqU1bCfpQITlg8dBN4XYxAutkSDM8kUYSBx5JOTHpT9sQqAjpOt22XrMh
+F5J+UOi2egdg8DXhJVpzXm0CA6kKHblpn/wPeptphEcMnBEKFFe11KU5wZaRzAQM
+gvHVvymVlvTiNMoChwIDAQAB
+-----END PUBLIC KEY-----
+' />
+            <div class="footer">
+                <p>说明：1.使用chrome或IE10+浏览器（360浏览器版本8.1以上）  2.1280*800分辨率以上浏览本系统  3.请不要屏蔽弹出窗口  4.技术支持：南京南软(版本:5.0)</p>
+            </div>
+        </div>
+	</body>
+</html>
+
+<script type="text/javascript">
+    $(function () {
+        getcity();
+    });
+
+    function getcity() {
+        //        var province = returnCitySN.province;
+//        var city = returnCitySN.cname;
+//        $("#hfcity").val(city);
+    }
+
+    function loginform() {
+        var info = new Object();
+        info.UserId = $("#UserId").val();
+        //info.Password = $("#Password").val();
+        var p = $("#Password").val();
+        var rsa = new JSEncrypt();
+        var pubkey = $("#pubkey").val();
+        rsa.setPublicKey(pubkey);
+        var rsa_p = rsa.encrypt(p);
+        info.Password = rsa_p;
+        info.VeriCode = $("#VeriCode").val();
+        info.url = $("#hfgoto").val();
+        info.city = $("#hfcity").val();
+        var jsonObject = JSON.stringify(info);
+        $.ajax({
+            type: 'post',
+            url: "stulogin_do",
+            dataType: "json", //返回json格式的数据
+            data: { 'json': jsonObject },
+            cache: false,
+            success: function (data) {
+                if (data.jg == "1") {
+                    document.location = "../" + data.url;
+                }
+                else {
+                    $('#imgVerifi').attr('src', '/Home/VerificationCode?codetype=stucode' + '&&t=' + new Date().getSeconds());
+                    alert(data.msg);
+                    //                    $.messager.alert("提示", data.msg, "error");
+                }
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                alert(msg);
+                //                $.messager.alert("提示", e.toString(), "error");
+            }
+        });
+    }
+    window.onkeypress = function () {
+        if (event.keyCode == 13) {
+            document.getElementById('btnlogin').click(); //btnOK为登录按钮的ID
+        }
+    }
+    function changecode() {
+        $('#imgVerifi').attr('src', '/Home/VerificationCode?codetype=stucode' + '&&t=' + new Date().getTime());
+    }
+</script>

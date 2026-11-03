@@ -1,0 +1,380 @@
+{
+  "menus": [
+    {
+      "menuid": "gr",
+      "icon": "icon-user",
+      "menuname": "个人管理",
+      "url": "",
+      "menus": [
+        {
+          "menuid": "grjbxx",
+          "icon": "",
+          "menuname": "个人基本信息",
+          "url": "/student/grgl/xsxx",
+          "menus": null
+        },
+        {
+          "menuid": "xyjc",
+          "icon": "",
+          "menuname": "学业进程查看",
+          "url": "/student/grgl/xyjc",
+          "menus": null
+        },
+        {
+          "menuid": "xsxqzc",
+          "icon": "",
+          "menuname": "学期报到注册",
+          "url": "/student/grgl/xsxqzc",
+          "menus": null
+        },
+        {
+          "menuid": "xsrxdj",
+          "icon": "",
+          "menuname": "新生入学登记",
+          "url": "/student/grgl/xsrxdj",
+          "menus": null
+        },
+        {
+          "menuid": "xslqfc",
+          "icon": "null",
+          "menuname": "新生录取复查",
+          "url": "/student/grgl/xslqfc",
+          "menus": null
+        },
+        {
+          "menuid": "grxxxg",
+          "icon": "",
+          "menuname": "个人信息维护",
+          "url": "/student/grgl/grxxxg",
+          "menus": null
+        },
+        {
+          "menuid": "ccqjwh",
+          "icon": "",
+          "menuname": "乘车区间维护",
+          "url": "/student/grgl/ccqjwh",
+          "menus": null
+        },
+        {
+          "menuid": "xjydsq",
+          "icon": "",
+          "menuname": "学籍异动申请",
+          "url": "/student/grgl/xjydsq",
+          "menus": null
+        },
+        {
+          "menuid": "djksbm",
+          "icon": "",
+          "menuname": "等级考试管理",
+          "url": "/student/grgl/djksbm",
+          "menus": null
+        },
+        {
+          "menuid": "djkscj",
+          "icon": "",
+          "menuname": "等级考试成绩",
+          "url": "/student/grgl/djkscj",
+          "menus": null
+        },
+        {
+          "menuid": "zpxxhd",
+          "icon": "",
+          "menuname": "照片信息核对",
+          "url": "/student/grgl/zpxxhd",
+          "menus": null
+        },
+        {
+          "menuid": "wskscp",
+          "icon": "",
+          "menuname": "网上考试测评",
+          "url": "/student/wsks/wskscp",
+          "menus": null
+        }
+      ]
+    },
+    {
+      "menuid": "py",
+      "icon": "icon-peiyang",
+      "menuname": "培养管理",
+      "url": "",
+      "menus": [
+        {
+          "menuid": "pyfacx",
+          "icon": "",
+          "menuname": "培养方案查看",
+          "url": "/student/pygl/pyfacx",
+          "menus": null
+        },
+        {
+          "menuid": "pyjhtj",
+          "icon": "",
+          "menuname": "培养计划提交",
+          "url": "/student/pygl/pyjhtj",
+          "menus": null
+        },
+        {
+          "menuid": "pyjhcx",
+          "icon": "",
+          "menuname": "培养计划查询",
+          "url": "/student/pygl/pyjhcx",
+          "menus": null
+        },
+        {
+          "menuid": "kcmxsq",
+          "icon": "",
+          "menuname": "课程免修申请",
+          "url": "/student/pygl/kcmxsq",
+          "menus": null
+        },
+        {
+          "menuid": "xswsxk",
+          "icon": "",
+          "menuname": "课程开课一览",
+          "url": "/student/pygl/xswsxk",
+          "menus": null
+        },
+        {
+          "menuid": "xswsxk_kb",
+          "icon": "",
+          "menuname": "学生网上选课",
+          "url": "/student/pygl/xswsxk_kb",
+          "menus": null
+        },
+        {
+          "menuid": "xkjgcx",
+          "icon": "",
+          "menuname": "选课结果查询",
+          "url": "/student/pygl/xkjgcx",
+          "menus": null
+        },
+        {
+          "menuid": "xskbcx",
+          "icon": "",
+          "menuname": "学生课表查询",
+          "url": "/student/pygl/xskbcx",
+          "menus": null
+        },
+        {
+          "menuid": "ttkcx",
+          "icon": "",
+          "menuname": "调课信息查询",
+          "url": "/student/pygl/ttkcx",
+          "menus": null
+        },
+        {
+          "menuid": "kckccx",
+          "icon": "",
+          "menuname": "课程考场查询",
+          "url": "/student/pygl/kckccx",
+          "menus": null
+        },
+        {
+          "menuid": "xscjcx",
+          "icon": "",
+          "menuname": "课程成绩查询",
+          "url": "/student/pygl/xscjcx",
+          "menus": null
+        },
+        {
+          "menuid": "qxkczml",
+          "icon": "",
+          "menuname": "全校课程总目录",
+          "url": "/student/pygl/qxkczml",
+          "menus": null
+        },
+        {
+          "menuid": "cxhkbksq",
+          "icon": "",
+          "menuname": "重缓补考申请",
+          "url": "/student/pygl/cxhkbksq",
+          "menus": null
+        },
+        {
+          "menuid": "wsjxpj",
+          "icon": "",
+          "menuname": "课程教学评价",
+          "url": "/student/pygl/wsjxpj",
+          "menus": null
+        },
+        {
+          "menuid": "gjxsjlhd",
+          "icon": "null",
+          "menuname": "国际学术交流申请",
+          "url": "/student/pygl/gjxsjlhd",
+          "menus": null
+        },
+        {
+          "menuid": "py_zysjwc",
+          "icon": "null",
+          "menuname": "专业实践（科研/学习）外出审核",
+          "url": "/student/pygl/py_zysjwc",
+          "menus": null
+        }
+      ]
+    },
+    {
+      "menuid": "yg",
+      "icon": "icon-yangong",
+      "menuname": "研工管理",
+      "url": "",
+      "menus": [
+        {
+          "menuid": "xnjddj",
+          "icon": "",
+          "menuname": "学年鉴定登记",
+          "url": "/student/yggl/xnjddj",
+          "menus": null
+        },
+        {
+          "menuid": "pypgsq",
+          "icon": "",
+          "menuname": "评优评干申请",
+          "url": "/student/yggl/pypgsq",
+          "menus": null
+        },
+        {
+          "menuid": "knzzsq",
+          "icon": "",
+          "menuname": "困难资助申请",
+          "url": "/student/yggl/knzzsq",
+          "menus": null
+        },
+        {
+          "menuid": "szgwsq",
+          "icon": "",
+          "menuname": "三助岗位申请",
+          "url": "/student/yggl/szgwsq",
+          "menus": null
+        },
+        {
+          "menuid": "xshdbm",
+          "icon": "",
+          "menuname": "学术报告申请",
+          "url": "/student/yggl/xshdbm",
+          "menus": null
+        },
+        {
+          "menuid": "xwsxsq",
+          "icon": "",
+          "menuname": "校外实习申请",
+          "url": "/student/yggl/xwsxsq",
+          "menus": null
+        },
+        {
+          "menuid": "zyzfwbm",
+          "icon": "",
+          "menuname": "劳动实践申请",
+          "url": "/student/yggl/zyzfwbm",
+          "menus": null
+        },
+        {
+          "menuid": "tyydbm",
+          "icon": "",
+          "menuname": "体育活动申请",
+          "url": "/student/yggl/tyydbm",
+          "menus": null
+        },
+        {
+          "menuid": "tyydmxsq",
+          "icon": "",
+          "menuname": "体育运动免修申请",
+          "url": "/student/yggl/tyyd_mxsq",
+          "menus": null
+        }
+      ]
+    },
+    {
+      "menuid": "ky",
+      "icon": "icon-xueke",
+      "menuname": "科研管理",
+      "url": "",
+      "menus": [
+        {
+          "menuid": "xsfblwdj",
+          "icon": "",
+          "menuname": "发表论文登记",
+          "url": "/student/bygl/xsfblwdj",
+          "menus": null
+        },
+        {
+          "menuid": "xskycgdj",
+          "icon": "",
+          "menuname": "其他创新性成果登记",
+          "url": "/student/bygl/xskyxmdj",
+          "menus": null
+        },
+        {
+          "menuid": "xszlcgdj",
+          "icon": "",
+          "menuname": "专利情况登记",
+          "url": "/student/bygl/xszlcgdj",
+          "menus": null
+        },
+        {
+          "menuid": "xshjcgdj",
+          "icon": "",
+          "menuname": "科研成果奖励登记",
+          "url": "/student/bygl/xshjcgdj",
+          "menus": null
+        }
+      ]
+    },
+    {
+      "menuid": "by",
+      "icon": "icon-xuewei",
+      "menuname": "毕业与学位",
+      "url": "",
+      "menus": [
+        {
+          "menuid": "ktlwsq",
+          "icon": "null",
+          "menuname": "开题报告申请",
+          "url": "/student/pygl/lwktsq_edit",
+          "menus": null
+        },
+        {
+          "menuid": "lwktsq",
+          "icon": "",
+          "menuname": "提交开题报告",
+          "url": "/student/pygl/xsktsq_edit",
+          "menus": null
+        },
+        {
+          "menuid": "zqkhsq",
+          "icon": "null",
+          "menuname": "中期报告申请",
+          "url": "/student/pygl/zqkhsq",
+          "menus": null
+        },
+        {
+          "menuid": "zqkhdj",
+          "icon": "",
+          "menuname": "提交中期报告",
+          "url": "/student/pygl/xszqkhdj",
+          "menus": null
+        },
+        {
+          "menuid": "xsdbsq",
+          "icon": "",
+          "menuname": "硕士查重盲审申请",
+          "url": "/student/bygl/xsdbsq_edit",
+          "menus": null
+        },
+        {
+          "menuid": "lwpygl",
+          "icon": "",
+          "menuname": "查重盲审论文提交",
+          "url": "/student/bygl/lwpygl",
+          "menus": null
+        },
+        {
+          "menuid": "xsxwsq",
+          "icon": "",
+          "menuname": "学生学位申请",
+          "url": "/student/bygl/xsxwsq_edit",
+          "menus": null
+        }
+      ]
+    }
+  ]
+}

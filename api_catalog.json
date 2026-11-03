@@ -1,0 +1,1176 @@
+[
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/getlwccsqbyxh",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/lwcsdatalist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/lwpygl_bs_getmsmdxx",
+    "method": "POST",
+    "params": [
+      "pcdm"
+    ]
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/lwpygl_savelwxx",
+    "method": "POST",
+    "params": [
+      "json",
+      "sfcc",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/lwpygl_savemslw",
+    "method": "POST",
+    "params": [
+      "json",
+      "sfcc",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/lwpygl_sslwsc",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/sslwsh_list",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/xsdbsq_edit_load",
+    "method": "GET",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/zjpsjglist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/lwpygl",
+    "endpoint": "/student/bygl/zpb_down",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsfblwdj",
+    "endpoint": "/student/bygl/worddy",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsfblwdj",
+    "endpoint": "/student/bygl/xs_dclwcg",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsfblwdj",
+    "endpoint": "/student/bygl/xwlwdjlist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsfblwdj",
+    "endpoint": "/student/bygl/zqkh_cxtj",
+    "method": "POST",
+    "params": [
+      "json"
+    ]
+  },
+  {
+    "page": "/student/bygl/xshjcgdj",
+    "endpoint": "/student/bygl/hjqklist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xshjcgdj",
+    "endpoint": "/student/bygl/savehjcgdjinfo",
+    "method": "POST",
+    "params": [
+      "datajson"
+    ]
+  },
+  {
+    "page": "/student/bygl/xshjcgdj",
+    "endpoint": "/student/bygl/xs_hjcgdj",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xskyxmdj",
+    "endpoint": "/student/bygl/xs_dckyxm",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xskyxmdj",
+    "endpoint": "/student/bygl/xskyxmdj_list",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xskyxmdj",
+    "endpoint": "/student/bygl/xskyxmdj_save",
+    "method": "POST",
+    "params": [
+      "datajson"
+    ]
+  },
+  {
+    "page": "/student/bygl/xsxwsq_edit",
+    "endpoint": "/student/bygl/bindbypc",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsxwsq_edit",
+    "endpoint": "/student/bygl/scxwlw_down",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsxwsq_edit",
+    "endpoint": "/student/bygl/xsxwsq_edit_dy",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsxwsq_edit",
+    "endpoint": "/student/bygl/xsxwsq_edit_load",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xsxwsq_edit",
+    "endpoint": "/student/bygl/xsxwsq_edit_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt",
+      "yxlwshtl",
+      "dbid",
+      "yjfx",
+      "zwzy",
+      "cxd1",
+      "cxd2",
+      "cxd3",
+      "cxd4",
+      "cxd5"
+    ]
+  },
+  {
+    "page": "/student/bygl/xsxwsq_edit",
+    "endpoint": "/student/bygl/xsxwsq_edit_sqtj",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xszlcgdj",
+    "endpoint": "/student/bygl/savezlcgdjinfo",
+    "method": "POST",
+    "params": [
+      "datajson"
+    ]
+  },
+  {
+    "page": "/student/bygl/xszlcgdj",
+    "endpoint": "/student/bygl/xs_dczlcg",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/bygl/xszlcgdj",
+    "endpoint": "/student/bygl/zlcglist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/ccqjwh",
+    "endpoint": "/student/grgl/ccqjwh_load",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/ccqjwh",
+    "endpoint": "/student/grgl/ccqjwh_save",
+    "method": "POST",
+    "params": [
+      "ccqj"
+    ]
+  },
+  {
+    "page": "/student/grgl/djksbm",
+    "endpoint": "/student/grgl/canCelbmks",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/djksbm",
+    "endpoint": "/student/grgl/djksbm_list",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/djksbm",
+    "endpoint": "/student/grgl/djksxxbm",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/djksbm",
+    "endpoint": "/student/grgl/getbmrecorder",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/djksbm",
+    "endpoint": "/student/grgl/uploadkszp",
+    "method": "POST",
+    "params": [
+      "xh"
+    ]
+  },
+  {
+    "page": "/student/grgl/djkscj",
+    "endpoint": "/student/grgl/djkscjcx",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/grxxxg",
+    "endpoint": "/student/grgl/Dmwh_getZyByyxbh",
+    "method": "GET",
+    "params": [
+      "xsbh"
+    ]
+  },
+  {
+    "page": "/student/grgl/grxxxg",
+    "endpoint": "/student/grgl/ccqj_getzmdrop",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/grxxxg",
+    "endpoint": "/student/grgl/getxxlrkz",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/grxxxg",
+    "endpoint": "/student/grgl/xgxx",
+    "method": "POST",
+    "params": [
+      "xjjsonstr",
+      "editfield"
+    ]
+  },
+  {
+    "page": "/student/grgl/tzgglist",
+    "endpoint": "/student/grgl/tzgg_list",
+    "method": "POST",
+    "params": [
+      "ksrq",
+      "jsrq",
+      "bt"
+    ]
+  },
+  {
+    "page": "/student/grgl/xjydsq",
+    "endpoint": "/student/grgl/deletexjyd",
+    "method": "POST",
+    "params": [
+      "ids"
+    ]
+  },
+  {
+    "page": "/student/grgl/xjydsq",
+    "endpoint": "/student/grgl/getxjydlistbyxssq",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xjydsq",
+    "endpoint": "/student/grgl/xjydsqsjkz",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xslqfc",
+    "endpoint": "/student/grgl/init_xslqfc",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xslqfc",
+    "endpoint": "/student/grgl/submit_xslqfc",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xslqfc",
+    "endpoint": "/student/grgl/xlrz_upload",
+    "method": "POST",
+    "params": [
+      "json"
+    ]
+  },
+  {
+    "page": "/student/grgl/xslqfc",
+    "endpoint": "/student/grgl/xwzs_upload",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/deletejtzcry",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/deletexxgzjl",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/getjtzcxx",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/getxxgzjl",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/savejtcy",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/savexxgzjl",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/updatexjinfo",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsrxdj",
+    "endpoint": "/student/grgl/xsrxdjdy_new",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxqzc",
+    "endpoint": "/student/grgl/bindXsZcXx",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxqzc",
+    "endpoint": "/student/grgl/getzcxx",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxqzc",
+    "endpoint": "/student/grgl/xszcaction",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxx",
+    "endpoint": "/student/grgl/xsxx_byxw",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxx",
+    "endpoint": "/student/grgl/xsxx_jbxx",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxx",
+    "endpoint": "/student/grgl/xsxx_jcjl",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxx",
+    "endpoint": "/student/grgl/xsxx_ktzq",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxx",
+    "endpoint": "/student/grgl/xsxx_kylw",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxx",
+    "endpoint": "/student/pygl/pyjhcxlist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/xsxx",
+    "endpoint": "/student/pygl/xscjcx_list",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/grgl/zpxxhd",
+    "endpoint": "/student/grgl/grxxxg_uploadzp",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/cxhkbksq",
+    "endpoint": "/student/pygl/cxbkbksq_bindkkbj",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/cxhkbksq",
+    "endpoint": "/student/pygl/cxhkbksq_del",
+    "method": "POST",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/cxhkbksq",
+    "endpoint": "/student/pygl/cxhkbksq_edit_save",
+    "method": "POST",
+    "params": [
+      "json"
+    ]
+  },
+  {
+    "page": "/student/pygl/cxhkbksq",
+    "endpoint": "/student/pygl/cxhkbksq_list",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/cxhkbksq",
+    "endpoint": "/student/pygl/cxhkbksq_sqjl",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/gjxsjlhd",
+    "endpoint": "/student/pygl/gjxsjlhd_load",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/gjxsjlhd",
+    "endpoint": "/student/pygl/gjxsjlhd_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/pygl/gjxsjlhd",
+    "endpoint": "/student/pygl/gjxsjlhdcltj_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/pygl/kckccx",
+    "endpoint": "/student/pygl/kckccx_list",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_add",
+    "method": "POST",
+    "params": [
+      "kcbh"
+    ]
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_addimg",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_bindtj",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_cancel",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_delimg",
+    "method": "POST",
+    "params": [
+      "filename"
+    ]
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_edit",
+    "method": "POST",
+    "params": [
+      "id",
+      "sqly",
+      "pycc",
+      "bh",
+      "mxcj",
+      "yycj"
+    ]
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_list",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/kcmxsq",
+    "endpoint": "/student/pygl/kcmxsq_qxsq",
+    "method": "POST",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/lwktsq_edit",
+    "endpoint": "/student/pygl/lwktsq_edit_load",
+    "method": "GET",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/lwktsq_edit",
+    "endpoint": "/student/pygl/lwktsq_edit_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/pygl/py_zysjwc",
+    "endpoint": "/student/pygl/zysjwc_load",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/py_zysjwc",
+    "endpoint": "/student/pygl/zysjwc_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/pygl/pyfacx",
+    "endpoint": "/student/pygl/bindpyfacx",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/pyfacx",
+    "endpoint": "/student/pygl/pyfacxlist",
+    "method": "POST",
+    "params": [
+      "xslbm",
+      "yxsh",
+      "zydm"
+    ]
+  },
+  {
+    "page": "/student/pygl/pyjhtj",
+    "endpoint": "/student/pygl/py_kclist",
+    "method": "POST",
+    "params": [
+      "yxsh",
+      "kcbh"
+    ]
+  },
+  {
+    "page": "/student/pygl/pyjhtj",
+    "endpoint": "/student/pygl/py_pyjh_addkc",
+    "method": "POST",
+    "params": [
+      "kcbh",
+      "pyfx"
+    ]
+  },
+  {
+    "page": "/student/pygl/pyjhtj",
+    "endpoint": "/student/pygl/py_pyjh_delkc",
+    "method": "POST",
+    "params": [
+      "kcbh"
+    ]
+  },
+  {
+    "page": "/student/pygl/pyjhtj",
+    "endpoint": "/student/pygl/pyjhtj_drop",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/pyjhtj",
+    "endpoint": "/student/pygl/pyjhtj_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "dotype",
+      "pyfx",
+      "yjfx"
+    ]
+  },
+  {
+    "page": "/student/pygl/pyjhtj",
+    "endpoint": "/student/pygl/pyjhtjlist",
+    "method": "POST",
+    "params": [
+      "pyfx"
+    ]
+  },
+  {
+    "page": "/student/pygl/ttkcx",
+    "endpoint": "/student/pygl/ttkcx_list",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/wsjxpj",
+    "endpoint": "/student/pygl/wsjxpjlist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xkjgcx",
+    "endpoint": "/student/default/bindterm",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xkjgcx",
+    "endpoint": "/student/pygl/dcexcel_yw",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xkjgcx",
+    "endpoint": "/student/pygl/py_kbcx_yw",
+    "method": "POST",
+    "params": [
+      "termcode"
+    ]
+  },
+  {
+    "page": "/student/pygl/xscjcx",
+    "endpoint": "/student/pygl/dcword_cj",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xscjcx",
+    "endpoint": "/student/pygl/xscjcx_cjzydo",
+    "method": "GET",
+    "params": [
+      "id",
+      "type"
+    ]
+  },
+  {
+    "page": "/student/pygl/xscjcx",
+    "endpoint": "/student/pygl/xscjcx_cjzylist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xskbcx",
+    "endpoint": "/student/pygl/dcword_kb",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xskbcx",
+    "endpoint": "/student/pygl/doprint_kb",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xskbcx",
+    "endpoint": "/student/pygl/py_kbcx_ew",
+    "method": "POST",
+    "params": [
+      "kblx",
+      "termcode"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_checkwj",
+    "method": "GET",
+    "params": [
+      "wjmc"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_jddel",
+    "method": "POST",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_jdlist",
+    "method": "POST",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_jdsave",
+    "method": "POST",
+    "params": [
+      "json"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_load",
+    "method": "GET",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_zjdel",
+    "method": "POST",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_zjlist",
+    "method": "POST",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_edit_zjsave",
+    "method": "POST",
+    "params": [
+      "json"
+    ]
+  },
+  {
+    "page": "/student/pygl/xsktsq_edit",
+    "endpoint": "/student/pygl/xsktsq_print",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/default/bindyxsh",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/pygl/xswsxk_all",
+    "method": "POST",
+    "params": [
+      "yxsh",
+      "kcbh"
+    ]
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/pygl/xswsxk_dx",
+    "method": "POST",
+    "params": [
+      "yxsh",
+      "kcbh"
+    ]
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/pygl/xswsxk_jhn_tx",
+    "method": "POST",
+    "params": [
+      "bjid"
+    ]
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/pygl/xswsxk_jhnxk",
+    "method": "POST",
+    "params": [
+      "bjid"
+    ]
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/pygl/xswsxk_jhw_tx",
+    "method": "POST",
+    "params": [
+      "bjid"
+    ]
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/pygl/xswsxk_jhwxk",
+    "method": "POST",
+    "params": [
+      "bjid"
+    ]
+  },
+  {
+    "page": "/student/pygl/xswsxk",
+    "endpoint": "/student/pygl/xswsxk_load",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xswsxk_kb",
+    "endpoint": "/student/pygl/xswsxk_kb_list",
+    "method": "POST",
+    "params": [
+      "lb",
+      "xwk",
+      "zh",
+      "jc1",
+      "jc2",
+      "yxsh",
+      "kcbh",
+      "page",
+      "rows",
+      "type"
+    ]
+  },
+  {
+    "page": "/student/pygl/xswsxk_kb",
+    "endpoint": "/student/pygl/xswsxk_kb_load",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xswsxk_kb",
+    "endpoint": "/student/pygl/xswsxk_kb_loadkb",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xswsxk_kb",
+    "endpoint": "/student/pygl/xswsxk_kb_xk",
+    "method": "POST",
+    "params": [
+      "lb",
+      "bjid",
+      "xkyzm"
+    ]
+  },
+  {
+    "page": "/student/pygl/xszqkhdj",
+    "endpoint": "/student/pygl/dcword_zq",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xszqkhdj",
+    "endpoint": "/student/pygl/zqkhdj_load",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/pygl/xszqkhdj",
+    "endpoint": "/student/pygl/zqkhdj_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/wsks/wskscp",
+    "endpoint": "/student/wsks/wskscp_list",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/wsks/wskscp",
+    "endpoint": "/student/wsks/wskscp_load",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/knzzsq",
+    "endpoint": "/student/yggl/knzzsq_jtcy_list",
+    "method": "POST",
+    "params": [
+      "sqid"
+    ]
+  },
+  {
+    "page": "/student/yggl/knzzsq",
+    "endpoint": "/student/yggl/knzzsq_plxzrdcy_list",
+    "method": "POST",
+    "params": [
+      "sqid"
+    ]
+  },
+  {
+    "page": "/student/yggl/pypgsq",
+    "endpoint": "/student/yggl/pypgsq_list",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/pypgsq",
+    "endpoint": "/student/yggl/pypgsq_sqlist",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/szgwsq",
+    "endpoint": "/student/yggl/szgwsq_bindszlb",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/szgwsq",
+    "endpoint": "/student/yggl/szgwsq_list",
+    "method": "GET",
+    "params": [
+      "gwlb"
+    ]
+  },
+  {
+    "page": "/student/yggl/szgwsq",
+    "endpoint": "/student/yggl/szgwsq_save",
+    "method": "POST",
+    "params": [
+      "json",
+      "zt"
+    ]
+  },
+  {
+    "page": "/student/yggl/szgwsq",
+    "endpoint": "/student/yggl/szgwsq_sqlist",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/tyyd_mxsq",
+    "endpoint": "/student/yggl/tyyd_mxsq_del",
+    "method": "POST",
+    "params": [
+      "id",
+      "ids"
+    ]
+  },
+  {
+    "page": "/student/yggl/tyyd_mxsq",
+    "endpoint": "/student/yggl/tyyd_mxsq_list",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/tyydbm",
+    "endpoint": "/student/yggl/gettyydzsc_tyyd",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/tyydbm",
+    "endpoint": "/student/yggl/tyydbm_cklist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/tyydbm",
+    "endpoint": "/student/yggl/tyydbm_del",
+    "method": "POST",
+    "params": [
+      "hdid"
+    ]
+  },
+  {
+    "page": "/student/yggl/tyydbm",
+    "endpoint": "/student/yggl/tyydbm_sqlist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/tyydbm",
+    "endpoint": "/student/yggl/tyydhz_print",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/tyydbm",
+    "endpoint": "/student/yggl/xshdbm_bm",
+    "method": "POST",
+    "params": [
+      "id",
+      "VeriCode"
+    ]
+  },
+  {
+    "page": "/student/yggl/xnjddj",
+    "endpoint": "/student/yggl/xnjddj_dcword",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/xnjddj",
+    "endpoint": "/student/yggl/xnjddj_load",
+    "method": "GET",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/xshdbm",
+    "endpoint": "/student/yggl/printword",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/xshdbm",
+    "endpoint": "/student/yggl/xshdbm_cklist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/xshdbm",
+    "endpoint": "/student/yggl/xshdbm_del",
+    "method": "POST",
+    "params": [
+      "hdid"
+    ]
+  },
+  {
+    "page": "/student/yggl/xshdbm",
+    "endpoint": "/student/yggl/xshdbm_sfkysq",
+    "method": "GET",
+    "params": [
+      "id"
+    ]
+  },
+  {
+    "page": "/student/yggl/xshdbm",
+    "endpoint": "/student/yggl/xshdbm_sqlist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/xwsxsq",
+    "endpoint": "/student/yggl/xwsxsq_del",
+    "method": "POST",
+    "params": [
+      "id",
+      "ids"
+    ]
+  },
+  {
+    "page": "/student/yggl/xwsxsq",
+    "endpoint": "/student/yggl/xwsxsq_list",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/zyzfwbm",
+    "endpoint": "/student/yggl/getldsjzsc",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/zyzfwbm",
+    "endpoint": "/student/yggl/ldsjbm_del",
+    "method": "POST",
+    "params": [
+      "hdid"
+    ]
+  },
+  {
+    "page": "/student/yggl/zyzfwbm",
+    "endpoint": "/student/yggl/ldsjhz_print",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/zyzfwbm",
+    "endpoint": "/student/yggl/zyzfwbm_cklist",
+    "method": "POST",
+    "params": []
+  },
+  {
+    "page": "/student/yggl/zyzfwbm",
+    "endpoint": "/student/yggl/zyzfwbm_sqlist",
+    "method": "POST",
+    "params": []
+  }
+]

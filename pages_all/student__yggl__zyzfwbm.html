@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>zyzfwbm</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript">
+    $(function () {
+        if ("1" == "0") {
+            $.messager.alert("提示", "当前时间无法进行劳动实践申请！", "error");
+          
+            return;
+        }
+        GetList();
+        GetList_sq();
+        getldsjzsc();
+
+    });
+
+
+    function getldsjzsc() {
+        $.ajax({
+            type: 'post',
+            dataType: 'json',
+            url: "getldsjzsc",
+            cache: false,
+            success: function (data) {
+                if (data.zt == "1") {
+                    //alert(data.hdzsc);
+                    $("#ldsjsc").html(data.hdzsc);
+
+                }
+                else {
+                    $.messager.alert("提示", "查询失败:" + data.msg, "error");
+                }
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+
+    function GetList() {
+        var head = '<tr class="head">' +
+				   '	<td width="40px">类别</td>' +
+				   '	<td width="150px">劳动实践项目</td>' +
+					'	<td width="70px">发布单位</td>' +
+                    '   <td width="110px">劳动实践开始时间</td>' +
+                    '   <td width="110px">劳动实践截止时间</td>' +
+                    '   <td width="150px">劳动实践地点</td>' +
+                    '   <td width="50px">可报名人数</td>' +
+                    '   <td width="70px">主办单位</td>' +
+                    '   <td width="70px">报名方式</td>' +
+                    '   <td width="100px">报名开始时间</td>' +
+                    '   <td width="100px">报名截止时间</td>' +
+                    '   <td width="50px">项目化加分</td>' +
+                    '   <td width="50px">劳动实践时长</td>' +
+                    '   <td width="45px">审核状态</td>' +
+                    '	<td width="45px" class="operate">提交心得</td>' +
+					'	<td width="45px" class="operate">取消报名</td>' +
+					'	<td width="45px" class="operate">扫码进群</td>' +
+					'	<td class="foot"></td>' +
+					'</tr>';
+        $('#td_gw tbody').empty();
+        $('#td_gw tbody').append(head);
+        $.ajax({
+            url: "zyzfwbm_cklist",
+            type: "post",
+            dataType: "json",
+            data: {},
+            success: function (data) {
+                $('#imgVerifi').attr('src', '/Home/VerificationCode' + '?t=' + new Date().getSeconds());
+                if (data.rows.length == 0) {
+                    var tr = "<tr class='odd'><td colspan='16'>未报名活动</td></tr>";
+                    $('#td_gw tbody').append(tr);
+                    return;
+                }
+                $.each(data.rows, function (i, o) {
+                    if (i % 2 == 0)
+                        tr = '<tr class="odd">';
+                    else
+                        tr = '<tr class="even">';
+
+                    tr += '      <td>' + o.fl + '</td>' +
+                       '         <td>' + o.mc + '</td>' +
+                       '         <td>' + o.fbdw + '</td>' +
+                       '         <td>' + o.kssj + '</td>' +
+                       '         <td>' + o.jzsj + '</td>' +
+                       '         <td>' + o.dd + '</td>' +
+                       '         <td>' + o.rs + '</td>' +
+                       '         <td>' + o.zbdw + '</td>' +
+                       '         <td>' + o.bmfs + '</td>' +
+                       '         <td>' + o.bmkssj + '</td>' +
+                       '         <td>' + o.bmjzsj + '</td>' +
+                       '         <td>' + o.fs + '</td>' +
+                       '         <td>' + o.hdsc + '</td>' +
+                        '         <td>' + o.shbj + '</td>' +
+                        '         <td><a href="zyzfyjytj?id=' + o.hdid + '" class="btn-link">提交</a></td>' +
+                       '         <td><a href="javascript:void(0)" class="btn-link" onclick=show_del("' + o.hdid + '")>取消</a></td>' +
+                       '         <td><a href="javascript:void(0)" class="btn-link" onclick=show_ewm("' + o.hdid + '")>预览</a></td>' +
+                       '         <td class="foot"></td>' +
+                       '     </tr>';
+                    $('#td_gw tbody').append(tr);
+
+                })
+            }
+        });
+    }
+
+    function GetList_sq() {
+        var head = '<tr class="head">' +
+				   '	<td width="40px">类别</td>' +
+				   '	<td width="150px">劳动实践项目</td>' +
+					'	<td width="70px">发布单位</td>' +
+                    '   <td width="100px">劳动实践开始时间</td>' +
+                    '   <td width="100px">劳动实践截止时间</td>' +
+                    '   <td width="150px">劳动实践地点</td>' +
+                    '   <td width="50px">可报名人数</td>' +
+                    '   <td width="50px">已报名人数</td>' +
+                    '   <td width="60px">主办单位</td>' +
+                    '   <td width="50px">报名方式</td>' +
+                    '   <td width="100px">报名开始时间</td>' +
+                    '   <td width="100px">报名截止时间</td>' +
+                    '   <td width="50px">项目化加分</td>' +
+                    '	<td width="50px" class="operate">查看详情</td>' +
+					'	<td width="50px" class="operate">我要报名</td>' +
+					'	<td class="foot"></td>' +
+					'</tr>';
+        $('#td_sqjl tbody').empty();
+        $('#td_sqjl tbody').append(head);
+        $.ajax({
+            url: "zyzfwbm_sqlist",
+            type: "post",
+            dataType: "json",
+            data: {},
+            success: function (data) {
+                if (data.rows.length == 0) {
+                    var tr = "<tr class='odd'><td colspan='16'>暂未发布活动</td></tr>";
+                    $('#td_sqjl tbody').append(tr);
+                    return;
+                }
+                $('#imgVerifi').attr('src', '/Home/VerificationCode' + '?t=' + new Date().getSeconds());
+                $.each(data.rows, function (i, o) {
+                    if (i % 2 == 0)
+                        tr = '<tr class="odd">';
+                    else
+                    tr = '<tr class="even">';
+
+                    tr += '      <td>' + o.fl + '</td>' +
+                       '         <td>' + o.mc + '</td>' +
+                       '         <td>' + o.fbdw + '</td>' +
+                       '         <td>' + o.kssj + '</td>' +
+                       '         <td>' + o.jzsj + '</td>' +
+                       '         <td>' + o.dd + '</td>' +
+                       '         <td>' + o.rs + '</td>' +
+                       '         <td>' + o.bmrs + '</td>' +
+                       '         <td>' + o.zbdw + '</td>' +
+                       '         <td>' + o.bmfs + '</td>' +
+                       '         <td>' + o.bmkssj + '</td>' +
+                       '         <td>' + o.bmjzsj + '</td>' +
+                       '         <td>' + o.fs + '</td>' +
+                        '         <td><a href="zyzfwbmck?id=' + o.id + '" class="btn-link" >查看</a></td>' +
+                       '         <td><a href="javascript:void(0)" class="btn-link" onclick=show_add("' + o.id + '")>报名</a></td>' +
+                       '         <td class="foot"></td>' +
+                       '     </tr>';
+                    $('#td_sqjl tbody').append(tr);
+                })
+            }
+        });
+    }
+
+    function show_add(id) {
+        $.messager.confirm("提示",
+            "请同学们诚信报名并听取学术报告。对于每学年学术报告缺勤达两次及以上者，将记入诚信档案，影响当年评奖评优!<br/>" +
+            " <form align=\"middle\">" +
+            " <input type =\"text\" class=\"inputtext width60\" style=\"height: 25px; vertical-align: middle;\" id=\"VeriCode\" name=\"VeriCode\"/>" +
+            " <img id=\"imgVerifi\" title=\"单击获取验证码\" style=\"height: 33px;vertical-align: middle;\" src=\"VerificationCode\"  class=\"inputimage\" onclick=\"changecode()\" /><from/>",
+            function (r) {
+                var VeriCode = $("#VeriCode").val();
+                if (r) {
+                    $.ajax({
+                        type: 'post',
+                        dataType: 'json',
+                        url: "xshdbm_bm",
+                        data: { 'id': id, 'VeriCode': VeriCode },
+                        cache: false,
+                        success: function (data) {
+                            if (data.sign == "-1") {
+                                $.messager.alert("提示", "不在报名时间内！", "error");
+                                return;
+                            }
+                            if (data.msg) {
+                                $.messager.alert("提示", data.msg, "error");
+                                setTimeout("window.location.reload()", 1000);
+                            }
+                            else {
+                                if (data.zt = "1") {
+                                    $.messager.alert("提示", "报名成功");
+                                    setTimeout("window.location.reload()", 1000);
+                                }
+                                else {
+                                    $.messager.alert("提示", "报名失败", "error");
+                                    setTimeout("window.location.reload()", 1000);
+                                }
+                            }
+                        },
+                        error: function (e) {
+                            var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+                            setTimeout("window.location.reload()", 1000);
+                        }
+
+                    });
+                }
+                else {
+                    setTimeout("window.location.reload()", 500);
+                }
+
+            });
+        $(".panel-tool-close").css("display", "none");
+    }
+
+    function show_del(hdid) {
+        $.messager.confirm("提示", "你确定要取消报名吗?", function (r) {
+            if (r) {
+                $.ajax({
+                    type: 'post',
+                    dataType: 'json',
+                    url: "ldsjbm_del",
+                    data: { 'hdid': hdid },
+                    cache: false,
+                    success: function (data) {
+                        if (data.msg) {
+                            $.messager.alert("提示", data.msg, "error");
+                        }
+                        else {
+                            if (data.zt = "1") {
+                                $.messager.alert("提示", "取消报名成功");
+                                GetList();
+                                GetList_sq();
+                            }
+                            else {
+                                $.messager.alert("提示", "取消报名失败", "error");
+                            }
+                        }
+                    },
+                    error: function (e) {
+                        var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+                    }
+                });
+            }
+        });
+    }
+
+
+    function show_ewm(id) {
+        $.post("show_ewm_yl", { "id": id, "type": "ck" }, function (data) {
+            if (data.sign == "1") {
+                var height = ($(window).height())*0.9+ "px";
+                var width = ($(window).width())*0.9+ "px";
+                var top = 0;
+                parent.layer.open({
+                        type: 2,
+                        title: false,
+                        area: [width, height],
+                        content: ["/student/yggl/show_ewm_yl?id="+id],
+                        shadeClose: true,
+                        closeBtn: 1,
+                        end: function () {
+
+                        }
+                    });
+            }
+            else {
+                $.messager.alert("提示", data.msg, "error");
+            }
+        }, "json");
+    }
+
+    function changecode() {
+        $('#imgVerifi').attr('src', '/Home/VerificationCode' + '?t=' + new Date().getTime());
+    }
+
+
+    function do_print() {
+        var id = $('#hfid').val();
+        var form = $("<form id='form3'></form>");
+        form.attr("action", "ldsjhz_print");
+        form.attr("method", "post");
+        form.attr("target", "_self");
+
+        var input = $("<input type='hidden' value='" + id + "' name='id'/>");
+        form.append(input);
+
+        $(document.body).append(form)
+        form.submit();
+        $("#form3").remove();
+    }
+
+
+</script>
+
+<div class="Slayout">
+	<div class="container">
+        <div class="Operating_area">
+            
+
+            <button id="btnprint" type="button" class="btn-primary" style="float:right;margin-left:30px" onclick="do_print()">
+                打印劳动实践表
+            </button>
+
+        </div>
+        <div class="warning-box marginleft10 marginright10">
+            <p>操作提示:</p>
+            <p>1、在您可报名参加的[劳动实践]列表中，点击“我要报名”按钮提交报名申请，点击“查看详情”可查看 [劳动实践]的详细信息。</p>
+            <p>2、劳动实践类，参加后请及时提交 [改进意见]，经审核通过，才有效。</p>
+        </div>
+        <div class="row-inline">
+            <div class="col-md-12" >
+				<div class="panel1 panel1-default">
+                    <div class="panel1-head">
+                        <h3 class="panel1-title">您的成功报名列表</h3>
+                        <div style="text-align: center;">
+                            <strong>劳动实践总时长：</strong><label id="ldsjsc"></label>小时
+                        </div>
+                    </div>
+                    <div class="panel1-body">
+                        <table class="listtable" id="td_gw">
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                    </div>
+			</div>
+			<div class="col-md-12">
+				<div class="panel1 panel1-default">
+					<div class="panel1-head">
+                        <h3 class="panel1-title">您可报名参加的[劳动实践] 列表</h3>
+                         <div style="text-align:center;">
+                              备注：点击<strong>报名</strong>输入验证码
+                              <!--<input type="text" class="inputtext width80" style="height:30px; vertical-align:middle" id="VeriCode" name="VeriCode"/>
+                              <img id="imgVerifi" title="单击换一张验证码" style="height:35px; vertical-align:middle" class="inputimage"-->  <!--onclick="changecode()" />-->  
+                         </div>
+					</div>
+					<div class="panel1-body">
+						<table class="listtable" id="td_sqjl">
+							<tbody></tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+
+
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

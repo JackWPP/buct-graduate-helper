@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>gjxsjlhd</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+
+<script type="text/javascript">
+    $(function () {
+        //GetList();
+        pageload();
+    });
+
+    function pageload() {
+        var search = document.location.search;
+        var id = $("#hfid").val();
+        if (id != "" && id != "0")
+            search = "?id=" + id;
+
+        $.ajax({
+            type: 'get',
+            dataType: 'json',
+            url: "gjxsjlhd_load" + search,
+            cache: true,
+            success: function (data) {
+                if (data.shl) {
+                    if (data.shl.dqzt != "" && data.shl.dqzt_shlxx.sfkyxg != "1") {
+                        $("#btnsubmit").hide();
+                        $("#btnsave").hide();
+                        //提交后将可操作为变灰
+                        $('#hdlx').combobox({ disabled: true });
+                        $('#xmmc').textbox({ disabled: true });
+                        $('#kssj').datetimebox({ disabled: true });
+                        $('#jssj').datetimebox({ disabled: true });
+                        $('#hydd').textbox({ disabled: true });
+                        $('#zbf').textbox({ disabled: true });
+                        $('#zzje').textbox({ disabled: true });
+                        //$("#lwtm").attr("disabled", true);
+                        $("#hyyqclDiv").hide();
+                        controlbtn();
+
+                        
+                    }
+                }
+                controlbtn1();
+                if (data.shl_cl.dqzt != "" && data.shl_cl.dqzt_shlxx.sfkyxg != "1") {
+                    $("#btnsubmit_cl").hide();
+                    $("#btnsave_cl").hide();
+                }
+                //显示学生信息
+                //var xsxx = data.xsxx[0];
+                //$("#xh").html(xsxx.xh);
+                //$("#xm").html(xsxx.xm);
+                if (data.shjl) {
+                    shlxx(data.shjl);
+                }
+                if (data.shjl1) {
+                    shlxx1(data.shjl1);
+                }
+                
+                $('#hdlx').combobox({
+                    panelHeight: 'auto',
+                    data: data.hdlxlist,
+                    editable: false,
+                    valueField: 'dm',
+                    textField: 'dmmc'
+                });
+
+                //申请表存在信息
+                if (data.model != undefined && data.model != null) {
+                    $('#ff').form("load", data.model);
+                    var dsje = "未录入";
+                    var yxjtje = "未录入";
+                    if (data.model.dsjtje != 0)
+                        dsje = data.model.dsjtje;
+                    if (data.model.yxjtje != 0)
+                        yxjtje = data.model.yxjtje;
+                    $("#dsjtje").html(dsje);
+                    $("#yxjtje").html(yxjtje);
+                    //$('#kssj').datetimebox('setValue', data.model.kssj);
+                    //$('#jssj').datetimebox('setValue', data.model.jssj);
+                    controlbtn();
+
+                }
+            }
+        });
+    }
+
+    function shlxx(shl) {
+        var html = "";
+        var shz = true; //审核中
+        $.each(shl, function (i, o) {
+            html += '<li class="step_sm_done">';
+            if (o.shljb == "0") {
+                if (o.shsj != "")
+                    html += '<div class="step_sm_item step_sm_success"><span class="name">' + o.shlmc + '</span> <span class="time">' + o.shsj + '</span>';
+                else {
+                    shz = false;
+                    html += '<div class="step_sm_item step_sm_future"><span class="name">' + o.shlmc + '</span> <span class="time">等待提交…</span>';
+                }
+            }
+            else {
+                if (o.shsj != "")
+                    html += '<div class="step_sm_item step_sm_success"><span class="name">' + o.shlmc + '</span> <span class="time">' + o.shsj + '</span>';
+                else {
+                    if (shz) {
+                        html += '<div class="step_sm_item step_sm_processing"><span class="name">' + o.shlmc + '</span> <span class="time">审核中…</span>';
+                        shz = false;
+                    } else {
+                        html += '<div class="step_sm_item step_sm_future"><span class="name">' + o.shlmc + '</span> <span class="time">等待审核…</span>';
+                    }
+                }
+            }
+            html += '      </div>' +
+                '  </li>';
+        })
+        $("#step_sm").html(html);
+    }
+
+    
+    function shlxx1(shl) {
+        var html = "";
+        var shz = true; //审核中
+        $.each(shl, function (i, o) {
+            html += '<li class="step_sm_done">';
+            if (o.shljb == "0") {
+                if (o.shsj != "")
+                    html += '<div class="step_sm_item step_sm_success"><span class="name">' + o.shlmc + '</span> <span class="time">' + o.shsj + '</span>';
+                else {
+                    shz = false;
+                    html += '<div class="step_sm_item step_sm_future"><span class="name">' + o.shlmc + '</span> <span class="time">等待提交…</span>';
+                }
+            }
+            else {
+                if (o.shsj != "")
+                    html += '<div class="step_sm_item step_sm_success"><span class="name">' + o.shlmc + '</span> <span class="time">' + o.shsj + '</span>';
+                else {
+                    if (shz) {
+                        html += '<div class="step_sm_item step_sm_processing"><span class="name">' + o.shlmc + '</span> <span class="time">审核中…</span>';
+                        shz = false;
+                    } else {
+                        html += '<div class="step_sm_item step_sm_future"><span class="name">' + o.shlmc + '</span> <span class="time">等待审核…</span>';
+                    }
+                }
+            }
+            html += '      </div>' +
+                '  </li>';
+        })
+        $("#step_sm1").html(html);
+    }
+    //保存和提交
+    function btn_save(zt) {
+        var info = $('#ff').serializeObject();
+        info.xh=2026201060;
+        info.xmmc = $('#xmmc').textbox("getValue");
+        info.kssj = $('#kssj').datetimebox("getValue");
+        info.jssj = $('#jssj').datetimebox("getValue");
+        info.hydd = $('#hydd').textbox("getValue");
+        info.zbf = $('#zbf').textbox("getValue");
+        info.zzje = $('#zzje').textbox("getValue");
+        if (info.zzje !== null && info.zzje != "" && info.zzje != undefined) {
+            var regPos = /^\d+(.\d+)*$/;
+            if (!regPos.test(info.zzje)) {
+                $.messager.alert("提示", "金额为数字！", "error");
+                return;
+            }
+        } else {
+
+            info.zzje = 0;
+        }
+      
+        
+        if (info.xmmc == "") {
+            $.messager.alert("提示", "请输入项目名称！", "error");
+            return;
+        }
+        if (info.kssj == "") {
+            $.messager.alert("提示", "请选择开始时间！", "error");
+            return;
+        }
+        if (info.jssj == "") {
+            $.messager.alert("提示", "请选择结束时间！", "error");
+            return;
+        }
+        if (info.hydd == "") {
+            $.messager.alert("提示", "请输入地点（院校）！", "error");
+            return;
+        }
+        if (info.zbf == "") {
+            $.messager.alert("提示", "请输入主办方！", "error");
+            return;
+        }
+        if (info.zjje == "") {
+            $.messager.alert("提示", "请输入资助金额！", "error");
+            return;
+        }
+        if (info.hbjltm == "") {
+            $.messager.alert("提示", "请输入口头汇报/墙报题目！", "error");
+            return;
+        }
+
+        if (info.id == "") {
+            info.id = "0";
+        }
+        var tsxx = "保存";
+        if (zt == "0")
+            tsxx = "提交";
+        var jsonObject = JSON.stringify(info);
+        pageloadms("请稍候。。。");
+        $('#ff').ajaxSubmit({
+            type: 'post',
+            url: "gjxsjlhd_save",
+            dataType: "json",
+            data: { 'json': jsonObject, 'zt': zt },
+            cache: false,
+            success: function (json) {
+                if (json.zt == "0") {
+                    $.messager.alert("提示", json.msg, "error");
+                }
+                else if (json.zt == "1") {
+                    $("#hfid").val(json.id);
+                    $.messager.alert("提示", tsxx + "成功");
+                    pageload();
+                }
+                dispageload();
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+
+
+    //下载
+    function controlbtn() {
+        var id = $("#hfid").val();
+        if (id != "0") {
+            $.post("getpy_gjxsjlhdinfo", { id: id }, function (data) {
+                if (data.tjgccjd != "") {
+                    $("#Downhyyqcl").text("已上传，下载").attr("href", "hyyqcl_down?id=" + id + "&date=" + new Date().getMilliseconds());
+                }
+
+            }, 'json');
+        }
+    }
+
+    //下载
+    function controlbtn1() {
+        var id = $("#hfid").val();
+        if (id != "0") {
+            $.post("getpy_gjxsjlhdcltjinfo", { id: id }, function (data) {
+                if (data.tjgccjd != "") {
+                    $("#Downbxcl").text("已上传，下载").attr("href", "gjhybxcl_down?id=" + id + "&date=" + new Date().getMilliseconds());
+                }
+
+            }, 'json');
+        }
+    }
+
+
+    //保存和提交
+    function btn_savecl(zt) {
+        var info = $('#ff').serializeObject();
+        info.xh =2026201060;
+
+        
+
+
+        if (info.id == "") {
+            info.id = "0";
+        }
+        var tsxx = "保存";
+        if (zt == "0")
+            tsxx = "提交";
+        var jsonObject = JSON.stringify(info);
+        pageloadms("请稍候。。。");
+        $('#ff').ajaxSubmit({
+            type: 'post',
+            url: "gjxsjlhdcltj_save",
+            dataType: "json",
+            data: { 'json': jsonObject, 'zt': zt },
+            cache: false,
+            success: function (json) {
+                if (json.zt == "0") {
+                    $.messager.alert("提示", json.msg, "error");
+                }
+                else if (json.zt == "1") {
+                    $("#hfid").val(json.id);
+                    $.messager.alert("提示", tsxx + "成功");
+                    pageload();
+                }
+                dispageload();
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+</script>
+<div class="Slayout">
+    <div class="container">
+        
+        
+        <div class="block">
+            <div class="block-box">
+                <form id="ff" class="marginbottom30">
+                    <input id="hfid" name="id" type="hidden" value="0" />
+                    <input id="hfxh" name="xh" type="hidden" value="2026201060" />
+                    <table cellpadding="0" cellspacing="0" class="basictable " style="margin-top:30px;" width="100%">
+                        <tr>
+                            <td colspan="4" style=" text-align:left; font-weight:bold; font-size:16px">
+                                国际学术交流活动申请
+                                
+
+
+                                <button id="btnsubmit" type="button" class="btn-primary floatright marginright20" onclick="btn_save('0')">
+                                    提交
+                                </button>
+                                <button id="btnsave" type="button" class="btn-primary floatright marginright20" onclick="btn_save()">
+                                    保存
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" style="width:100%">
+                                <div class="step_sm_view" style="width:80%">
+                                    <ul id="step_sm" class="step_sm">
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:20%" class="bg">
+                                选择活动类型：
+                            </td>
+                            <td style="width:35%">
+                                <input id="hdlx" name="hdlx" class="easyui-combobox" data-options="width:'50%'" />
+                            </td>
+
+                            <td style="width:15%;" class="bg">
+                                项目名称：
+                            </td>
+                            <td style="width:35%">
+                                <input id="xmmc" name="xmmc" class="easyui-textbox" data-options="width:'50%'" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="width:20%" class="bg" >
+                                口头汇报/墙报题目：
+                            </td>
+                            <td style="width:35%" colspan="3">
+                                <input id="hbjltm" name="hbjltm" class="easyui-textbox" data-options="width:'50%' "  />
+                            </td>
+
+                            
+                        </tr>
+
+                        <tr>
+                            <td style="width:15%" class="bg">
+                                开始时间：
+                            </td>
+                            <td style="width:35%">
+                                <input id="kssj" name="kssj" class="easyui-datetimebox" data-options="width:'50%'" />
+                            </td>
+
+                            <td style="width:15%;" class="bg">
+                                结束时间：
+                            </td>
+                            <td style="width:35%">
+                                <input id="jssj" name="jssj" class="easyui-datetimebox" data-options="width:'50%'" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:15%" class="bg">
+                                地点（院校）：
+                            </td>
+                            <td style="width:35%">
+                                <input id="hydd" name="hydd" class="easyui-textbox" data-options="width:'50%'" />
+                            </td>
+
+                            <td style="width:15%;" class="bg">
+                                主办方：
+                            </td>
+                            <td style="width:35%">
+                                <input id="zbf" name="zbf" class="easyui-textbox" data-options="width:'50%'" />
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="width:15%" class="bg">
+                                申请资金金额：
+                            </td>
+                            <td style="width:35%">
+                                <input type="text" id="zzje" name="zzje" class="easyui-textbox" data-options="min:0,precision:2,width:'50%'" />
+                            </td>
+
+                            <td class="bg" colspan="1">
+                                上传会议邀请函等相关材料:
+                            </td>
+                            <td>
+                                <div id="hyyqclDiv" style="float:left">
+                                    <input id="hyyqcl" name="hyyqclname" class="easyui-filebox" style="width: 200px;" data-options="buttonAlign: 'left',prompt:'zip格式',buttonText:'选择文件',display:'none' " />
+                                    <input type="hidden" name="hyyqcl" />
+
+                                </div>
+                                <a id="Downhyyqcl" style="color:red;position:relative;top:5px;left:5px;">  </a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width:15%" class="bg">
+                                导师审批后资助金额：
+                            </td>
+                            <td style="width:35%">
+                                <label id="dsjtje">
+                                </label>
+                            </td>
+
+                            <td style="width:15%;" class="bg">
+                                研究生院审批后资助金额：
+                            </td>
+                            <td style="width:35%">
+                                <label id="yxjtje">
+                                </label>
+                            </td>
+                        </tr>
+
+
+
+                        <tr>
+                            <td style="width:15%;" class="bg">
+                                驳回原因：
+                            </td>
+                            <td colspan="3">
+                                <input id="byzd" name="byzd" type="text" class="easyui-textbox" style="width: 99%;" data-options="height:100" disabled />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" style=" text-align:left; font-weight:bold; font-size:16px">
+                                国际学术交流活动材料提交
+                                <button id="btnsubmit_cl" type="button" class="btn-primary floatright marginright20" onclick="btn_savecl('0')">
+                                    提交材料
+                                </button>
+                                <button id="btnsave_cl" type="button" class="btn-primary floatright marginright20" onclick="btn_savecl()">
+                                    保存材料
+                                </button>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" style="width:100%">
+                                <div class="step_sm_view" style="width:80%">
+                                    <ul id="step_sm1" class="step_sm">
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+
+                            <td class="bg" colspan="1">
+                                上传总结材料（成果、现场活动照片等）:
+                            </td>
+                            <td colspan="4">
+                                <div id="bxclDiv" style="float:left">
+                                    <input id="bxcl" name="bxclname" class="easyui-filebox" style="width: 200px;" data-options="buttonAlign: 'left',prompt:'zip格式',buttonText:'选择文件',display:'none' " />
+                                    <input type="hidden" name="bxcl" />
+
+                                </div>
+                                <a id="Downbxcl" style="color:red;position:relative;top:5px;left:5px;">  </a>
+
+                                <span style="color:red; font-weight:bold">备注：先提交国际交流申请，审核结束后再进行材料提交</span>
+                            </td>
+
+                        </tr>
+                    </table>
+                    <table id="dg" style="padding-top:30px">
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

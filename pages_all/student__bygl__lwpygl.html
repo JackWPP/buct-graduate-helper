@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>论文评阅管理</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+    <script type="text/javascript" src="/Scripts/ueditor/ueditor.config.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/Scripts/ueditor/ueditor.all.js" charset="utf-8"></script>
+    <script type="text/javascript" src="/Scripts/openDialog.js"></script>
+
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript">
+    $(function () {
+
+         //选择暂不公开学生单独控制上传文件
+         //$("input[name='sfzbgk']").change(function () {
+         //   shownx();
+         //});
+        $('#txtyzlb').combobox({
+            method: 'get',
+            editable: false,
+            valueField: 'dm',
+            textField: 'dmmc',
+            data: [{ 'dm': '中文', 'dmmc': '中文' },
+            { 'dm': '英文', 'dmmc': '英文' }
+            ],
+            onLoadSuccess: function (data) {
+                $('#txtyzlb').combobox('setValue', data[0].dm)
+            }
+        })
+
+        var id = $('#hfid').val();
+        if ("42" == "" && id == "") {
+            $.messager.alert("提示", "当前无可用批次！", "error");
+            return;
+        }
+
+        $('#mslwid').hide();
+        showmslw();
+        pageLoad();
+        if ("" == "0") {
+
+            $.messager.alert("提示", "当前时间无法进行论文评阅！", "error");
+            $('#btnsave').hide();
+            $('#btntj').hide();
+            return;
+
+        }
+        if ("" == "2") {
+
+            $.messager.alert("提示", "预答辩尚未通过！", "error");
+            $('#btnsave').hide();
+            $('#btntj').hide();
+            return;
+
+        }
+        if ("3" == "3") {
+
+            $.messager.alert("提示", "查重盲审申请尚未通过！", "error");
+            $('#btnsave').hide();
+            $('#btntj').hide();
+            return;
+
+        }
+    })
+
+    function pageLoad() {
+        GetFilebox("ccfile");
+        GetFilebox("lwfile");
+        //GetFilebox("lwfilewd");
+        var id = $("#hfid").val();
+        $.ajax({
+            type: 'get',
+            dataType: "json", //返回json格式的数据
+            url: "xsdbsq_edit_load",
+            data: { 'id': id },
+            cache: false,
+            success: function (data) {
+                 var pycc = "2";
+                
+                if ("1" == "2" && (pycc == "2" || pycc == "1")) {
+
+                      $('#xwlbm').textbox('setValue', data.xwlbmc);
+                     }
+
+                     //查重盲审的论文题目硕士取答辩申请    博士取预答辩的题目
+
+                     var yjxkmc = data.yjxkmc;
+
+                     if (!("1"=="2"&&(pycc=="2"||pycc=="1"))) {
+                         $('#txtyjxk').textbox('setValue', yjxkmc);
+                     }
+
+                     //$('#ejxk').textbox('setValue', ejxk);
+
+
+                     if (data.info) {
+                    $('#pcdm').combobox('enable');
+                    //$('#txtlwksrq').datebox('enable');
+                    $('#ff').form('load', data.info);
+                    $('#pcdm').combobox('disable');
+                         //$('#txtlwksrq').datebox('disable');
+                         controlbtn();
+
+                         // 修复1：确保单选按钮有选中状态
+                         if (data.info.sfzbgk) {
+                             $("input[name='sfzbgk'][value='" + data.info.sfzbgk + "']").prop("checked", true);
+                         } else {
+                             // 如果没有值，确保默认选中"否"
+                             $("input[name='sfzbgk'][value='否']").prop("checked", true);
+                         }
+
+                     }
+                     else {
+
+                         if (pycc == '1') {//博士（预答辩）
+
+                             var lwtm = data.ydb[0].lwtm;
+                             //$('#txtlwtm').textbox('setValue', lwtm);
+                         } else {//硕士（答辩申请）
+                                 //$('#txtlwtm').textbox('setValue', '');
+                         }
+                     }
+                     //else if (data.ktinfo) {
+                     //    $('#txtlwtm').textbox('setValue', data.ktinfo.lwtm);
+                     //    $('#txtlwlx').combobox('setValue', data.ktinfo.lwlx);
+                     //    //$('#txtlwxtly').combobox('setValue', data.ktinfo.tmly);
+                     //}
+
+                     //if (data.zbgkxx) {
+                     //    //console.log(data.zbgkxx);
+                     //    if (data.zbgkxx.length > 0) {
+                     //        var zbgkxx_info = data.zbgkxx[0];
+                     //        $("[name='sfzbgk'][value='" + zbgkxx_info.sfzbgk + "'").prop("checked", true);
+                     //        $('#zbgknx').textbox('setValue', zbgkxx_info.zbgknx);
+                     //    }
+
+                     //}
+
+
+                     //shownx();
+
+                 },
+            error: function (e) {
+                //var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+        //sfshowsslw();    //是否显示评审论文上传
+        //shownx();
+        showmslw();
+        btnsslw();
+        bindccjg();
+        bindcsmd()
+        bindpsjg();
+        bindfkdata();
+
+    }
+
+    
+
+
+    function showmslw() {
+        var pycc = "2";
+        var msmd = "";//msmd为1，在盲审名单中
+        if (pycc == "1" || msmd == "1") {
+            $('#mslwid').show();
+        }
+
+    }
+
+
+
+   //查重结果
+    function bindccjg() {
+        var paramobj = {};
+        paramobj.pcdm = $('#pcdm').combobox('getValue');
+
+        $("#dg_cc").datagrid({
+            width: 'auto',
+            height: 'auto',
+            scrollbarSize: 0,
+            autoRowHeight: false,
+            queryParams: paramobj,
+            url: "getlwccsqbyxh",
+            columns: [[
+                { field: 'pcmc', title: '申请', width: 80 },
+                { field: 'lwtm', title: '论文题目', width: 100 },
+                { field: 'lwlx', title: '论文类型', width: 80 },
+                { field: 'bcsj', title: '保存时间', width: 80 },
+                { field: 'lwccjg', title: '查重结果', width: 80 },
+                { field: 'shzt', title: '审核状态', width: 80 },
+                { field: 'action1', title: '下载查重报告', width: 80, formatter: function (value, row, index) {
+                    return "<a href=\"javascript:void(0)\" style=\" text-decoration:underline; color:Red; font-weight:bold;\" onclick=\"downlwccbg('" + row.id + "')\">下载</a>"
+                }
+                }
+            ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件
+            rownumbers: true, //行号
+            onLoadSuccess: function (data) {
+                if (data.rows.length > 0) {
+                    $("#empty_cc").hide();
+                }
+            },
+            selectOnCheck: false,
+            onBeforeSelect: function () {
+                return false;
+            }
+        });
+    }
+
+    function bindcsmd() {
+        var paramobj = {};
+        paramobj.pcdm = $('#pcdm').combobox('getValue');
+        $("#dg_cs").datagrid({
+            width: 'auto',
+            height: 'auto',
+            queryParams: paramobj,
+            scrollbarSize: 0,
+            autoRowHeight: false,
+            url: "lwcsdatalist",
+            columns: [[
+                { field: 'xh', title: '学号', width: 60 },
+                { field: 'xm', title: '姓名', width: 40 },
+                { field: 'pcmc', title: '抽审批次', width: 60 },
+                { field: 'ssxz', title: '送审性质', width: 40 },
+                //{ field: 'csr', title: '抽审人', width: 90 },
+                { field: 'cssj', title: '抽审时间', width: 60 },
+                { field: 'sfdb', title: '答辩意见',width:60 },
+                {
+                    field: 'pysmc', title: '评阅书查看', width: 50, formatter: function (value, row, index) {
+                        if (value == "" || value == null || value == undefined) {
+                            return "<a href=\"javascript:void(0)\" onclick=\"downfj(" + row.id + ",'0')\">未上传</a>";
+                        }
+                        else {
+                            //"<a href=\"javascript:void(0)\" onclick=\"downfj(" + row.id + ",'1')\">下载</a>&nbsp;&nbsp;" +
+                            return "<a href=\"javascript:void(0)\" style=\" text-decoration:underline; color:Red; font-weight:bold;\" onclick=\"downfjyl(" + row.id + ",'1')\">查看</a>"
+                        }
+                    }
+                },
+                //{ field: 'action', title: '操作', width: 70, formatter: function (value, row, index) {
+                //    if (row.pycc == "1") {
+                //        return '<a href="javascript:void(0)"  class="easyui-linkbutton l-btn l-btn-small l-btn-plain" onclick="openlwzslr(\'' + row.pcdm + '\')" style="text-decoration:underline;color:blue;font-weight:bold">论文自述录入</a>';
+                //    }
+                //}
+                //}
+                { field: 'sftg', title: '盲审结果', width: 30, align: "center" },
+                ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件
+            rownumbers: true, //行号
+            onLoadSuccess: function (data) {
+                var cellcomp = 'ssxz';
+                var cells = ['xh', 'xm', 'pcmc','ssxz', 'sftg'];
+                mergeCells_one('dg_cs', data, cellcomp, cells);
+
+
+
+                if (data.rows.length > 0) {
+                    $("#empty_cs").hide();
+                }
+            },
+            selectOnCheck: false,
+            onBeforeSelect: function () {
+                return false;
+            }
+        })
+    }
+
+    function downfjyl(id, sign) {
+        $.post("lwpys_xsyl", { "id": id, "type": "ck" }, function (data) {
+                if (data.sign == "1") {
+                    var height = ($(window).height() + 80)+ "px";
+                    var width = ($(window).width() +100)+ "px";
+                    var top = 0;
+                    parent.layer.open({
+                            type: 2,
+                            title: false,
+                            area: [width, height],
+                            content: ["/student/bygl/lwpys_xsyl?id="+id],
+                            shadeClose: true,
+                            closeBtn: 1,
+                            end: function () {
+
+                            }
+                        });
+            }
+            else {
+                $.messager.alert("提示", data.msg, "error");
+            }
+        }, "json");
+        //}
+    }
+
+
+
+
+    function bindpsjg() {
+        $("#dg_ps").datagrid({
+            width: 'auto',
+            height: 'auto',
+            scrollbarSize: 0,
+            autoRowHeight: false,
+            url: "zjpsjglist",
+            columns: [[
+                { field: 'xh', title: '学号', width: 80 },
+                { field: 'xm', title: '姓名', width: 140 },
+                { field: 'lwtm', title: '论文名称', width: 120 },
+                { field: 'lwfx', title: '论文方向', width: 90 },
+                { field: 'sfecss', title: '是否二次送审', width: 90, formatter: function (value, row, index) {
+                    return row.sfecss == 0 ? "否" : "是";
+                }
+                },
+                { field: 'pstjbj', title: '评审状态', width: 90, formatter: function (value, row, index) {
+                    if (row.pstjbj == "1") {
+                        return "评阅意见已返回";
+                    }
+                    else {
+                        return "评阅意见尚未返回";
+                    }
+                }
+                },
+                { field: 'action', title: '操作', width: 70, formatter: function (value, row, index) {
+                    if (row.pstjbj == "1") {
+                        return '<a href="sslwjgck?id=' + row.id + '"  class="easyui-linkbutton l-btn l-btn-small l-btn-plain">查看</a>';
+                    }
+                }
+                }
+                ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件
+            rownumbers: true, //行号
+            onLoadSuccess: function (data) {
+                if (data.rows.length > 0) {
+                    $("#empty_ps").hide();
+                }
+            },
+            selectOnCheck: false,
+            onBeforeSelect: function () {
+                return false;
+            }
+        })
+    }
+
+    function bindfkdata() {
+        var paramobj = {};
+        paramobj.xsinfo = "";
+        paramobj.pcdm = $('#pcdm').combobox('getValue');
+        var array = [
+                { field: 'xh', title: '学号', width: 80, align: "center" },
+                { field: 'xm', title: '姓名', width: 60, align: "center" },
+                { field: 'nj', title: '年级', width: 50, align: "center" },
+                { field: 'xsmc', title: '学院', width: 140, align: "center" },
+                { field: 'zymc', title: '专业', width: 100, align: "center" },
+                { field: 'lwtm', title: '论文名称', width: 120, align: "center" },
+                { field: 'lwfx', title: '论文方向', width: 90, align: "center" },
+                { field: 'sfecss', title: '送审性质', width: 60, align: "center", formatter: function (value, row, index) {
+                    return (row.sfecss == "0" ? "首次送审" : row.sfecss == "1" ? "申诉送审" : "二次送审");
+                }
+                },
+                { field: 'zjdw', title: '送审单位', width: 100, align: "center", formatter: function (value, row, index) {
+                    var jsondata = JSON.parse(row.zjdw);
+                    var alink = "";
+                    $.each(jsondata, function (index, data) {
+                        var ssdw = "";
+                        ssdw = data.zjgzdw;
+                        alink += "<a href='javascript:void(0)'  style=\"font-size:13px\">" + ssdw + "</a></br></br>";
+                    })
+                    return alink;
+                }
+                },
+                { field: 'psinfo', title: '送审结果查看', width: 100, align: "center", formatter: function (value, row, index) {
+                    var jsondata = JSON.parse(row.psinfo);
+                    var alink = "";
+                    $.each(jsondata, function (index, data) {
+                        var dbjg = "";
+                        dbjg = data.lwpyjg;
+                        alink += "<a href='javascript:void(0)'  style=\"font-size:13px\">" + dbjg + "</a></br></br>";
+                    })
+                    return alink;
+                }
+                }
+
+                 ];
+
+        var msjg = { field: 'msjg', title: '盲审结果', width: 90, align: "center", formatter: function (value, row, index) {
+            return (row.msjg == "" ? "盲审未审核" : row.msjg == "0" ? "撤销盲审结果" : row.msjg == "1" ? "盲审通过" : "盲审不通过");
+
+        }
+        };
+        array.push(msjg);
+
+
+        $("#dg_fk").datagrid({
+            width: 'auto',
+            height: 'auto',
+            autoRowHeight: true,
+            queryParams: paramobj,
+            url: "sslwsh_list",
+            columns: [array],
+            pagination: true, //分页控件
+            pageSize: 10,
+            pageList: [10, 20, 30, 50],
+            fitColumns: true,
+            striped: true,
+            rownumbers: true, //行号
+            toolbar: "#menue",
+            selectOnCheck: false,
+            onBeforeSelect: function () {
+                return false;
+            },
+            onLoadSuccess: function (data) {
+                if (data.rows.length > 0) {
+                    $("#empty_fk").hide();
+                }
+            },
+        })
+    }
+
+
+    function lwxx_save(zt) {
+        var form = $("#ff");
+        var isValid = $("#ff").form('enableValidation').form('validate');
+        if (!isValid) {
+            $.messager.progress('close'); // hide progress bar while the form is invalid
+            return isValid;
+        }
+
+        $('#pcdm').combobox('enable');
+        //$('#txtlwksrq').datebox('enable');
+        //判断研究方向
+        var lwyjfx = $('#txtlwfx').textbox('getValue');
+        var isexsit = lwyjfx.search("；");
+        var yjfxsp = lwyjfx.split("；");
+        if (isexsit != -1) {
+            if (yjfxsp.length>2) {
+                $.messager.alert("提示", "研究方向仅限2个！", "error");
+                return;
+            }
+            var leftlength = yjfxsp[0].length;
+            var rightlength = yjfxsp[1].length;
+
+            if (leftlength < 1 || leftlength>8) {
+                $.messager.alert("提示", "； 左边长度不符合规范！", "error");
+                return;
+            }
+            if (rightlength < 1 || rightlength > 8) {
+                $.messager.alert("提示", "； 右边长度不符合规范！", "error");
+                return;
+            }
+            if (lwyjfx.length>17) {
+                $.messager.alert("提示", "； 总长度不符合规范！", "error");
+                return;
+            }
+        } else {
+            if (lwyjfx.search(";")!=-1) {
+                $.messager.alert("提示", "请用中文；来分隔研究方向！", "error");
+                return;
+
+            }
+            if (lwyjfx.length > 8) {
+                $.messager.alert("提示", "一个研究方向不得超过8个字！", "error");
+                return;
+            }
+
+
+        }
+
+
+       // 研究方向不超过8字
+
+        var info = $('#ff').serializeObject();
+
+        info.lwtm = $('#txtlwtm').textbox('getValue');
+
+
+        //专硕不提交二级学科
+
+        var xwlx = "1";
+        var pycc = "2";
+
+        if ((pycc == "2" && xwlx == "2")||(pycc == "1" && xwlx == "2")) {
+            info.zyxwly = $("#zyxwly").textbox("getValue");
+            if (info.zyxwly == '' || info.zyxwly == undefined || info.zyxwly == null) {
+                $.messager.alert("提示", "请选择专业学位领域！", "info");
+                return;
+
+            }
+        }
+        else {
+            info.ejxk = $("#ejxk").textbox("getValue");
+            if (info.ejxk == '' || info.ejxk == undefined || info.ejxk == null) {
+                $.messager.alert("提示", "请选择二级学科！", "info");
+                return;
+
+            }
+
+        }
+
+
+
+        //var sfzbgk = $("[name='sfzbgk']:checked").val();
+        //var zbgknx = $('#zbgknx').textbox('getValue');
+
+        //if (sfzbgk == "0") {
+        //    zbgknx = "";
+        //} else {
+        //    if (zbgknx == "") {
+        //        $.messager.alert("提示", "请填写不公开年限", "info");
+        //        return;
+        //    }
+        //}
+
+        //info.lwksrq = $('#txtlwksrq').datebox('getValue');
+        //info.lwjsrq = $('#txtlwjsrq').datebox('getValue');
+        //alert(info.lwksrq );
+
+        //info.sfzbgk = $("input[name='sfzbgk']:checked").val(); 
+        //alert(info.sfzbgk );
+        var sfzbgkElem = document.querySelector('input[name="sfzbgk"]:checked');
+        info.sfzbgk = sfzbgkElem ? sfzbgkElem.value : "否";
+        if (info.sfzbgk == '' || info.sfzbgk == undefined || info.sfzbgk == null) {
+            $.messager.alert("提示", "请选择是否暂不公开论文！", "info");
+            return;
+
+        }
+
+        info.nhbzj1 = $("#nhbzj1").textbox("getValue");
+        info.nhbzj2 = $("#nhbzj2").textbox("getValue");
+        info.nhbzj3 = $("#nhbzj3").textbox("getValue");
+        //if (info.nhbzj1 == '' || info.nhbzj1 == undefined || info.nhbzj1 == null) {
+        //    $.messager.alert("提示", "请填写盲审拟回避专家/单位1！", "info");
+        //    return;
+
+        //}
+        //if (info.nhbzj2 == '' || info.nhbzj2 == undefined || info.nhbzj2 == null) {
+        //    $.messager.alert("提示", "请填写盲审拟回避专家/单位2！", "info");
+        //    return;
+
+        //}
+
+        var tsxx = "保存";
+        if (zt == "0") {
+            tsxx = "提交";
+        }
+        var jsonObject = JSON.stringify(info);
+        //var sfcc = $("#sfcclwtj").prop("checked");
+        //var sfcc_sign = sfcc ? "1" : "0";
+        var sfcc_sign = "1";
+        $('#pcdm').combobox('disable');
+        //$('#txtlwksrq').datebox('disable');
+
+
+        pageload();
+        $("#ff").ajaxSubmit({
+            type: 'post',
+            url: "lwpygl_savelwxx",
+            dataType: "json",
+            data: { 'json': jsonObject, 'sfcc': sfcc_sign, 'zt': zt},
+            cache: false,
+            success: function (json) {
+                if (json.jg == "0") {
+                    $.messager.alert("提示", tsxx + "出错:" + json.msg, "error");
+                }
+                else if (json.jg == "1") {
+                    $("#dg_cc").datagrid("reload");
+                    $("#dg_cs").datagrid("reload");
+                    //                    var ccfile = $("#ccfile");
+                    //                    ccfile.after(ccfile.clone().val(""));
+                    //                    ccfile.remove();
+                    GetFilebox("ccfile");
+                    $("#hfid").val(json.id);
+                    $("#cclwwjm").val(json.cclwwjm);
+                    controlbtn();
+                    $.messager.alert("提示", json.msg);
+                    if (zt == "0") {
+                        $("#btnsave").hide();
+                        $("#btntj").hide();
+                    }
+                }
+                else if (json.jg == "2") {
+                    window.location.reload();
+                }
+                else if (json.jg == "3") {
+                    $.messager.alert("提示", "该批次已经申请，请不要重复申请!", "error");
+                }
+                else if (json.jg == "4" || json.jg == "5" || json.jg == "6") {
+                    $.messager.alert("提示", json.msg, "error");
+                }
+
+                dispageload();
+                pageLoad();
+                //shownx();
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+                dispageload();
+                pageLoad();
+            }
+        });
+    }
+
+    //单独提交盲审论文
+    function tjmslw(zt) {
+        var form = $("#ff");
+        var isValid = $("#ff").form('enableValidation').form('validate');
+        if (!isValid) {
+            $.messager.progress('close'); // hide progress bar while the form is invalid
+            return isValid;
+        }
+
+        $('#pcdm').combobox('enable');
+        //$('#txtlwksrq').datebox('enable');
+        var lwyjfx = $('#txtlwfx').textbox('getValue');
+
+        var info = $('#ff').serializeObject();
+        //info.lwksrq = $('#txtlwksrq').datebox('getValue');
+        //info.lwjsrq = $('#txtlwjsrq').datebox('getValue');
+
+        //alert(info.lwksrq );
+        var tsxx = "保存";
+        if (zt == "0") {
+            tsxx = "提交";
+        }
+        var jsonObject = JSON.stringify(info);
+        //var sfcc = $("#sfcclwtj").prop("checked");
+        //var sfcc_sign = sfcc ? "1" : "0";
+        var sfcc_sign = "1";
+        $('#pcdm').combobox('disable');
+        //$('#txtlwksrq').datebox('disable');
+        pageload();
+        $("#ff").ajaxSubmit({
+            type: 'post',
+            url: "lwpygl_savemslw",
+            dataType: "json",
+            data: { 'json': jsonObject, 'sfcc': sfcc_sign, 'zt': zt },
+            cache: false,
+            success: function (json) {
+                if (json.jg == "0") {
+                    $.messager.alert("提示", tsxx + "出错:" + json.msg, "error");
+                }
+                else if (json.jg == "1") {
+                    $("#dg_cc").datagrid("reload");
+                    $("#dg_cs").datagrid("reload");
+                    GetFilebox("ccfile");
+                    $("#hfid").val(json.id);
+                    $("#cclwwjm").val(json.cclwwjm);
+                    controlbtn();
+                    $.messager.alert("提示", json.msg);
+                    if (zt == "0") {
+                        $("#btnsave").hide();
+                        $("#btntj").hide();
+                        $("#btntjmslw").hide();
+                    }
+                }
+                else if (json.jg == "2") {
+                    window.location.reload();
+                }
+                else if (json.jg == "3") {
+                    $.messager.alert("提示", "该批次已经申请，请不要重复申请!", "error");
+                }
+                else if (json.jg == "4" || json.jg == "5") {
+                    $.messager.alert("提示", json.msg, "error");
+                }
+                dispageload();
+                pageLoad();
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+                dispageload();
+                pageLoad();
+            }
+        });
+    }
+
+
+    function controlbtn() {
+        var id = $("#hfid").val();
+        $.post("getlwxxinfo", { id: id }, function (data) {
+            if (data != "" && data != null) {
+                if (data.cclwwjm != "") {
+                    $("#DownCclwUrl").text("已上传，下载").attr("href", "lwpygl_down?id=" + id + "&type=lwcc&date=" + new Date().getMilliseconds());
+                }
+
+                //盲审
+                if (data.lwwjm != "") {
+                    $("#DownUrl").text("已上传，下载").attr("href", "mslwpygl_down?id=" + id + "&type=mslw&date=" + new Date().getMilliseconds());
+                }
+                //盲审（word）
+                //if (data.lwwjmwd != "") {
+                //    $("#DownUrlwd").text("已上传，下载").attr("href", "mswdlwpygl_down?id=" + id + "&type=mslwwd&date=" + new Date().getMilliseconds());
+                //}
+
+            }
+
+
+        }, 'json');
+        $.post("sclwxz", function (data) {
+            if (data["cclw"].sfbxsc == "1") {
+                $("#ccspantip").text("(必须上传)");
+            }
+            else {
+                $("#ccspantip").text("");
+            }
+
+        }, 'json');
+    }
+
+    //下载自评表
+    
+
+
+    function sczpb1() {
+        var zycxd = $('#zycxd').textbox('getValue');
+        var dgjdf = $('#dgjdf').textbox('getValue');
+
+        if (zycxd == "") {
+            $.messager.alert("提示", "请输入博士学位论文的主要创新点!", "error");
+            return;
+        }
+        if (dgjdf == "") {
+            $.messager.alert("提示", "请输入博士学位论文有待改进之处!", "error");
+            return;
+        }
+        $.post("CreatePdf", { zycxd: zycxd, dgjdf: dgjdf }, function (data) {
+            if (data.sign == "0") {
+                $.messager.alert("提示", data.msg, "success");
+            }
+            else {
+                $.messager.alert("提示", data.msg, "error");
+            }
+        }, "json");
+    }
+
+
+
+
+
+
+
+    function zpbxz() {
+        var id = $("#hfid").val();
+        $.post("zpb_down", { "id": id, "type": "ck" }, function (data) {
+            if (data.flag == "1") {
+                var form = $("<form method='post' action='zpb_down'></form>")
+                var param_id = $("<input type='hidden' value='" + id + "' name='id'/>");
+                form.append(param_id);
+                $("body").append(form);
+                form.submit();
+            }
+            else {
+                $.messager.alert("提示", data.msg, "error");
+            }
+        }, "json");
+    }
+
+
+
+    function GetFilebox(id) {
+        $('#' + id).filebox({
+            buttonText: '选择文件',
+            buttonAlign: 'right',
+            prompt: '选择文件'
+        });
+    }
+
+    function downlwccbg(id) {
+        $.post("isExitsCcbg", { id: id }, function (data) {
+            if (data.flag == "1") {
+                window.location.href = "downlwccbg?id=" + id;
+            }
+            else {
+                $.messager.alert("提示", "查重报告尚未导入！", "error");
+            }
+        }, "json")
+    }
+    function openlwzslr(pcdm) {
+        $("#lwzstable").css("display", "");
+        $("#lwzspcdm").val(pcdm);
+        $("#lwzswin").window({
+            title: "博士论文自述录入",
+            height: 620,
+            width: 1000,
+            collapsible: false,
+            minimizable: false,
+            maximizable: false,
+            closable: false,
+            modal: true,
+            onClose: function () {
+                UE.getEditor('txtlwcxd').setContent("");
+                UE.getEditor('txtlwgjd').setContent("");
+            },
+            onOpen: function () {
+                $.ajax({
+                    url: "lwpygl_bs_getmsmdxx",
+                    type: 'post',
+                    data: { "pcdm": pcdm },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data != undefined) {
+                            UE.getEditor('txtlwcxd').setContent(data.lwcxd);
+                            UE.getEditor('txtlwcxd').addListener("ready", function () {
+                                // editor准备好之后才可以使用
+                                UE.getEditor('txtlwcxd').setContent(data.lwcxd);
+                            });
+                            UE.getEditor('txtlwgjd').setContent(data.lwgjd);
+                            UE.getEditor('txtlwgjd').addListener("ready", function () {
+                                // editor准备好之后才可以使用
+                                UE.getEditor('txtlwgjd').setContent(data.lwgjd);
+                            });
+                        }
+                    }
+                })
+            }
+        });
+        $("#lwzswin").window("center");
+    }
+    function lwzs_cancle() {
+        $("#lwzswin").window('close');
+    }
+    function lwzs_save() {
+        var lwcxdobj = UE.getEditor('txtlwcxd');
+        var lwgjddobj = UE.getEditor('txtlwgjd');
+        var obj = {};
+        obj.lwcxd = lwcxdobj.getContent();
+        obj.lwgjd = lwgjddobj.getContent();
+        obj.pcdm = $("#lwzspcdm").val();
+        $.post("lwpygl_bs_lwzsrlr", obj, function (data) {
+            if (data == "1") {
+                $.messager.alert("提示", "已添加！", "info");
+                lwzs_cancle();
+            }
+            else {
+                $.messager.alert("提示", "无法添加！", "info");
+            }
+        })
+    }
+    function sslwsc() {
+        var obj = {};
+        obj.id = $("#hfid").val();
+        obj.fileid = "ssfile";
+        obj.pcdm = $("#pcdm").combobox('getValue');
+        $("#sslw").ajaxSubmit({
+            url: 'lwpygl_sslwsc',
+            type: 'post',
+            dataType: 'json',
+            data: obj,
+            success: function (data) {
+                if (data.flag == "0") {
+                    $.messager.alert("提示", data.msg, "error");
+                }
+                else {
+                    btnsslw();
+                    $.messager.alert("提示", data.msg, "info");
+                }
+            }
+        });
+        var file = $("#ssfile");
+        file.after(file.clone().val(""));
+        file.remove();
+    }
+
+    function btnsslw() {
+        var id = $("#hfid").val();
+        $.post("getlwxxinfo", { id: id }, function (data) {
+            if (data != "" && data !=null) {
+                if (data.lwwjm != "") {
+                    $("#DownSSlwUrl").text("已上传，下载").attr("href", "lwpygl_sslwdown?id=" + id + "&type=mslw&date=" + new Date().getMilliseconds());
+                    $("#btnsslwsc").hide();
+                }
+            }
+
+
+        }, 'json');
+        $.post("sclwxz", function (data) {
+            if (data["sslw"].sfbxsc == "1") {
+                $("#ssspantip").text("(必须上传)");
+            }
+            else {
+                $("#ssspantip").text("");
+            }
+
+        }, 'json');
+    }
+
+    function sfshowsslw() {
+        var obj = {};
+        obj.id = $("#hfid").val();
+        obj.pcdm = $("#pcdm").combobox('getValue');
+        $.post("lwpygl_sfshowsslw", obj, function (data) {
+            if (data.flag == "0") {
+                $("#sslw").hide();
+            } else {
+                $("#sslw").show();
+            }
+        }, 'json');
+
+    }
+</script>
+<div class="Slayout">
+    <div class="container">
+        <div class="row-inline">
+            <div class="col-md-12">
+                <div class="panel1 panel1-default">
+                    <div class="panel1-head">
+                        <span class="title-number">1.</span>
+                        <h3 class="panel1-title">
+                            查重盲审评阅论文上传
+                        </h3>
+                        <div class="title-btn-group" style="position: absolute; right: 25px; top: 30px;">
+                                <button id="btnsave" type="button" class="btn-primary btn-small" onclick="lwxx_save()">
+                                    保存
+                                </button>
+                                <button id="btntj" type="button" class="btn-primary btn-small" onclick="lwxx_save('0')">
+                                    提交
+                                </button>
+                        </div>
+                    </div>
+                    <div class="panel1-body" id="xxgzjl">
+                        <form id="ff">
+                            <table cellpadding="0" cellspacing="0" class="basictable">
+                                <tr>
+                                    <td style="width: 160px; text-align: right" class="bg">
+                                        批次：
+                                    </td>
+                                    <td colspan="3">
+                                        <select id="pcdm" name="pcdm" class="easyui-combobox" data-options="data:[{&quot;pcdm&quot;:&quot;42&quot;,&quot;pcmc&quot;:&quot;2026年12月批次&quot;,&quot;ksrq&quot;:&quot;2026-07-17&quot;,&quot;jzrq&quot;:&quot;2026-12-31&quot;,&quot;sfqy&quot;:&quot;1&quot;,&quot;selected&quot;:true}],required:true,
+                                    width:150,
+					                method:'get',
+                                    editable:false,
+                                    disabled:true,
+					                valueField: 'pcdm',
+                                    textField: 'pcmc'">
+                                        </select>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 150px; text-align: right" class="bg">
+                                        论文题目：
+                                    </td>
+                                    <td colspan="3">
+                                        <input id="hfid" name="id" type="hidden" value="" />
+                                        <input id="txtlwtm" name="lwtm" type="text" class="easyui-textbox" style="width: 80%"
+                                               data-options="required:true" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        关键词 <span style="color: Red;">(3-5个,用中文分号"；"隔开)</span>
+                                    </td>
+                                    <td colspan="3">
+                                        <input id="txtlwztc" name="lwztc" type="text" class="easyui-textbox" style="width: 80%"
+                                               data-options="required:true" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 150px; text-align: right" class="bg">
+                                        研究方向<br /> <span style="color:red">(限2个,每个不超过8个字,用中文；隔开)</span>：
+                                    </td>
+                                    <td colspan="3">
+                                        <input id="txtlwfx" name="lwfx" type="text" class="easyui-textbox" style="width: 80%"
+                                               data-options="required:true" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="width: 150px; text-align: right" class="bg">
+                                        论文类型：
+                                    </td>
+                                    <td>
+                                        <input id="txtlwlx" name="lwlx" style="width: 150px" class="easyui-combobox" data-options="data:[{&quot;dm&quot;:&quot;&quot;,&quot;dmmc&quot;:&quot;请选择&quot;,&quot;selected&quot;:true},{&quot;dm&quot;:&quot;01&quot;,&quot;dmmc&quot;:&quot;基础研究&quot;},{&quot;dm&quot;:&quot;02&quot;,&quot;dmmc&quot;:&quot;应用研究&quot;},{&quot;dm&quot;:&quot;03&quot;,&quot;dmmc&quot;:&quot;综合研究&quot;},{&quot;dm&quot;:&quot;99&quot;,&quot;dmmc&quot;:&quot;其它&quot;}],
+					                method:'get',
+                                    editable:false,
+					                valueField: 'dm',
+                                    textField: 'dmmc'" validType='ComboboxRequire["lwlx"]' invalidMessage="论文类型不能为空！" />
+                                    </td>
+                                    <td style="width: 150px; text-align: right" class="bg">
+                                        题目来源：
+                                    </td>
+                                    <td>
+                                        <input id="txtlwxtly" name="lwxtly" style="width: 150px" class="easyui-combobox" data-options="data:[{&quot;dm&quot;:&quot;&quot;,&quot;dmmc&quot;:&quot;请选择&quot;,&quot;selected&quot;:true},{&quot;dm&quot;:&quot;03&quot;,&quot;dmmc&quot;:&quot;国家重点研发计划项目&quot;},{&quot;dm&quot;:&quot;04&quot;,&quot;dmmc&quot;:&quot;国家社科规划、基金项目&quot;},{&quot;dm&quot;:&quot;05&quot;,&quot;dmmc&quot;:&quot;教育部人文、社会科学研究项目&quot;},{&quot;dm&quot;:&quot;06&quot;,&quot;dmmc&quot;:&quot;国家自然科学基金项目&quot;},{&quot;dm&quot;:&quot;07&quot;,&quot;dmmc&quot;:&quot;中央、国家各部门项目&quot;},{&quot;dm&quot;:&quot;09&quot;,&quot;dmmc&quot;:&quot;省（自治区、直辖市）项目&quot;},{&quot;dm&quot;:&quot;12&quot;,&quot;dmmc&quot;:&quot;国际合作研究项目&quot;},{&quot;dm&quot;:&quot;13&quot;,&quot;dmmc&quot;:&quot;与港、澳、台合作研究项&quot;},{&quot;dm&quot;:&quot;14&quot;,&quot;dmmc&quot;:&quot;企、事业单位委托项目&quot;},{&quot;dm&quot;:&quot;15&quot;,&quot;dmmc&quot;:&quot;外资项目&quot;},{&quot;dm&quot;:&quot;16&quot;,&quot;dmmc&quot;:&quot;学校自选项目&quot;},{&quot;dm&quot;:&quot;17&quot;,&quot;dmmc&quot;:&quot;国防项目&quot;},{&quot;dm&quot;:&quot;90&quot;,&quot;dmmc&quot;:&quot;非立项&quot;},{&quot;dm&quot;:&quot;99&quot;,&quot;dmmc&quot;:&quot;其他&quot;}],
+					                method:'get',
+                                    editable:false,
+					                valueField: 'dm',
+                                    textField: 'dmmc'" validType='ComboboxRequire["lwxtly"]' invalidMessage="题目来源不能为空！" />
+                                    </td>
+                                </tr>
+
+                                <tr>
+                                    <td style="width: 150px; text-align: right" class="bg">
+                                        论文撰写语种：
+                                    </td>
+                                    <td>
+                                        <input id="txtyzlb" name="yzlb" style="width: 150px" class="easyui-combobox" data-options="required:true" validType='ComboboxRequire["yzlb"]' invalidMessage="撰写语种不能为空！" />
+                                    </td>
+                                    <td style="width: 150px; text-align: right" class="bg">
+                                        是否暂不公开论文：
+                                    </td>
+                                    <td>
+                                        <!-- 修复1：给"否"添加checked（兼容XHTML/HTML5写法），验证规则统一加在组内第一个元素 -->
+                                        <input type="radio" id="isHidePaper_yes" name="sfzbgk" value="是"
+                                               validType='RadioRequire["sfzbgk"]'
+                                               invalidMessage="请选择是否暂不公开论文！" /> 是
+                                        <input type="radio" id="isHidePaper_no" name="sfzbgk" value="否"
+                                               checked="checked" autocomplete="off" /> 否
+                                    </td>
+
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        论文字数：
+                                    </td>
+                                    <td>
+                                        <input id="txtlwzs" name="lwzs" type="text" class="easyui-numberbox" style="width: 150px" data-options="required:true" />(单位:万字)
+                                    </td>
+                                    <td style="text-align: right" class="bg">
+                                        论文总页数：
+                                    </td>
+                                    <td>
+                                        <input id="txtlwzys" name="lwzys" type="text" class="easyui-numberbox" data-options="required:true" style="width: 150px" />
+                                    </td>
+                                </tr>
+
+
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        盲审拟回避专家/单位1
+                                    </td>
+                                    <td>
+                                        <input id="nhbzj1" name="nhbzj1" type="text" class="easyui-textbox" style="width: 300px" />
+                                        <br /><span style="font-size:14px;color:red">（注意：回避专家可能会影响评阅速度，请谨慎填写）</span>
+                                    </td>
+                                    <td style="text-align: right" class="bg">
+                                        盲审拟回避专家/单位2：
+                                    </td>
+                                    <td>
+                                        <input id="nhbzj2" name="nhbzj2" type="text" class="easyui-textbox"  style="width:300px" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        盲审拟回避专家/单位3：
+                                    </td>
+                                    <td>
+                                        <input id="nhbzj3" name="nhbzj3" type="text" class="easyui-textbox" style="width:300px" />
+                                    </td>
+                                    <td></td>
+                                    <td></td>
+                                </tr>
+
+                                
+
+                                    <tr>
+                                        <td style="width:15%;" class="bg">
+                                            一级学科：
+                                        </td>
+                                        <td>
+                                            <input id="txtyjxk" name="yjxk" class="easyui-textbox" style="width: 150px" data-options="required:true" disabled />
+                                        </td>
+
+                                        <td style="width: 15%" class="bg">
+                                            论文所属二级学科：<br /><span style="color:red">（提示：请选择本人一级学科对应下属二级学科）</span>
+                                        </td>
+
+
+                                        <td>
+
+                                            <input id="ejxk" name="ejxk" class="easyui-textbox" data-options="disabled:true,width:'30%'" />
+                                            <input id="ejxkdm" name="ejxkdm" type="hidden" />
+
+                                            <a id="chooseejxk" class="easyui-linkbutton" data-options="iconCls:'icon-filter'" onclick='OpenDialog({WinTitle:"选择二级学科",itemValue:"ejxkm",itemText:"ejxk",fullscreen:true,flag:"5"})'>选择...</a>
+
+                                        </td>
+
+
+
+                                    </tr>
+
+
+
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        中文摘要：
+                                    </td>
+                                    <td colspan="3">
+                                        <input id="txtlwzy" name="lwzy" type="text" style="width: 80%" class="easyui-textbox" data-options="multiline:true,height:100,required:true" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        英文摘要：
+                                    </td>
+                                    <td colspan="3">
+                                        <input id="txtywzy" name="ywzy" type="text" style="width: 80%" class="easyui-textbox" data-options="multiline:true,height:100,required:true" />
+                                    </td>
+                                </tr>
+
+
+
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        英文题目：
+                                    </td>
+                                    <td colspan="3">
+                                        <input id="txtywlwtm" name="ywlwtm" type="text" class="easyui-textbox" data-options="required:true" style="width: 80%" />
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        英文关键词：
+                                    </td>
+                                    <td colspan="3">
+                                        <input id="txtywztc" name="ywztc" type="text" class="easyui-textbox" style="width: 80%" data-options="required:true" />
+                                    </td>
+                                </tr>
+
+
+                                <tr>
+                                    <td style="text-align: right" class="bg">
+                                        查重论文（word）
+                                        <br>
+                                        <span style="color: Red" id="ccspantip">(必须上传)</span>
+                                    </td>
+                                    <td>
+                                         
+                                        <input id="ccfile" name="ccfile" style="width: 200px;" />
+                                        <a id="DownCclwUrl" style="color: Red"></a>
+                                        <input type="hidden" id="cclwwjm" name="cclwwjm" />
+                                    </td>
+
+
+                                </tr>
+                                
+
+                                <tr id="mslwid">
+
+                                    <td style="text-align: right" class="bg">
+                                        盲审论文上传(pdf)：<br><span style="color: Red">(必须上传)</span>
+                                    </td>
+                                    <td>
+                                        <input id="lwfile" name="lwfile" style="width: 200px;" />
+                                        <a id="DownUrl" style="color: Red"></a>
+                                        <input type="hidden" id="lwwjm" name="lwwjm" />
+                                    </td>
+                                </tr>
+
+
+
+
+
+
+                            </table>
+                        </form>
+
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="panel1 panel1-default">
+                    <div class="panel1-head">
+                        <span class="title-number">2.</span>
+                        <h3 class="panel1-title">
+                            查重结果
+                        </h3>
+                    </div>
+                    <div class="alert_area">
+                        <p>
+                            <b>查重说明:</b>
+                        </p>
+                    </div>
+                    <div class="table_box">
+                        <table id="dg_cc" style="width: 100%">
+                        </table>
+                        <div id="empty_cc" class="emptyDiv" style="border: 0px solid #E5E5E5; height: 100px;
+                            margin-top: 1px; background: #F4F7F9">
+                            <div style="margin: 0px auto; width: 100px; padding: 30px">
+                                无数据！
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-12">
+                <div class="panel1 panel1-default">
+                    <div class="panel1-head">
+                        <span class="title-number">3.</span>
+                        <h3 class="panel1-title">
+                            论文抽审结果
+                        </h3>
+                    </div>
+                    <div class="alert_area">
+                        <p>
+                            <b>论文抽审说明:</b>
+                        </p>
+                    </div>
+                    <div class="table_box">
+                        <table id="dg_cs" style="width: 100%">
+                        </table>
+                        <div id="empty_cs" class="emptyDiv" style="border: 0px solid #E5E5E5; height: 100px;
+                            margin-top: 1px; background: #F4F7F9">
+                            <div style="margin: 0px auto; width: 100px; padding: 30px">
+                                暂未被导入！
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title></title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript" language="javascript">
+    $(function () {
+        $("#xjydGlView").window("close");
+        bindData();
+    })
+    //绑定列表
+    function bindData() {
+        $("#dg").datagrid({
+            width: 'auto',
+            height: 'auto',
+            scrollbarSize: 0,
+            method: "post",
+            fitColumns: true,
+            rownumbers: true, //行号
+            toolbar: "#toobars",
+            striped: true,
+            url: "getxjydlistbyxssq",
+            columns: [[
+                { field: 'ck', title: '', width: 100, checkbox: true },
+                { field: 'xsmc', title: '院系', width: 80 },
+                { field: 'xh', title: '学号', width: 80 },
+                { field: 'xm', title: '姓名', width: 80 },
+                { field: 'zymc', title: '专业', width: 80 },
+                { field: 'dsxm', title: '导师姓名', width: 80 },
+                { field: 'ydlb', title: '异动类别', width: 80 },
+                { field: 'pylb', title: '培养类别', width: 80 },
+                { field: 'sqrq', title: '申请日期', width: 80 },
+                { field: 'sqly', title: '申请理由', width: 200 },
+                { field: 'bohuiReason', title: '驳回原因', width: 200 },
+                {
+                    field: 'zt', title: '审核状况', width: 200, formatter: function (value, row, index) {
+                        if (value == undefined || value == null || value == "") {
+                            if (row.bohuiReason != "") {
+                                return "该数据作废";
+                            } else {
+                                return "已申请未审核";
+                            }
+                        }
+                        else {
+                            return value;
+                        }
+                    }
+                }
+            ]],
+            onCheck: function (index, row) {
+                var length = $("#dg").datagrid("getChecked").length;
+                if (length > 1) {
+                    $("#btnEdite").attr({ "disabled": "disabled" })
+                }
+                else {
+                    $("#btnEdite").removeAttr("disabled");
+                }
+            },
+            onUncheck: function (index, row) {
+                var length = $("#dg").datagrid("getChecked").length;
+                if (length > 1) {
+                    $("#btnEdite").attr({ "disabled": "disabled" })
+                }
+                else {
+                    $("#btnEdite").removeAttr("disabled");
+                }
+            },
+            onCheckAll: function (rows) {
+                var length = $("#dg").datagrid("getChecked").length;
+                if (length > 1) {
+                    $("#btnEdite").attr({ "disabled": "disabled" })
+                }
+                else {
+                    $("#btnEdite").removeAttr("disabled");
+                }
+            },
+            onUncheckAll: function (rows) {
+                var length = $("#dg").datagrid("getChecked").length;
+                if (length > 1) {
+                    $("#btnEdite").attr({ "disabled": "disabled" })
+                }
+                else {
+                    $("#btnEdite").removeAttr("disabled");
+                }
+            }
+        })
+    }
+    ///弹出window窗体
+    function openWindow(id) {
+        var isregister = true;
+        $.ajaxSetup({
+            async: false
+        });//ajax请求设为同步
+        $.ajax({
+            type: 'get',
+            dataType: 'json',
+            url: 'xjydsqsjkz',
+            cache: false,
+            success: function (data) {
+                if (data.flag == "0") {
+                    $.messager.alert("提示", "不在学籍异动申请日期内，无法申请！", "info");
+                    isregister = false;
+                }
+            }
+        })
+        $.ajaxSetup({
+            async: true
+        });//ajax请求设为同步
+        if (!isregister) {
+            return;
+        }
+        var titlename = "", iconCls = "", url = "";
+        if (id == undefined || id == "") {
+            titlename = "添加学籍异动申请";
+            iconCls = "icon-table_add";
+            url = "addxjyd";
+        }
+        else {
+            titlename = "编辑学籍异动申请";
+            iconCls = "icon-table_edit";
+            url = "editxjyd";
+        }
+        var Wtop = $(window).height() * 0.006;
+        var Wwidth = $(window).width() * 0.7;
+        var Wheigth = $(window).height() * 0.98;
+        $("#xjydGlView").window({
+            title: titlename,
+            width: Wwidth,
+            height: Wheigth,
+            top: Wtop,
+            href: url,
+            modal: true,
+            iconCls: iconCls,
+            maximizable: false,
+            minimizable: false,
+            collapsible: false,
+            queryParams: { id: id }
+        });
+        $("#xjydGlView").window("center");
+    }
+    ///关闭窗体
+    function colseWin() {
+        $("#xjydGlView").window('close');
+    }
+    function reload() {
+        $("#dg").datagrid('reload');
+    }
+    function editById() {
+        var row = $("#dg").datagrid('getChecked');
+        if (row.length == 0) {
+            $.messager.alert("提示", "请选择要编辑的数据！", "info");
+            return;
+        }
+        openWindow(row[0].id);
+    }
+    function deleteById() {
+        $.messager.confirm("提示", "确定要删除？", function (booltip) {
+            if (booltip) {
+                var rows = $("#dg").datagrid('getChecked');
+                if (rows.length == 0) {
+                    $.messager.alert('提示', '请选择要删除的数据！', 'info');
+                    return;
+                }
+                var isdelete = true;
+                $.each(rows, function (index, row) {
+                    if (row.status == 1) {
+                        isdelete = false;
+                    }
+                })
+                if (!isdelete) {
+                    $.messager.alert("提示", "选择中存在申请已审核，无法删除！", "info");
+                    return;
+                }
+                var array = [];
+                $.each(rows, function (index, item) {
+                    array.push(item.id);
+                })
+                var idstr = array.join(',');
+                $.ajax({
+                    type: "post",
+                    url: "deletexjyd",
+                    data: { ids: idstr },
+                    dataType: "json",
+                    success: function (data) {
+                        if (data.flag == "1") {
+                            reload();
+                            $.messager.alert("提示", "删除成功！", "info");
+                        }
+                        else {
+                            $.messager.alert("提示", data.msg, "info");
+                        }
+                    }
+                })
+            }
+        })
+    }
+    function printword() {
+        var rows = $("#dg").datagrid('getChecked');
+        if (rows.length == 0) {
+            $.messager.alert("提示", "请选择要打印的申请！", "info");
+            return;
+        }
+        var idsarray = [];
+        $.each(rows, function (index, row) {
+            idsarray.push(row.id);
+        });
+        var idstr = idsarray.join(",");
+        $.post("xjydprint", { ids: idstr, sfcheck: "yes" }, function (data) {
+            if (data.flag == "0") {
+                $.messager.alert("提示", data.msg, "info");
+            }
+            else {
+                window.location.href = "xjydprint?ids=" + idstr;
+            }
+        }, "json");
+    }
+</script>
+<div class="Slayout">
+    <div class="container">
+        <div class="layout_box">
+            <div class="Operating_area">
+                <button type="button" class="btn-primary floatright" onclick="deleteById()">
+                    <span class="icon icon-delete"></span>删除
+                </button>
+                <button id="btnEdite" type="button" class="btn-primary floatright marginright20" onclick="editById()">
+                    <span class="icon icon-edit"></span>编辑
+                </button>
+                <button type="button" class="btn-primary floatright marginright20" onclick="openWindow()">
+                    <span class="icon icon-add"></span>新增
+                </button>
+                <button type="button" class="btn-primary floatright marginright20" onclick="printword()">
+                    打印
+                </button>
+            </div>
+            <div class="warning-box marginleft10 marginright10">
+                <p>1.休学的研究生，自研究生院批准同意之日第二个月起，停发国家助学金，复学手续办理后第二个月继续发放国家助学金；休学期间停发国家助学金不再补发。</p>
+                <p>2.休学的研究生，休学手续办理期及休学期间，一切安全问题，由学生本人负责。</p>
+                <p>3.休学期满，准备复学的研究生；需提前一个月提交复学手续。</p>
+                <p>4.校内住宿的研究生在休学手续办理完成后需办理退宿，否则产生的住宿费用由学生本人承担。</p>
+            </div>
+            <table id="dg">
+            </table>
+        </div>
+    </div>
+</div>
+<div id="xjydGlView" class="easyui-window">
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

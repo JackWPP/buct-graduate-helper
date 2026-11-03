@@ -1,0 +1,2 @@
+const { chromium } = require('/Users/jackwang/node_modules/playwright-core');
+(async()=>{const b=await chromium.launch({headless:true,executablePath:'/Users/jackwang/Library/Caches/ms-playwright/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing',args:['--no-sandbox']});const p=await b.newPage();await p.goto('https://gmis.buct.edu.cn/home/stulogin',{waitUntil:'load'});console.log(await p.$eval('#pubkey',e=>e.value));await b.close();})();

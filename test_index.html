@@ -1,0 +1,414 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    
+    <meta charset="utf-8" />
+    <title>学生端</title>
+    <link rel="stylesheet" type="text/css" href="/Content/themes/gray/easyui.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+    <link rel="stylesheet" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" href="/Content/themes/student/css/student.css" />
+    <script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/layer/layer.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" language="javascript">
+        $(function () {
+            getMenu();
+            tagbindEvent();
+            SetTimeOut();
+            welcome();
+            mmqdjc();
+            mmgqjc()
+        });
+        function mmqdjc() {
+            var mmqd = "0";
+            if (mmqd == "1") {
+                //$.messager.alert("提示", "您的密码强度不符合安全需求，请及时修改！");
+               
+
+                $.messager.alert("提示", "您的密码强度不符合安全需求，请及时修改","info",function(){
+                    var height = ($(window).height()*0.7)+ "px";
+                    var width = ($(window).width()*0.5)+ "px";
+                    var top = 0;
+                    parent.layer.open({
+                            type: 2,
+                            title: false,
+                            area: [width, height],
+                            //skin: 'layui-layer-rim', //加上边框
+                            content: ["/default/changepwd_xs"],
+                            shadeClose: false,
+                            closeBtn: 0,
+                            end: function () {
+
+                            }
+                        });
+                });
+            }
+            $(".panel-tool-close").css("display", "none");
+        }
+
+
+
+
+
+        function mmgqjc() {
+            mmgq = "0";
+            if (mmgq == "1") {
+                parent.$("#w").window(
+                    {
+                        width: 600,
+                        height: 550,
+                        modal: true,
+                        draggable: false,
+                        resizable: false,
+                        closable: false,
+                        title: "您的密码已过期，请及时修改",
+                        minimizable: false,
+                        collapsed: false,
+                        cache: false,
+                        onClose: function () {
+
+                        },
+                        href: "/student/default/changepwd_xs"
+                    });
+                parent.$("#w").window('center');
+            }
+        }
+        function loginout() {
+            $.messager.confirm('系统提示', '您确定要退出本次登录吗?', function (r) {
+                if (r) {
+                    var dd="";
+                    if (dd=="") {
+                        location.href = '/home/logout?js=xs';
+                    }
+                    else if (dd == "dddlxx") {
+                        location.href = '/oauthLogin/logout';
+                    }
+                    else {
+                        location.href = '/oauthLogin/logout';
+                    }
+                }
+            });
+        }
+        //初始化菜单
+        function getMenu() {
+            $.ajax({
+                type: 'get',
+                dataType: "json", //返回json格式的数据
+                url: "MenuleftInfo",
+                cache: false,
+                success: function (Data) {
+                    onIniteMenue(Data);
+                }
+            });
+        }
+        function onIniteMenue(data) {
+            var menuestr = "";
+            if (data && data.menus && data.menus.length > 0) {
+                $.each(data.menus, function (index, item) {
+                    var itemmenue = "";
+                    var icon = item.icon;
+
+                    itemmenue = "<div class=\"nav\"><a href=\"javascript:void(0)\"><span class=\"" + icon + " icon18\"></span>" + item.menuname + "<span class=\"right\"></span></a>";
+                    if (item.menus.length > 0) {
+                        itemmenue += "<ul class=\"subnav\" style=\"display:none\">";
+                        $.each(item.menus, function (index, iteminfo) {
+                            itemmenue += "<li><a href=\"" + iteminfo.url + "\" target=\"mainFrame\">" + iteminfo.menuname + "</a></li>";
+                        })
+                        itemmenue += "</ul>";
+                    }
+                    itemmenue += "</div>";
+                    menuestr += itemmenue;
+                });
+            }
+            else {
+                menuestr = "<div class=\"nav\"><a href=\"javascript:void(0)\"><span class=\"icon-user icon18\"></span>个人管理<span class=\"right\"></span></a></div>"
+                menuestr += "<div class=\"nav\"><a href=\"javascript:void(0)\"><span class=\"icon-peiyang icon18\"></span>培养管理<span class=\"right\"></span></div>"
+                menuestr += "<div class=\"nav\"><a href=\"javascript:void(0)\"><span class=\"icon-xuewei icon18\"></span>毕业与学位<span class=\"right\"></span></a></div>"
+            }
+            $("#nav_box").html(menuestr);
+            addleftMenueEvent();
+        }
+        function addleftMenueEvent() {
+            $(".nav .subnav").prev().click(function () {
+                var classvalue = $(this).attr("class");
+                var allsubnav = $(".nav .subnav");
+                var allnava = $(".nav .subnav").prev();
+                allnava.removeAttr("class");
+                allsubnav.slideUp();
+                var ulobj = $(this).next();
+                if (ulobj) {
+                    if (classvalue == "current") {
+                        ulobj.slideUp();
+                        $(this).removeAttr("class")
+                    }
+                    else {
+                        ulobj.slideDown();
+                        $(this).attr({ "class": "current" });
+                    }
+                }
+            });
+            $(".nav .subnav a").click(function () {
+                var currentobj = $(this);
+                $(".nav .subnav a").removeAttr("class");
+                currentobj.attr({ "class": "current" });
+                var ejcd = currentobj.parents(".subnav").prev().text();
+                var sjcd = currentobj.text();
+            })
+        }
+        //个人下拉信息
+        function tagbindEvent() {
+            $("#nav_user_button").click(function () {
+                var displayvalue = $("#userinfo").css("display");
+                if (displayvalue == "none") {
+                    $("#xjxxbtn").unbind().click(function () {
+                        $("#userinfo").css("display", "none");
+                        $(this).attr("href", "../grgl/grjbxx");
+                    });
+                    $("#xjeditbtn").unbind().click(function () {
+                        $("#userinfo").css("display", "none");
+                        $(this).attr("href", "../grgl/grxxxg");
+                    })
+                    $("#userinfo").css("display", "");
+
+                }
+                else {
+                    $("#userinfo").css("display", "none");
+                }
+            });
+        }
+
+        //位置定位信息
+        function frameLoad() {
+            var framesrc = document.getElementById("mainFrame").contentWindow.location.pathname;
+            $.post("index_position", { p: framesrc }, function (htmldata) {
+                $(".top-left").html(htmldata);
+            }, "text");
+            var framedocument = document.getElementById("mainFrame").contentWindow.document;
+            var parentdocument = parent.document;
+            $(parentdocument).bind('click', documentClick);
+            $(framedocument).bind('click', documentClick);
+        }
+        function documentClick(e) {
+            var e = e || window.event;
+            var elem = e.target || e.srcElement;
+            while (elem) {
+                if (elem.className && (elem.className.indexOf('popover-photo') > -1 || elem.className.indexOf('nav-link') > -1)) {
+                    return;
+                }
+                elem = elem.parentNode;
+            }
+            parent.$('.popover-photo').css('display', 'none');
+        }
+        var intervalId = undefined;
+        function closeRbbox() {
+            $("#rbbox").fadeOut("slow");
+            //            setTimeInteval();
+        }
+        function SetTimeOut() {
+            setTimeout(function () {
+                unRemindTzxx();
+                unReadtzxx();
+                //                setTimeInteval();
+            }, 1000);
+        }
+        function setTimeInteval() {
+            var time = 180 * 1000;
+            intervalId = setInterval(function () {
+                try {
+                    unRemindTzxx();
+                    unReadtzxx();
+                } catch (e) {
+
+                }
+            }, time);
+        }
+        function unRemindTzxx() {
+            $.post("getUnRemindTzxx", function (tzdata) {
+                if (tzdata != undefined && tzdata.length > 0) {
+                    var htmlstr = "";
+                    $.each(tzdata, function (index, jsonitem) {
+                        htmlstr += "<li><a href=\"javascript:void(0)\" onclick=\"redirecttzgglist()\"><span>[最新通知]</span>" + jsonitem.zbt + "</a></li>";
+                    });
+                    $(".rbbox_list").html(htmlstr);
+                    //                    clearInterval(intervalId);
+                    $("#rbbox").slideDown("fast");
+                }
+            }, "json");
+        }
+        function redirecttzgglist() {
+            closeRbbox();
+            var obj = $("#mainFrame");
+            obj[0].src = "../grgl/tzgglist";
+        }
+        function unReadtzxx() {
+            $.post("getUnReadTzxx", function (tzdata) {
+                if (tzdata.wdtz != "0") {
+                    var tzxxhtml = "<span class=\"badge\">" + tzdata.wdtz + "</span>";
+                    $("#tzxx").html(tzxxhtml);
+                }
+                else {
+                    $("#tzxx").html("");
+                }
+                $("#wdzx").html("[" + tzdata.wdzx + "]");
+            }, "json");
+        }
+        function welcome() {
+            $.post("checkIsFisrtLogin", function (sign) {
+                if (sign == "0") {
+                    var height = $(window).height() * 0.95 + "px";
+                    var width = $(window).width() * 0.9 + "px";
+                    layer.open({
+                        type: 2,
+                        title: false,
+                        area: [width, height],
+                        //skin: 'layui-layer-rim', //加上边框
+                        content: ['welcompage'],
+                        shadeClose: true,
+                        closeBtn: 1,
+                        end: function () {
+                            $.post("upateFirstLogin", "text")
+                        }
+                    });
+                }
+
+            }, "text");
+        }
+    </script>
+</head>
+<body>
+    <div id="google_translate_element"></div>
+    <div class="page">
+        <header>
+            <div class="top-left">
+            </div>
+            <div class="top-right">
+                <span class="icon-out icon24" onclick="loginout()"></span>
+                <a href="changepwd_xs" target="mainFrame"><span class="icon-mima icon24"></span></a>
+                <a href="../grgl/tzgglist" target="mainFrame"><span id="tzxx" class="icon-xiaoxi icon24"></span></a>
+                <a href="yjssc" target="mainFrame" title="研究生手册" style="display:none"><span class="book-icon icon24"></span></a>
+                <a href="/FileMould/yjssc.pdf" download="研究生手册.pdf" title="研究生手册"><span class="book-icon icon24"></span></a>
+            </div>
+        </header>
+        <div class="page-wrap">
+            <div class="Submenu">
+                <div class="logo">
+                    <img src="/images/logo_student.png" />
+                </div>
+                <div class="nav" id="homediv">
+                    <a href="home" target="mainFrame"><span class="icon-home icon18"></span>首页</a>
+                </div>
+                <div id="nav_box" class="nav_box">
+                </div>
+                <div class="help" style="width:180px">
+                    <a href="../grgl/zixun" target="mainFrame">
+                        <span class="icon-zixun icon16"></span>咨询<span id="wdzx" class="error"></span>
+                    </a> <a href="../grgl/xssqxx" target="mainFrame">
+                        <span class="icon-shenqing icon16"></span>我的申请
+                    </a>
+                </div>
+            </div>
+            <div class="layout1">
+                <iframe id="mainFrame" name="mainFrame" scrolling="auto" onload="frameLoad()" frameborder="0"
+                        src='home' style="width: 100%; height: 100%"></iframe>
+            </div>
+        </div>
+    </div>
+    <div id="rbbox" style="display: none">
+        <ul class="rbbox_list">
+            <li><a href="#"><span>[通知消息类型]</span>某某某某某某某某某某某某某某某某通知消息内容某某某某某某某某某某某某某某某某</a></li>
+            <li><a href="#"><span>[通知消息类型]</span>某某某某某某某某某某某某某某某某通知消息内容某某某某某某某某某某某某某某某某</a></li>
+            <li><a href="#"><span>[通知消息类型]</span>通知消息内容某某某某某某某某某某</a></li>
+            <li><a href="#"><span>[通知消息类型]</span>某某某某某某某某某某某某某某某某</a></li>
+            <li><a href="#"><span>[通知消息类型]</span>通知消息内容某某某某某某某某某某</a></li>
+        </ul>
+        <a class="rbbox_close" href="javascript:void(0)" onclick="closeRbbox()">关闭</a>
+    </div>
+    <div id="w" title="学生信息" data-options="cache:false">
+    </div>
+    <div id="ChooseWin" class="choose">
+        <table id="contentdt">
+        </table>
+        <div id="searchMenue" style="height: 30px; background: White; display: none">
+            代码(名称)：<input class="easyui-textbox" style="width: 20%; height: 25px" id="txtdm" />
+            <a href="#" class="easyui-linkbutton" id="btnsearch" iconcls="icon-search">查询</a>
+        </div>
+    </div>
+    <div id="foot" style="width: 100%; height: 30px; display: none">
+        <span style="margin: 0 6px auto auto; display: block; width: 150px; height: 40px">
+            <a href="#" id="btnsave" class="easyui-linkbutton" data-options="iconCls:'icon-save'">iu
+                保存
+            </a> <a href="#" id="btncancle" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">
+                取消
+            </a>
+        </span>
+    </div>
+    <div id="customWin">
+    </div>
+    <script type="text/javascript">
+
+        function LangeSelectChange() {
+            var lang = $("#sel_language").val();
+            if (lang == "zh-EN") { $("#homepage").html("HOME PAGE"); getMenu("en"); } else { $("#homepage").html("首页"); getMenu(); }
+
+        }
+    </script>
+</body>
+
+<div id="google_translate_element" style="position:absolute;bottom:10px;right:10px;z-index:2000;opacity:0.7;"></div>
+<script type="text/javascript">
+    $(function () {
+        $("#google_translate_element").hide();
+        //var currentLanguage = getCookie("googtrans");
+        var currentLanguage = $.cookie('googtrans');
+        if (currentLanguage)
+            $("[name='languageSelector']").val(currentLanguage);
+        setTimeout(function () { $("body").css("top", "0px"); }, 500);
+    });
+
+    function languageSelectChange() {
+        //document.cookie = "googtrans=" + $("[name='languageSelector']").val() + ";domain=" + languageSelector_domain + ";path=/";
+        $.cookie('googtrans', $("[name='languageSelector']").val());
+        $.cookie('domain', languageSelector_domain);
+        $.cookie('path', "/");
+        location.reload();
+    }
+
+
+    //读取cookies
+    function getCookie(name) {
+        var arr, reg = new RegExp("(^| )" + name + "=([^;]*)(;|$)");
+
+        if (arr = document.cookie.match(reg))
+
+            return unescape(arr[2]);
+        else
+            return null;
+    }
+
+    function googleTranslateElementInit() {
+        new google.translate.TranslateElement(
+            {
+                pageLanguage: 'zh-CN',
+                includedLanguages: 'en,zh-CN',
+                autoDisplay: false,
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            },
+            'google_translate_element'
+        );
+    }
+</script>
+
+
+<script type="text/javascript" src="/Scripts/google_translate/google_translate.js"></script>
+</html>

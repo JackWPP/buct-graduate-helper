@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title></title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+
+<script type="text/javascript" language="javascript">
+    $(function () {
+        var checkdata=$.getJSON("");
+        if(checkdata.flag=="0")
+        {
+                
+        }
+        else
+        {
+            BindData();
+            displayzcxx();
+        }
+    })
+    function displayzcxx() {
+        $.ajax({
+            url: "getzcxx",
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+            
+                $("#term").html(data.termname+"<span>[第 "+data.xdxq+" 学期]</span>");
+                $("#zcsj").html(data.zcsj);
+                var tempip="";
+                $.each(data.ipdata,function(index,djson){
+                    tempip+=djson.ksip+"~"+djson.jsip+",<br/>";
+                })
+                if(tempip=="")
+                {
+                    tempip="没有限制注册IP范围";
+                }
+                $("#zcip").html(tempip);
+                if(data.dqzt=="已注册")
+                {
+                    $("#img_sfzc").attr('src','../../images/img_yzc.png');
+                    $("#btn_tjzc").hide();
+                }
+                else
+                {
+                    $("#img_sfzc").attr('src','../../images/img_wzc.png'); 
+                    $("#btn_tjzc").show();
+                }
+                $("#zcsm").html(data.zcsm);
+            }
+        });
+    }
+    function BindData() {
+        $.ajax({
+            url: "bindXsZcXx",
+            type: "post",
+            dataType: "json",
+            success: function (data) {
+                var html="";
+                $.each(data,function(i,o){
+                html+='<li>'
+                        +'  <div class="xq-item">'
+                        +'      <div class="xq-info info-item">'
+                        +'          <div class="info-primary info-done">'+o.termname+'</div>'
+                        +'          <dl>'
+                        +'              <dt class="width70">注册日期：</dt>'
+                        +'              <dd>'+o.zcrq+'</dd>'
+                        +'          </dl>'
+                        +'          <dl>'
+                        +'              <dt class="width70">注册类型：</dt>'
+                        +'              <dd>'+o.zclxmc+'</dd>'
+                        +'          </dl>'
+                        +'          <dl>'
+                        +'              <dt class="width70">审核人：</dt>'
+                        +'              <dd>'+o.shr+'</dd>'
+                        +'          </dl>'
+                        +'      </div>'
+                        +'      <div class="info-fettle"><img src="../../images/'+(o.shzt=='已审核'?'img_ysh':'img_wsh')+'.png" /></div>'
+                        +'  </div>'
+                        +'  <div class="xq-title-mask"></div>'
+                        +'  <div class="xq-title">0'+(i+1)+'</div>'
+                    +'</li>';
+                });
+                $("#zclist").html(html);
+            }
+        });
+    }
+    function btn_tjzc()
+    {
+        $.ajax({
+            url: "xszcaction",
+            type:"post",
+            dataType:"json",
+            success:function(data)
+            {
+                if(data.flag=="0")
+                {
+                    $("#dg").datagrid("reload");
+                    BindData();
+                    displayzcxx();
+                    $.messager.alert("提示",data.msgtip,"info");
+                }
+                else
+                {
+                    $.messager.alert("提示",data.msgtip,"error");
+                }
+            }
+        })
+    }
+</script>
+
+<div class="Slayout">
+        <div class="container">
+            <div class="row">
+                <ul id="zclist" class="xq-box">
+                    
+                </ul>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="boxshadow">
+                        <div class="Operating_area">
+                            <label class="title">当前学期注册</label>
+                            <button id="btn_tjzc" type="button" class="btn-primary floatright" onclick="btn_tjzc()">提交注册</button>
+                        </div>
+                        <div class="zc-item">
+                            <div class="zc-info info-item">
+                                <div id="term" class="info-primary">
+                                </div>
+                                <dl>
+                                    <dt class="width130">注册时间范围要求：</dt>
+                                    <dd id="zcsj"></dd>
+                                </dl>
+                                <dl>
+                                    <dt class="width130">注册IP范围要求：</dt>
+                                    <dd id="zcip"></dd>
+                                </dl>
+                                <div class="info-fettle"><img id="img_sfzc" src="../../images/img_wzc.png" /></div>
+                            </div>
+                            <div id="zcsm" class="zc-note">
+                                
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

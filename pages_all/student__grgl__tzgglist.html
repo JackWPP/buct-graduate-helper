@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>tzggcx</title>
+    <style>
+    *{font-size:12px; font-family:arial, helvetica, sans-serif, Microsoft YaHei;}
+    </style>
+    <link rel="stylesheet" type="text/css" href="/Content/themes/gray/easyui.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/gray/mystyle.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/gray/css/system.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/gray/css/widget.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/gray/css/font.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+    
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/layer/layer.js"></script>
+    <script type="text/javascript">
+//        window.onload = function () {
+//            //屏蔽键盘事件
+//            document.onkeydown = function () {
+//                var e = window.event || arguments[0];
+//                //F12
+//                if (e.keyCode == 123) {
+//                    return false;
+//                    //Ctrl+Shift+I
+//                } else if ((e.ctrlKey) && (e.shiftKey) && (e.keyCode == 73)) {
+//                    return false;
+//                    //Shift+F10
+//                } else if ((e.shiftKey) && (e.keyCode == 121)) {
+//                    return false;
+//                    //Ctrl+U
+//                } else if ((e.ctrlKey) && (e.keyCode == 85)) {
+//                    return false;
+//                }
+//            };
+//            //屏蔽鼠标右键
+//            document.oncontextmenu = function () {
+//                return false;
+//            }
+//        }
+     </script>
+
+    
+</head>
+<body>
+    <div>
+        
+<style style="text/css">
+    .aclass:link 
+    {
+        color: blue;
+        text-decoration:underline;
+      
+     }     /* 未访问的链接 */
+    .aclass:visited {color: #00FF00}  /* 已访问的链接 */
+    .aclass:hover {color: #FF00FF}    /* 当有鼠标悬停在链接上 */
+    .aclass:active {color: #0000FF}   /* 被选择的链接 */
+</style>
+<script type="text/javascript">
+    $(function () {
+        
+        GetList();
+    })
+    function GetList() {
+
+        var ksrq = $('#txtksrq').datebox("getValue");
+        var jsrq = $('#txtjsrq').datebox("getValue");
+        var bt = $('#txtbt').val();
+        var query = $("#searchform").serialize();
+        $('#dg').datagrid({
+            width: 'auto',
+            height: 'auto',
+            scrollbarSize: 0,
+            url: 'tzgg_list',
+            queryParams: { 'ksrq': ksrq, 'jsrq': jsrq, 'bt': bt },
+            columns: [[
+                { field: 'id', title: '', hidden: true },
+                { field: 'zbt', title: '标题', width: 150,formatter:function(value,row,index){
+                    var htmltext="<a href=\"javascript:void(0)\" onclick=\"openView(\'"+row.id+"\')\" class=\"aclass\">"+value+"</a>";
+                    return htmltext;
+                } },
+                { field: 'fbrq', title: '发布时间', width: 80, sortable: true },
+                { field: 'fbr', title: '发布人', width: 60, sortable: true },
+                { field: 'fbdw', title: '发布单位', width: 60, sortable: true },
+                { field: 'isReaded', title: '阅读情况', width: 60, sortable: true, formatter: function (value, row, index) {
+                    if (value == "0") {
+                        return "<span style=\"color:red;font-weight:bold;font-size:15px\">未读</span>";
+                    }
+                    else {
+                        return "已读";
+                    }
+                }
+                }
+            ]],
+            pageSize: 10,
+            pageList: [10, 20, 30, 50],
+            fitColumns: true,
+            striped: true,
+            pagination: true, //分页控件 
+            rownumbers: true, //行号
+            singleSelect: true, //是否单选 
+            selectOnCheck: false,
+            onBeforeSelect: function () {
+                return false;
+            },
+            toolbar: '#searchdiv',
+            onLoadError: function (e) {
+                $.messager.alert("提示", "加载失败", "error");
+            }
+
+        });
+        //设置分页控件 
+        dgpageInit('dg');
+    }
+    function reload()
+    {
+        var ksrq = $('#txtksrq').datebox("getValue");
+        var jsrq = $('#txtjsrq').datebox("getValue");
+        var bt = $('#txtbt').val();
+        var obj={ksrq:ksrq,jsrq:jsrq,bt:bt};
+        $("#dg").datagrid('reload',obj);
+    }
+    function openView(id) {
+        var checkDiv = top.$("#tzggView");
+        if (checkDiv.length== 0) {
+            var div = top.$("<div id=\"tzggView\"></div>");
+            top.$("body").append(div);
+        }
+        var wwidth = $(window).width();
+        var wheight = $(window).height();
+        top.$("#tzggView").window({
+            title: '通知公告',
+            width: wwidth,
+            height: wheight,
+            href:"/student/grgl/tzggview",
+            queryParams:{id:id},
+            onClose:function(){
+                $.post("/default/updateTzstate",{tzid:id},function(data){
+                    if(data=="1")
+                    {
+                        top.unReadtzxx();
+                        reload();
+                    }
+                    
+                },'text');
+            }
+        })
+    }
+    function getRowIndex(target) {
+        var tr = $(target).closest('tr.datagrid-row');
+        return parseInt(tr.attr('datagrid-row-index'));
+    }
+</script>
+<div id="searchdiv">
+    <form id="searchform" name="searchform" style="padding:5px; margin:0px;">
+        发布日期：<input id="txtksrq" type="text" class="easyui-datebox" name="ksrq" />-
+        <input id="txtjsrq" type="text" class="easyui-datebox" name="jsrq" />
+        &nbsp;&nbsp;标题：<input type="text" class="easyui-textbox" placeholder="Search" name="bt" id="txtbt" />
+        <a href="javascript:void(0)" class="easyui-linkbutton" data-options="iconCls:'icon-search'"  onclick="reload()">查询</a>
+    </form>
+</div>
+<table id="dg">
+</table>
+
+    </div>
+</body>
+</html>

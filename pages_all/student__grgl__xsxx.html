@@ -1,0 +1,1711 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>xsxx</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript" language="javascript">
+    $(function()
+    {
+        getjbxx();
+        getpyjh();
+        getxscj();
+        getjcjl();
+        getkylw();
+        getktzq();
+        getbyxw();
+        $(".catalog-level-1 a").click(function () {
+            var currentobj = $(this);
+            $(".catalog-level-1").removeClass("catalog-current");
+            $(".catalog-level-2 li").removeClass("current");
+            currentobj.parent().addClass("catalog-current");
+        })
+        $(".catalog-level-2 a").click(function () {
+            var currentobj = $(this);
+            $(".catalog-level-1").removeClass("catalog-current");
+            $(".catalog-level-2 li").removeClass("current");
+            currentobj.parent().addClass("current");
+            currentobj.parent().parent().prev().addClass("catalog-current");
+        })
+        $(".title-level-2 a").click(function () {
+            var currentobj = $(this);
+            if(currentobj.html()=="＋ 展开")
+            {
+                currentobj.html("－ 收起");
+                currentobj.parent().next().show();
+            }
+            else
+            {
+                currentobj.html("＋ 展开");
+                currentobj.parent().next().hide();
+            }
+        });
+
+    })
+    //绑定基本信息
+    function getjbxx() {
+          var xh = "C77A9030DC0577680F6A1074501D2864";
+       $.ajax({
+            type: "get",
+            url: "xsxx_jbxx",
+            dataType: "json",
+            cache: false,
+            success: function (data) {
+                var jbxx=data.jbxx;
+                $("#userphoto").attr("src","/student/grgl/PotoImageShowjm/?bh="+xh);
+                $.each(jbxx,function(key,value){
+                    if($("#"+key).length>0)
+                    {
+                        if(value==null||value=="")
+                            value="--";
+                        $("#"+key).html(value);
+                    }
+                })
+                //工作经历
+                var html_gzjl="";
+                if(data.gzjl.length==0)
+                {
+                    html_gzjl='<tr class="odd"><td colspan="6">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.gzjl,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_gzjl+='<tr class="'+classname+'">'+
+                                   '         <td class="order">'+(i+1)+'</td>'+
+                                   '         <td>'+o.ksrq+'</td>'+
+                                   '         <td>'+o.jsrq+'</td>'+
+                                   '         <td>'+o.grjl+'</td>'+
+                                   '         <td>'+o.drzw+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_gzjl').append(html_gzjl);
+                //家庭成员
+                var html_jtcy="";
+                if(!data.jtcy||data.jtcy.length==0)
+                {
+                    html_jtcy='<tr class="odd"><td colspan="6">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.jtcy,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_jtcy+='<tr class="'+classname+'">'+
+                                   '         <td class="order">'+(i+1)+'</td>'+
+                                   '         <td>'+o.relation+'</td>'+
+                                   '         <td>'+o.xm+'</td>'+
+                                   '         <td>'+o.gzdw+'</td>'+
+                                   '         <td>'+o.lxdh+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_jtcy').append(html_jtcy);
+                //入学成绩
+                if(data.rxcj.length)
+                {
+                    var rxcj=data.rxcj[0];
+                    $.each(rxcj,function(key,value){
+                        if($("#"+key).length>0)
+                        {
+                            if(value==null)
+                            {
+                                $("#"+key).text("--");
+                            }
+                            else
+                            {
+                                $("#"+key).text(value);
+                            }
+                        }
+                    })
+                }
+                //学籍异动
+                var html_xjyd="";
+                if(!data.xjyd||data.xjyd.length==0)
+                {
+                    html_xjyd='<tr class="odd"><td colspan="5">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.xjyd,function(i,o){
+                        var classname='odd';
+                        var zt='';
+                        if(i%2==1)
+                            classname='even';
+                        if(o.zt==undefined||o.zt==null||o.zt=="")
+                        {
+                            zt= "未审核";
+                        }
+                        html_xjyd+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.ydlb+'</td>'+
+                                   '         <td>'+o.sqrq+'</td>'+
+                                   '         <td>'+o.sqly+'</td>'+
+                                   '         <td>'+zt+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_xjyd').append(html_xjyd);
+            }
+        });
+    }
+
+    function getpyjh()
+    {
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "../pygl/pyjhcxlist",
+            data: {},
+            cache: false,
+            success: function (data) {
+                var info = data.info;
+                $("#jh_faxwxf").html(info.xwxf);
+                $("#jh_fazxf").html(info.zxf);
+                var html_pyjh="";
+                if(!data.pyjh||data.pyjh.length==0)
+                {
+                    html_pyjh='<tr class="odd"><td colspan="8">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.pyjh,function(i,o){
+                        var classname='odd';
+                        var classname1='text-gary';
+                        var sfwc='已修';
+                        if(i%2==1)
+                            classname='even';
+                        if(o.sfwc=="0"){
+                            classname1='text-red';
+                            sfwc='未修';
+                        }
+                        var cj='';
+                        if(o.cj)
+                            cj=o.cj;
+                        html_pyjh+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.kcbh+'</td>'+
+                                   '         <td>'+o.kcmc+'</td>'+
+                                   '         <td>'+o.kclbmc+'</td>'+
+                                   '         <td>'+o.kcxf+'</td>'+
+                                   '         <td>'+o.kczxs+'</td>'+
+                                   '         <td>'+o.xxxq+'</td>'+
+                                   '         <td class="'+classname1+'">'+cj+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_pyjh').append(html_pyjh);
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+
+    //成绩
+    function getxscj()
+    {
+        $("#xwkname").html(xwknames.xwk);
+        $("#fxwkname").html(xwknames.fxwk);
+        $("#xwkname1").html(xwknames.xwk);
+        $("#fxwkname1").html(xwknames.fxwk);
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "../pygl/xscjcx_list",
+            data: {},
+            cache: false,
+            success: function (data) {
+                var xftj = data.xftj[0];
+                $("#xwxf").html(xftj.xwxf);
+                $("#fxwxf").html(xftj.fxwxf);
+                $("#zxf").html(xftj.zxf);
+                var html_xwk="";
+                if(!data.xwklist||data.xwklist.length==0)
+                {
+                    html_xwk='<tr class="odd"><td colspan="5">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.xwklist,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_xwk+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.kcmc+'</td>'+
+                                   '         <td>'+o.kcxf+'</td>'+
+                                   '         <td>'+o.xxxq+'</td>'+
+                                   '         <td>'+o.cj+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_xwk').append(html_xwk);
+                var html_fxwk="";
+                if(!data.fxwklist||data.fxwklist.length==0)
+                {
+                    html_fxwk='<tr class="odd"><td colspan="5">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.fxwklist,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_fxwk+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.kcmc+'</td>'+
+                                   '         <td>'+o.kcxf+'</td>'+
+                                   '         <td>'+o.xxxq+'</td>'+
+                                   '         <td>'+o.cj+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_fxwk').append(html_fxwk);
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+    //奖惩
+    function getjcjl()
+    {
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "xsxx_jcjl",
+            data: {},
+            cache: false,
+            success: function (data) {
+                var html_jxj="";
+                if(!data.jxj||data.jxj.length==0)
+                {
+                    html_jxj='<tr class="odd"><td colspan="8">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.jxj,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_jxj+='<tr class="'+classname+'">'+
+                                   '         <td>' + o.nd + '</td>' +
+                                   '         <td>' + o.jxjzmc + '</td>' +
+                                   '         <td>' + o.jxjdj + '</td>' +
+                                   '         <td>' + o.jxjje + '</td>' +
+                                   //'         <td>' + o.sqsj + '</td>' +
+                                   //'         <td>' + o.shsj + '</td>' +
+                                   //'         <td>' + o.shlmc + '</td>' +
+                                   //'         <td>' + o.pzdjmc + '</td>' +
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_jxj').append(html_jxj);
+                var html_pypg="";
+                if(!data.pypg||data.pypg.length==0)
+                {
+                    html_pypg='<tr class="odd"><td colspan="6">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.pypg,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_pypg+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.xmmc+'</td>'+
+                                   '         <td>'+o.je+'</td>'+
+                                   '         <td>'+o.sqsj+'</td>'+
+                                   '         <td>'+o.shlmc+'</td>'+
+                                   '         <td>'+o.shsj+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_pypg').append(html_pypg);
+                var html_cfxx="";
+                if(!data.cfxx||data.cfxx.length==0)
+                {
+                    html_cfxx='<tr class="odd"><td colspan="7">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.cfxx,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_cfxx+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.cfmc+'</td>'+
+                                   '         <td>'+o.cfyy+'</td>'+
+                                   '         <td>'+o.cfrq+'</td>'+
+                                   '         <td>'+o.cfwh+'</td>'+
+                                   '         <td>'+o.cxrq+'</td>'+
+                                   '         <td>'+o.cxwh+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_wjxx').append(html_cfxx);
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+    //科研
+    function getkylw()
+    {
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "xsxx_kylw",
+            data: {},
+            cache: false,
+            success: function (data) {
+                var html_fblw="";
+                if(!data.fblw||data.fblw.length==0)
+                {
+                    html_fblw='<tr class="odd"><td colspan="10">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.fblw,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_fblw+='<tr class="'+classname+'">'+
+                                   '         <td>' + o.lwmc + '</td>' +
+                                   '         <td>' + o.kwmc + '</td>' +
+                                   '         <td>' + o.cn + '</td>' +
+                                   '         <td>' + o.kwqh + '</td>' +
+                                   '         <td>' + o.dyzz + '</td>' +
+                                   '         <td>' + o.dspm + '</td>' +
+                                   '         <td>' + o.fblbmc + '</td>' +
+                                   '         <td>' + o.slqkmc + '</td>' +
+                                   '         <td>' + o.shlmc + '</td>' +
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_fblw').append(html_fblw);
+                var html_kycg="";
+                if(!data.kycg||data.kycg.length==0)
+                {
+                    html_kycg='<tr class="odd"><td colspan="9">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.kycg,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_kycg+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.cgmc+'</td>'+
+                                   '         <td>'+o.wcrq+'</td>'+
+                                   '         <td>'+o.pm+'</td>'+
+                                   '         <td>'+o.cgjbmc+'</td>'+
+                                   '         <td>'+o.hjqkmc+'</td>'+
+                                   '         <td>'+(o.sfzl=="1"?'是':'否')+'</td>'+
+                                   '         <td>'+o.zlh+'</td>'+
+                                   '         <td>'+o.shlmc+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    });
+                }
+                $('#tb_kycg').append(html_kycg);
+                var html_zlqk="";
+                if(!data.zlqk||data.zlqk.length==0)
+                {
+                    html_zlqk='<tr class="odd"><td colspan="10">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.zlqk,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_zlqk+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.zlmc+'</td>'+
+                                   '         <td>'+o.zlztmc+'</td>'+
+                                   '         <td>'+o.zllxmc+'</td>'+
+                                   '         <td>'+o.cyjsmc+'</td>'+
+                                   '         <td>'+o.pm+'</td>'+
+                                   '         <td>'+o.zlh+'</td>'+
+                                   '         <td>'+o.sqny+'</td>'+
+                                   '         <td>'+o.zsh+'</td>'+
+                                   '         <td>'+o.shzt+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_zlqk').append(html_zlqk);
+                var html_zzjc="";
+                if(!data.zzjc||data.zzjc.length==0)
+                {
+                    html_zzjc='<tr class="odd"><td colspan="8">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.zzjc,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_zzjc+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.zzjcmc+'</td>'+
+                                   '         <td>'+o.lbmc+'</td>'+
+                                   '         <td>'+o.cbsmc+'</td>'+
+                                   '         <td>'+o.cbsj+'</td>'+
+                                   '         <td>'+o.zzpx+'</td>'+
+                                   '         <td>'+o.skh+'</td>'+
+                                   '         <td>'+o.shzt+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+
+                    })
+                }
+                $('#tb_zzjc').append(html_zzjc);
+                var html_hjqk="";
+                if(!data.hjqk||data.hjqk.length==0)
+                {
+                    html_hjqk='<tr class="odd"><td colspan="10">无数据</td></tr>';
+                }
+                else{
+                    $.each(data.hjqk,function(i,o){
+                        var classname='odd';
+                        if(i%2==1)
+                            classname='even';
+                        html_hjqk+='<tr class="'+classname+'">'+
+                                   '         <td>'+o.jlmc+'</td>'+
+                                   '         <td>'+o.jljbmc+'</td>'+
+                                   '         <td>'+o.jldjmc+'</td>'+
+                                   '         <td>'+o.jllbmc+'</td>'+
+                                   '         <td>'+o.hjjsmc+'</td>'+
+                                   '         <td>'+o.zsh+'</td>'+
+                                   '         <td>'+o.hjrq+'</td>'+
+                                   '         <td>'+o.bjdw+'</td>'+
+                                   '         <td>'+o.shlmc+'</td>'+
+                                   '         <td class="foot"></td>'+
+                                   '     </tr>';
+                    })
+                }
+                $('#tb_hjqk').append(html_hjqk);
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+
+    //开题中期
+    function getktzq() {
+       $.ajax({
+            type: "get",
+            url: "xsxx_ktzq",
+            dataType: "json",
+            cache: false,
+            success: function (data) {
+                var ktbg=data.ktbg[0];
+                var zqkh=data.zqkh[0];
+                $.each(ktbg,function(key,value){
+                    if($("#"+key).length>0)
+                    {
+                        if(value==null||value=="")
+                            value="--";
+                        $("#"+key).html(value);
+                    }
+                });
+                $("#ktshzt").html(ktbg.shlmc);
+                $.each(zqkh,function(key,value){
+                    if($("#"+key).length>0)
+                    {
+                        if(value==null||value=="")
+                            value="--";
+                        $("#"+key).html(value);
+                    }
+                });
+                $("#zqshzt").html(zqkh.shlmc);
+            }
+        })
+    }
+    //毕业学位
+    function getbyxw() {
+       $.ajax({
+            type: "get",
+            url: "xsxx_byxw",
+            dataType: "json",
+            cache: false,
+            success: function (data) {
+                var dbxx=data.dbxx;
+                $("#dblwtm").html(dbxx.lwtm);
+                $.each(dbxx,function(key,value){
+                    if($("#"+key).length>0)
+                    {
+                        if(key!="xh")
+                        {
+                            if(value==null||value=="")
+                                value="--";
+                            $("#"+key).html(value);
+                        }
+                    }
+                });
+                $("#dbshzt").html(dbxx.shlmc);
+                $("#dbjg").html(dbxx.dbjg);
+                if(data.tljg&&data.tljg.length>0)
+                {
+                    var tljg=data.tljg[0];
+                    $.each(tljg,function(key,value){
+                        if($("#"+key).length>0)
+                        {
+                            if(value==null||value=="")
+                                value="--";
+                            $("#"+key).html(value);
+                        }
+                    });
+                }
+            }
+        })
+    }
+</script>
+<div class="Slayout" id="gotop">
+    <div class="container">
+        <div class="panel1">
+            <div class="article">
+                <div class="article-content">
+                    <div class="title-level-1" id="title-01">
+                        学籍信息</div>
+                    <div class="title-level-2" id="jbxxtitle-01">
+                        <h4>
+                            基本信息</h4>
+                        <span>Basic Information</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <table cellpadding="0" cellspacing="0">
+                            <tr>
+                                <td width="30%">
+                                    <div>
+                                        <img id="userphoto" src="/images/IDphoto.png" width="144" alt="" />
+                                    </div>
+                                    <ul class="catalog-level-3">
+                                        <li><span class="text-gary">学号：</span><label id="xh"></label></li>
+                                        <li><span class="text-gary">姓名：</span><label id="xm"></label></li>
+                                        <li><span class="text-gary">性别：</span><label id="xb"></label></li>
+                                        <li><span class="text-gary">出生日期：</span><label id="csrq"></label></li>
+                                        <li><span class="text-gary">证件类型：</span><label id="zjlxmc"></label></li>
+                                        <li><span class="text-gary">身份证号：</span><label id="sfzh"></label></li>
+                                        <li><span class="text-gary">Email：</span><label id="email"></label></li>
+                                        <li><span class="text-gary">手机号码：</span><label id="sjhm"></label></li>
+                                        <li><span class="text-gary">QQ：</span><label id="qq"></label></li>
+                                        <li><span class="text-gary">微信：</span><label id="wxh"></label></li>
+                                        <li><span class="text-gary">联系电话：</span><label id="lxdh"></label></li>
+                                        <li><span class="text-gary">联系地址：</span><label id="lxdz"></label></li>
+                                        <li><span class="text-gary">国家(地区)：</span><label id="gbmc"></label></li>
+                                        <li><span class="text-gary">民族：</span><label id="mz"></label></li>
+                                        <li><span class="text-gary">政治面貌：</span><label id="zzmm"></label></li>
+                                        <li><span class="text-gary">入党日期：</span><label id="rdrq"></label></li>
+                                        <li><span class="text-gary">监护人/父母1姓名：</span><label id="fmxm1"></label></li>
+                                        <li><span class="text-gary">监护人/父母2姓名：</span><label id="fmxm2"></label></li>
+                                    </ul>
+                                </td>
+                                <td width="35%">
+                                    <ul class="catalog-level-3">
+                                        <li><span class="text-gary">婚姻状况：</span><label id="hyzk"></label></li>
+                                        <li><span class="text-gary">现役军人：</span><label id="xyjr"></label></li>
+                                        <li><span class="text-gary">出生地：</span><label id="csdmc"></label></li>
+                                        <li><span class="text-gary">籍贯地：</span><label id="jg"></label></li>
+                                        <li><span class="text-gary">生源地：</span><label id="syd"></label><label id="sydm"></label></li>
+                                        <li><span class="text-gary">家庭户口所在地：</span><label id="hkszd"></label><label id="hkszdm"></label></li>
+                                        <li><span class="text-gary">证件签发日期：</span><label id="zjqfrq"></label></li>
+                                        <li><span class="text-gary">攻读本学位前户口所在省市：</span><label id="hkszss"></label></li>
+                                        <li><span class="text-gary">家庭户口所在地址详细地址：</span><label id="hkszdxxdz"></label></li>
+                                        <li><span class="text-gary">户口是否迁入学校：</span><label id="hksfqrxx"></label></li>
+                                        <li><span class="text-gary">家庭地区：</span><label id="jtdq"></label></li>
+                                        <li><span class="text-gary">家庭地址：</span><label id="jtdz"></label></li>
+                                        <li><span class="text-gary">家庭电话：</span><label id="jtdh"></label></li>
+                                        <li><span class="text-gary">工作年限：</span><label id="gznx"></label></li>
+                                        <li><span class="text-gary">档案所在单位：</span><label id="daszdw"></label></li>
+                                        <li><span class="text-gary">档案所在单位地址：</span><label id="daszdwdz"></label></li>
+                                        <li><span class="text-gary">档案所在单位邮政编码：</span><label id="daszdwyzbm"></label></li>
+                                        <li><span class="text-gary">是否单位委培：</span><label id="sfwpdw"></label></li>
+                                        <li><span class="text-gary">定向委培单位：</span><label id="dxwpdw"></label></li>
+                                        <li><span class="text-gary">定向委培单位区县代码：</span><label id="dxwpdwszd"></label></li>
+                                        <li><span class="text-gary">定向委培单位通信地址：</span><label id="dxwpdwtxdz"></label></li>
+                                        <li><span class="text-gary">定向委培单位邮政编码：</span><label id="dxwpdwyzbm"></label></li>
+                                        <li><span class="text-gary">监护人/父母1证件类型：</span><label id="fmzjlxmc1"></label></li>
+                                        <li><span class="text-gary">监护人/父母2证件类型：</span><label id="fmzjlxmc2"></label></li>
+                                    </ul>
+                                </td>
+                                <td width="35%" style="vertical-align: top;">
+                                    <ul class="catalog-level-3">
+                                        <li><span class="text-gary">原工作单位：</span><label id="ygzdw"></label></li>
+                                        <li><span class="text-gary">原工作单位地址：</span><label id="ygzdwdz"></label></li>
+                                        <li><span class="text-gary">原工作单位邮政编码：</span><label id="ygzdwyzbm"></label></li>
+                                        <li><span class="text-gary">是否校内住宿：</span><label id="sfxnzsmc"></label></li>
+                                        <li><span class="text-gary">宿舍地址：</span><label id="ssdz"></label></li>
+                                        <li><span class="text-gary">宿舍房间号：</span><label id="ssfjh"></label></li>
+                                        <li><span class="text-gary">宿舍电话：</span><label id="ssdh"></label></li>
+                                        <li><span class="text-gary">火车优惠卡乘车区间：</span><label id="ccqjsm"></label><label id="ccqj"></label></li>
+                                        <li><span class="text-gary">火车优惠卡序列号：</span><label id="yhkxlh"></label></li>
+                                        <li><span class="text-gary">技术职称：</span><label id="zyjszcmc"></label></li>
+                                        <li><span class="text-gary">干部职务：</span><label id="gbzw"></label></li>
+                                        <li><span class="text-gary">特长：</span><label id="tc"></label></li>
+                                        <li><span class="text-gary">爱好：</span><label id="ah"></label></li>
+                                        <li><span class="text-gary">身高：</span><label id="sg"></label></li>
+                                        <li><span class="text-gary">血型：</span><label id="xxmc"></label></li>
+                                        <li><span class="text-gary">配偶姓名：</span><label id="poxm"></label></li>
+                                        <li><span class="text-gary">配偶联系电话：</span><label id="polxdh"></label></li>
+                                        <li><span class="text-gary">配偶工作单位：</span><label id="pogzdw"></label></li>
+                                        <li><span class="text-gary">配偶工作单位地址：</span><label id="pogzdwdz"></label></li>
+                                        <li><span class="text-gary">银行卡号：</span><label id="yhkh"></label></li>
+                                         <li></li>
+                                        <li></li>
+                                        <li><span class="text-gary">监护人/父母1证件号码：</span><label id="fmzjhm1"></label></li>
+                                        <li><span class="text-gary">监护人/父母2证件号码：</span><label id="fmzjhm2"></label></li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-2" id="jbxxtitle-02">
+                        <h4>
+                            学业信息</h4>
+                        <span>Academic Information</span> <a href="javascript:void(0)">- 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td width="30%">
+                                    <span class="text-gary">年级：</span><label id="nj"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">培养方式：</span><label id="pylb"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">一卡通号：</span><label id="ykth"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">入学日期：</span><label id="rxrq"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">学习方式：</span><label id="xxfs"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">本科学号：</span><label id="bkxh"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">报到日期：</span><label id="bdrq"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">考生来源：</span><label id="ksly"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">硕士学号：</span><label id="ssxh"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">研究方向：</span><label id="yjfx"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">入学方式：</span><label id="rxfs"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">结束学业：</span><label id="jsxy"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">所属院系：</span><label id="xsmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">攻读类型：</span><label id="gdlx"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">结束学业日期：</span><label id="jsxyrq"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">专业名称：</span><label id="zymc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">专项计划：</span><label id="zxjhmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">毕业证号：</span><label id="byzh"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">班级编号：</span><label id="bjbh"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">享受照顾政策：</span><label id="xszgzcmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">毕业时间：</span><label id="bysj"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">学生类别：</span><label id="xslbmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">保留资格年限：</span><label id="blzgnxmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">学位证号：</span><label id="xwzh"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">备用院系：</span><label id="xsmc1"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">学制：</span><label id="xz"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">申请学位日期：</span><label id="sqxwrq"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">学位类别：</span><label id="xwlb"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">学习年限：</span><label id="xxnxmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">授学位日期：</span><label id="sxwrq"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">导师一：</span><label id="dsxm"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">学习地点：</span><label id="xxddmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">学信网考生号：</span><label id="xxwksh"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">导师二：</span><label id="dsxm1"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">准考证号：</span><label id="zkzh"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">欠费标记：</span><label id="qfbjmc"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">导师三：</span><label id="dsxm2"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">导师四：</span><label id="dsxm3"></label>
+                                </td>
+                                <td>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-2" id="jbxxtitle-03">
+                        <h4>
+                            前置学历</h4>
+                        <span>Pre-qualification</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td width="30%">
+                                    <span class="text-gary">文化程度：</span><label id="whcd"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">学士学位证书编号：</span><label id="xsxwzsbh"></label>
+                                </td>
+                                <td width="35%">
+                                    
+                                    <span class="text-gary">获硕士学位年月：</span><label id="ssxwny"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">入学前学位：</span><label id="rxqxw"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">本科毕业单位：</span><label id="bkbydw"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">硕士学位证书编号：</span><label id="ssxwzsbh"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">前置学位：</span><label id="qzxw"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">本科毕业专业：</span><label id="bkbyzymc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">硕士毕业单位：</span><label id="ssbydw"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">取得本科学历的学习形式：</span><label id="bkxxxsmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">本科毕业年月：</span><label id="bkbyny"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">硕士毕业专业：</span><label id="ssbyzymc"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">获学士学位的单位：</span><label id="xsxwdw"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">本科毕业证书编号：</span><label id="bkbyzsbh"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">硕士毕业年月：</span><label id="ssbyny"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">获学士学位专业：</span><label id="xsxwzymc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">获硕士学位的单位：</span><label id="ssxwdw"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">硕士毕业证书编号：</span><label id="ssbyzsbh"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">获学士学位年月：</span><label id="xsxwny"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">获硕士学位专业：</span><label id="ssxwzymc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">获硕士学位方式：</span><label id="ssxwfsmc"></label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-2" id="jbxxtitle-04">
+                        <h4>
+                            学习工作经历</h4>
+                        <span>Learning Experience</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <div class="T_view">
+                            <table id='tb_gzjl' class="listtable">
+                                <tr class="head">
+                                    <td class="order">
+                                    </td>
+                                    <td>
+                                        开始日期
+                                    </td>
+                                    <td>
+                                        结束日期
+                                    </td>
+                                    <td>
+                                        学习或工作经历
+                                    </td>
+                                    <td>
+                                        担任何职务
+                                    </td>
+                                    <td class="foot">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-2" id="jbxxtitle-05">
+                        <h4>
+                            家庭成员</h4>
+                        <span>Member of family</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <div class="T_view">
+                            <table id="tb_jtcy" class="listtable">
+                                <tr class="head">
+                                    <td class="order">
+                                    </td>
+                                    <td>
+                                        与本人关系
+                                    </td>
+                                    <td>
+                                        姓名
+                                    </td>
+                                    <td>
+                                        工作单位
+                                    </td>
+                                    <td>
+                                        联系电话
+                                    </td>
+                                    <td class="foot">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-2" id="jbxxtitle-06">
+                        <h4>
+                            入学成绩</h4>
+                        <span>Admission Results</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td width="30%">
+                                    <span class="text-gary">外国语码：</span><label id="wgym"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">业务课一码：</span><label id="ywk1m"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">加试科目一名称：</span><label id="js1mc"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">外国语名称：</span><label id="wgymc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">业务课一名称：</span><label id="ywk1mc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">加试科目一成绩：</span><label id="js1cj"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">外国语成绩：</span><label id="wgy"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">业务课一成绩：</span><label id="ywk1"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">加试科目二名称：</span><label id="js2mc"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">政治理论码：</span><label id="zzllm"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">业务课二码：</span><label id="ywk2m"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">加试科目二成绩：</span><label id="js2cj"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">政治理论名称：</span><label id="zzllmc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">业务课二名称：</span><label id="ywk2mc"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">初试总分：</span><label id="zf"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">政治理论成绩：</span><label id="zzll"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">业务课二成绩：</span><label id="ywk2"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">复试总成绩：</span><label id="fscj"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary"></span>
+                                </td>
+                                <td>
+                                    <span class="text-gary"></span>
+                                </td>
+                                <td>
+                                    <span class="text-gary">总成绩：</span><label id="zcj"></label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-2" id="jbxxtitle-07">
+                        <h4>
+                            异动信息</h4>
+                        <span>Transaction Information</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <div class="T_view">
+                            <table id="tb_xjyd" class="listtable">
+                                <tr class="head">
+                                    <td>
+                                        异动类别
+                                    </td>
+                                    <td>
+                                        申请日期
+                                    </td>
+                                    <td>
+                                        申请理由
+                                    </td>
+                                    <td>
+                                        审核状态
+                                    </td>
+                                    <td class="foot">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-1" id="title-02">
+                        培养计划</div>
+                    <div class="part-box">
+                        <div class="alert_area">
+                            <p>
+                                <b>培养方案要求:</b> 总学分<span id="jh_fazxf"></span>分，必修学分<span id="jh_faxwxf"></span>分。</p>
+                        </div>
+                        <div class="T_view">
+                            <table id="tb_pyjh" class="listtable">
+                                <tr class="head">
+                                    <td>
+                                        课程编号
+                                    </td>
+                                    <td>
+                                        课程名称
+                                    </td>
+                                    <td>
+                                        课程类别
+                                    </td>
+                                    <td>
+                                        学分
+                                    </td>
+                                    <td>
+                                        学时
+                                    </td>
+                                    <td>
+                                        学期
+                                    </td>
+                                    <td>
+                                        成绩
+                                    </td>
+                                    <td class="foot">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-1" id="title-03">
+                        成绩信息</div>
+                    <div class="part-box">
+                        <div class="alert_area">
+                            <p>
+                                <b>已修总学分:<label id="zxf"></label>
+                                    分</b>（必修学分<label id="xwxf"></label>分，选修学分<label id="fxwxf"></label>分）</p>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="T_view">
+                                    <div class="T_title" id="xwkname">
+                                    </div>
+                                    <div class="table_box" style="height: 280px; overflow-y: scroll">
+                                        <table id="tb_xwk" class="listtable">
+                                            <tr class="head">
+                                                <td>
+                                                    课程名称
+                                                </td>
+                                                <td>
+                                                    学分
+                                                </td>
+                                                <td>
+                                                    学期
+                                                </td>
+                                                <td>
+                                                    成绩
+                                                </td>
+                                                <td class="foot">
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="T_view hidden">
+                                    <div class="T_title" id="fxwkname">
+                                    </div>
+                                    <div class="table_box" style="height: 280px; overflow-y: scroll">
+                                        <table id="tb_fxwk" class="listtable">
+                                            <tr class="head">
+                                                <td>
+                                                    课程名称
+                                                </td>
+                                                <td>
+                                                    学分
+                                                </td>
+                                                <td>
+                                                    学期
+                                                </td>
+                                                <td>
+                                                    成绩
+                                                </td>
+                                                <td class="foot">
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="title-level-1" id="title-04">
+                        奖惩记录</div>
+                    <div class="title-level-2" id="subtitle-03">
+                        <h4>
+                            奖学金</h4>
+                        <span>Scholarship</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <div class="T_view">
+                            <table id="tb_jxj" class="listtable">
+                                <tr class="head">
+                                    <td>
+                                        年度
+                                    </td><td>
+                                        奖学金名称
+                                    </td>
+                                    <td>
+                                        奖学金等级
+                                    </td>
+                                    <td>
+                                        奖学金金额
+                                    </td>
+                                    
+                                    <td class="foot">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-2" id="subtitle-04">
+                        <h4>
+                            评优评干</h4>
+                        <span>Appraising</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <div class="T_view">
+                            <table id="tb_pypg" class="listtable">
+                                <tr class="head">
+                                    <td>
+                                        项目名称
+                                    </td>
+                                    <td>
+                                        金额
+                                    </td>
+                                    <td>
+                                        申请时间
+                                    </td>
+                                    <td>
+                                        审核时间
+                                    </td>
+                                    <td>
+                                        审核状态
+                                    </td>
+                                    <td class="foot">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-2" id="subtitle-05">
+                        <h4>
+                            违纪信息</h4>
+                        <span>Discipline Information</span> <a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <div class="T_view">
+                            <table id="tb_wjxx" class="listtable">
+                                <tr class="head">
+                                    <td>
+                                        处分名称
+                                    </td>
+                                    <td>
+                                        原因
+                                    </td>
+                                    <td>
+                                        处分日期
+                                    </td>
+                                    <td>
+                                        处分文号
+                                    </td>
+                                    <td>
+                                        撤销日期
+                                    </td>
+                                    <td>
+                                        撤销文号
+                                    </td>
+                                    <td class="foot">
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-1" id="title-05">
+                        科研论文</div>
+                    <div class="title-level-2" id="fblwtitle">
+                        <h4>
+                            发表论文</h4>
+                        <span></span><a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <div class="T_view">
+                            <table id="tb_fblw" class="listtable">
+                                <tr class="head">
+                                    <td>
+                                        论文题目
+                                    </td>
+                                    <td>
+                                        发表刊物
+                                    </td>
+                                    <td>
+                                        刊物型号
+                                    </td>
+                                    <td>
+                                        刊物期号
+                                    </td>
+                                    <td>
+                                        第一作者
+                                    </td>
+                                    <td>
+                                        导师排名
+                                    </td>
+                                    <td>
+                                        发表类别
+                                    </td>
+                                    <td>
+                                        收录情况
+                                    </td>
+                                    <td>
+                                        审核状态
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="title-level-2" id="qtkytitle">
+                        <h4>
+                            其他科研</h4>
+                        <span></span><a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div>
+                        <div class="part-box">
+                            <div class="T_view">
+                                <table id="tb_kycg" class="listtable">
+                                    <tr class="head">
+                                        <td>
+                                            成果名称
+                                        </td>
+                                        <td>
+                                            获奖日期
+                                        </td>
+                                        <td>
+                                            排名
+                                        </td>
+                                        <td>
+                                            成果级别
+                                        </td>
+                                        <td>
+                                            获奖情况
+                                        </td>
+                                        <td>
+                                            是否获奖专利
+                                        </td>
+                                        <td>
+                                            专利号
+                                        </td>
+                                        <td>
+                                            审核状态
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="part-box">
+                            <div class="T_view">
+                                <table id="tb_zlqk" class="listtable">
+                                    <tr class="head">
+                                        <td>
+                                            专利名称
+                                        </td>
+                                        <td>
+                                            专利状态
+                                        </td>
+                                        <td>
+                                            专利类型
+                                        </td>
+                                        <td>
+                                            参与角色
+                                        </td>
+                                        <td>
+                                            本人排名
+                                        </td>
+                                        <td>
+                                            专利申请号
+                                        </td>
+                                        <td>
+                                            专利授权(颁证)年月
+                                        </td>
+                                        <td>
+                                            证书号
+                                        </td>
+                                        <td>
+                                            审核状态
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="part-box">
+                            <div class="T_view">
+                                <table id="tb_zzjc" class="listtable">
+                                    <tr class="head">
+                                        <td>
+                                            著作教材名称
+                                        </td>
+                                        <td>
+                                            类别
+                                        </td>
+                                        <td>
+                                            出版社
+                                        </td>
+                                        <td>
+                                            出版时间
+                                        </td>
+                                        <td>
+                                            作者排序
+                                        </td>
+                                        <td>
+                                            书刊号
+                                        </td>
+                                        <td>
+                                            审核状态
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="part-box">
+                            <div class="T_view">
+                                <table id="tb_hjqk" class="listtable">
+                                    <tr class="head">
+                                        <td>
+                                            奖励名称
+                                        </td>
+                                        <td>
+                                            奖励级别
+                                        </td>
+                                        <td>
+                                            奖励等级
+                                        </td>
+                                        <td>
+                                            奖励类别
+                                        </td>
+                                        <td>
+                                            获奖角色
+                                        </td>
+                                        <td>
+                                            证书号
+                                        </td>
+                                        <td>
+                                            获奖日期
+                                        </td>
+                                        <td>
+                                            颁奖单位
+                                        </td>
+                                        <td>
+                                            审核状态
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="title-level-1" id="title-06">
+                        开题中期</div>
+                    <div class="title-level-2" id="kttitle">
+                        <h4>
+                            开题报告</h4>
+                        <span></span><a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td colspan="3">
+                                    <span class="text-gary">论文题目：</span><label id="lwtm"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="30%">
+                                    <span class="text-gary">开题日期：</span><label id="ktrq"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">论文类型：</span><label id="lwlx"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">题目来源：</span><label id="tmly"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">论文开始年月：</span><label id="lwksny"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">论文截止年月：</span><label id="lwjzny"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">经费：</span><label id="jfs"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3">
+                                    <span class="text-gary">开题地点：</span><label id="ktdd"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="3">
+                                    <span class="text-gary">审核状态：</span><label id="ktshzt"></label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-2" id="zqtitle">
+                        <h4>
+                            中期考核</h4>
+                        <span></span><a href="javascript:void(0)">－ 收起</a>
+                    </div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td>
+                                    <span class="text-gary">教学实习及兼任助教工作情况：</span><label id="jxsx"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">思想政治表现及健康状况自我评价：</span><label id="sxzzbx"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">审核状态：</span><label id="zqshzt"></label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-1" id="title-07">
+                        答辩信息</div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-gary">论文题目：</span><label id="dblwtm"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-gary">论文摘要：</span><label id="lwzy"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-gary">英文题目：</span><label id="ywlwtm"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td width="50%">
+                                    <span class="text-gary">论文类型：</span><label id="lwlxmc"></label>
+                                </td>
+                                <td width="50%">
+                                    <span class="text-gary">选题来源：</span><label id="lwxtlymc"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">论文起止日期：</span><label id="lwksrq"></label>-<label id="lwjsrq"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">论文字数：</span><label id="lwzs"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-gary">审核状态：</span><label id="dbshzt"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-gary">答辩结果：</span><label id="dbjg"></label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-1" id="title-08">
+                        学位信息</div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td colspan="2">
+                                    <span class="text-gary">委员会：</span><label id="fwhmc"></label>
+                                </td>
+                            </tr>
+                            
+                            <tr>
+                                <td>
+                                    <span class="text-gary">分委会讨论结果：</span><label id="fwhtljg"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">校委会讨论结果：</span><label id="xwhtljg"></label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="title-level-1" id="title-09">
+                        就业信息</div>
+                    <div class="part-box">
+                        <table class="table-lessborder">
+                            <tr>
+                                <td width="30%">
+                                    <span class="text-gary">去向：</span><label id="qx"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">工作单位：</span><label id="gzdw"></label>
+                                </td>
+                                <td width="35%">
+                                    <span class="text-gary">就业单位性质类别：</span><label id="gzdwxz"></label>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span class="text-gary">就业单位省市码：</span><label id="gzdwss"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary">工作性质码：</span><label id="gzxz"></label>
+                                </td>
+                                <td>
+                                    <span class="text-gary"></span>
+                                    <label>
+                                    </label>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="catalog">
+                    <div class="catalog-scroller">
+                        <div class="catalog-level-1 catalog-current">
+                            <span>1</span> <a href="#title-01">学籍信息</a>
+                        </div>
+                        <ul class="catalog-level-2">
+                            <li><a href="#jbxxtitle-01">基本信息</a> </li>
+                            <li><a href="#jbxxtitle-02">学业信息</a> </li>
+                            <li><a href="#jbxxtitle-03">前置学历</a> </li>
+                            <li><a href="#jbxxtitle-04">学习工作经历</a> </li>
+                            <li><a href="#jbxxtitle-05">家庭成员</a> </li>
+                            <li><a href="#jbxxtitle-06">入学成绩</a> </li>
+                            <li><a href="#jbxxtitle-07">异动信息</a> </li>
+                        </ul>
+                        <div class="catalog-level-1">
+                            <span>2</span> <a href="#title-02">培养计划</a>
+                        </div>
+                        <div class="catalog-level-1">
+                            <span>3</span> <a href="#title-03">成绩信息</a>
+                        </div>
+                        <div class="catalog-level-1">
+                            <span>4</span> <a href="#title-04">奖惩记录</a>
+                        </div>
+                        <ul class="catalog-level-2">
+                            <li><a href="#subtitle-03">奖学金</a> </li>
+                            <li><a href="#subtitle-04">评优评干</a> </li>
+                            <li><a href="#subtitle-05">违纪信息</a> </li>
+                        </ul>
+                        <div class="catalog-level-1">
+                            <span>5</span> <a href="#title-05">科研论文</a>
+                        </div>
+                        <ul class="catalog-level-2">
+                            <li><a href="#fblwtitle">发表论文</a> </li>
+                            <li><a href="#qtkytitle">其他科研</a> </li>
+                        </ul>
+                        <div class="catalog-level-1">
+                            <span>6</span> <a href="#title-06">开题中期</a>
+                        </div>
+                        <ul class="catalog-level-2">
+                            <li><a href="#kttitle">论文开题</a> </li>
+                            <li><a href="#zqtitle">中期考核</a> </li>
+                        </ul>
+                        <div class="catalog-level-1">
+                            <span>7</span> <a href="#title-07">答辩信息</a>
+                        </div>
+                        <div class="catalog-level-1">
+                            <span>8</span> <a href="#title-08">学位信息</a>
+                        </div>
+                        <div class="catalog-level-1">
+                            <span>9</span> <a href="#title-09">就业信息</a>
+                        </div>
+                    </div>
+                    <a href="#gotop" class="gotop-button">
+                        <img src="/images/img-gotop.png" alt="">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

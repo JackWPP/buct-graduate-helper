@@ -1,0 +1,74 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title></title>
+    <link rel="stylesheet" type="text/css" href="/gmis/Content/themes/gray/login.css" />
+    <link rel="stylesheet" type="text/css" href="/gmis/Content/themes/gray/easyui.css" />
+
+    <script>
+        var p = window;
+        if (p != p.parent) {
+            p = p.parent;
+            p.location.href = document.URL;
+        }
+    </script>
+</head>
+
+<body>
+    <div class="loginlogo">
+        <div class="logo"><img src="../images/loginlogo.png" /></div>
+        <div class="logo-word">
+            研究生管理信息系统
+            <span class="EN">Graduate Management Information System</span>
+        </div>
+    </div>
+    <div class="layout1">
+        <form id="ff">
+            <div class="loginlayout">
+                <div class="from">
+                    
+                    <div class="from-group">
+                        <button id="btnlogin" class="btn" onclick="loginform();return false">此登录入口已关闭，点此按钮进入统一身份认证登录页面</button>
+                    </div>
+                </div>
+                <div class="from-info">
+                    <div class="icon">
+                        <ul>
+                            <li>
+                                <span><img src="../images/icon1.png" /></span>
+                                <span>云智能 慧感知 优服务</span>
+                            </li>
+                            <li>
+                                <span><img src="../images/icon2.png" /></span>
+                                <span>流程化 规范化 一体化</span>
+                            </li>
+                            <li>
+                                <span><img src="../images/icon3.png" /></span>
+                                <span>轻办公 高效率 全过程</span>
+                            </li>
+                        </ul>
+                        <div class="clear"></div>
+                    </div>
+                    <div class="tip">
+                        
+                    </div>
+                </div>
+            </div>
+        </form>
+        <div class="footer">
+            <p>说明：1.使用chrome或IE10+浏览器（360浏览器最新版本）  2.1280*800分辨率以上浏览本系统  3.请不要屏蔽弹出窗口  4.技术支持：南京南软(版本:5.0)</p>
+        </div>
+    </div>
+
+</body>
+</html>
+
+<script type="text/javascript">
+    function loginform() {
+        location.href = '/gmis/(S(25o1lrxt5su4ir5qbzyvebev))/oauthLogin/sdzyydx';
+    }
+</script>

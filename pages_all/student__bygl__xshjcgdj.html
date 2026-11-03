@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title></title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+
+<script type="text/javascript" language="javascript">
+    $(function () {
+        $("#kycgwin").window("close");
+        binddata();
+    });
+    function binddata() {
+        var height = $(window).height() * 0.9;
+        $("#dg").datagrid({
+            width: 'auto',
+            height: 'auto',
+            scrollbarSize: 0,
+            autoRowHeight: false,
+            url: "hjqklist",
+            fitColumns: true,
+            striped:true,
+            columns: [[
+            { field: 'ck', title: '', width: 100, checkbox: true },
+            { field: 'jlmc', title: '奖励名称', width: 260 },
+            { field: 'jljbmc', title: '奖励级别', width: 150 },
+            { field: 'jldjmc', title: '奖励等级', width: 100 },
+            { field: 'jllbmc', title: '奖励类别', width: 150 },
+            { field: 'hjjs', title: '学生排名', width: 150 },
+            { field: 'dspm', title: '导师排名', width: 150 },
+            { field: 'zsh', title: '证书号', width: 150 },
+            { field: 'hjrq', title: '获奖日期', width: 150 },
+            { field: 'bjdw', title: '颁奖单位', width: 150 }
+            //{ field: 'shlmc', title: '审核状态', width: 80 }
+            ]],
+            onLoadSuccess: function (data) {
+                if (data.total > 0) {
+                    $(".div").css({ "display": "none" });
+                }
+                else {
+                    $(".div").css({ "display": "" });
+                }
+            },
+            onCheck: function (index, row) {
+                var rows = $("#dg").datagrid('getChecked');
+                if (rows.length > 1) {
+                    $("#btn-edite").attr("disabled", "disabled");
+                }
+                else {
+                    $("#btn-edite").attr("disabled", false);
+                }
+            },
+            onCheckAll: function (rows) {
+                var rows = $("#dg").datagrid('getChecked');
+                if (rows.length > 1) {
+                    $("#btn-edite").attr("disabled", "disabled");
+                }
+                else {
+                    $("#btn-edite").attr("disabled", false);
+                }
+            },
+            onUncheckAll: function (rows) {
+                var rows = $("#dg").datagrid('getChecked');
+                if (rows.length > 1) {
+                    $("#btn-edite").attr("disabled", "disabled");
+                }
+                else {
+                    $("#btn-edite").attr("disabled", false);
+                }
+            },
+            onUncheck: function (index, row) {
+                var rows = $("#dg").datagrid('getChecked');
+                if (rows.length > 1) {
+                    $("#btn-edite").attr("disabled", "disabled");
+                }
+                else {
+                    $("#btn-edite").attr("disabled", false);
+                }
+            }
+        });
+    }
+    function reload() {
+        $("#dg").datagrid('reload');
+    }
+    function OpenKycgwin(title, id) {
+        var icon = "";
+        if (id == undefined) {
+            icon = "icon-table_add";
+        }
+        else {
+            icon = "icon-table_edit";
+        }
+        $("#content").css("display", "inline");
+        $("#kycgwin").window({
+            top: 20,
+            title: title,
+            width: 800,
+            height: 400,
+            iconCls: icon,
+            modal: true,
+            onOpen: function () {
+                if (id != "") {
+                    $.post("gethjcgmodel", { id: id }, function (data) {
+                        if (data != null) {
+                            $('#ff').form('load', data);
+                            if (data.shbj == "1") {
+                                $("#editTip").css({ "display": "" });
+                                $("#btn-save").linkbutton("disable");
+                            }
+                            else {
+                                $("#editTip").css({ "display": "none" });
+                                $("#btn-save").linkbutton("enable");
+                            }
+                            if (data.fjmc == "") {
+                                $("#sfscfj").text("");
+                            }
+                            else {
+                                $("#sfscfj").text("已上传！");
+                            }
+                        }
+                        else {
+                            $("#editTip").css({ "display": "none" });
+                            $("#btn-save").linkbutton("enable");
+                        }
+                    }, "json");
+                }
+            },
+            onClose: function () {
+                $("#id").val("");
+                $("#xh").val("");
+                $("#ff").form("reset");
+                $("#editTip").css({ "display": "none" });
+                $("#btn-save").attr("disabled", false);
+            }
+        });
+        $("#kycgwin").window("hcenter");
+    }
+    function edittByid() {
+        var row = $('#dg').datagrid('getChecked');
+        if (row.length == 0) {
+            $.messager.alert('提示', '请选择要编辑的获奖成果！', 'info');
+            return;
+        }
+        OpenKycgwin('编辑获奖成果', row[0].id);
+    }
+    function closewin() {
+        $("#kycgwin").window("close");
+    }
+    function submitForm() {
+        var arraydata = $("#ff").serializeArray();
+        var jsonobj = {};
+        $.each(arraydata, function (index, item) {
+            jsonobj[item.name] = item.value;
+        });
+        if (jsonobj.id == "") {
+            jsonobj.id = 0;
+        }
+        var jsondata = JSON.stringify(jsonobj);
+        if ($("#ff").form('enableValidation').form('validate')) {
+            $("#ff").ajaxSubmit({
+                url: "savehjcgdjinfo",
+                method: "post",
+                dataType: 'json',
+                data: { datajson: jsondata },
+                success: function (data) {
+                    if (data.sign == "1") {
+                        closewin();
+                        reload();
+                    }
+                    else {
+                        $.messager.alert("提示", data.msg, "error");
+                    }
+                }
+            })
+        }
+    }
+    function deletekycg() {
+        var rows = $("#dg").datagrid("getChecked");
+        if (rows.length == 0) {
+            $.messager.alert('提示', '请选择要删除的获奖成果！', 'info');
+            return;
+        }
+        var tiparray = [];
+        $.each(rows, function (index, row) {
+            if (row.dqzt != 0 && row.dqzt != "" && row.dqzt != null && row.dqzt != undefined) {
+                tiparray.push("【" + row.jlmc + "】");
+            }
+        });
+        if (tiparray.length > 0) {
+            $.messager.alert("提示", tiparray.join(",") + "已被审核，无法删除！", "info");
+            return;
+        }
+        $.messager.confirm("提示", "确定要删除选择的获奖成果？", function (isok) {
+            if (isok) {
+                var idarray = [];
+                $.each(rows, function (index, row) {
+                    idarray.push(row.id);
+                });
+                var idstr = idarray.join(',');
+                $.post("deletehjcgbyid", { id: idstr }, function (data) {
+                    if (data.flag == "1") {
+                        reload();
+                    }
+                    else {
+                        $.messager.alert('提示', data.msg, 'error');
+                    }
+                }, "json");
+            }
+        });
+    }
+    function dcsj() {
+        var form = $("<form action='xs_hjcgdj' method='post'></form>");
+        $("body").append(form);
+        form.submit();
+    }
+
+    function fanhui() {
+        window.history.back();
+    }
+</script>
+<div class="Slayout">
+    <div class="container">
+        <div class="layout_box">
+            <div class="Operating_area">
+                <span style="color:Red">
+                </span>
+                <button id="btn-fh" type="button" onclick="fanhui()" class="btn-primary floatright">
+                    返回
+                </button>
+                <button id="btn-dcsj" type="button" class="btn-primary floatright marginright20" onclick="dcsj()">
+                    导出
+                </button>
+                <button id="btn-del" type="button" class="btn-primary floatright marginright20" onclick="deletekycg()"><span class="icon icon-delete"></span>删除</button>
+                <button id="btn-edite" type="button" class="btn-primary floatright marginright20" onclick="edittByid()">编辑</button>
+                <button id="btn-add" type="button" class="btn-primary floatright marginright20" onclick="OpenKycgwin('新增获奖成果')"><span class="icon icon-add"></span>新增</button>
+
+            </div>
+            <table id="dg">
+            </table>
+            <div class="div" style="height: 150px; border-top: 0px solid">
+                <div style="width: 95%; text-align: center; border: 0px; margin-top: 5%; font-family: 宋体;
+                    position: absolute">
+                    暂无数据！
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="kycgwin" class="easyui-window">
+    <div style="display:none" id="content">
+        <form id="ff" method="post">
+            <div style="margin: 0px auto; width: 700px; margin-top: 10px; border: 0px solid red">
+                <table class="basictable">
+                    <tr>
+                        <td class="bg" style="width: 20%">
+                            奖励名称:
+                        </td>
+                        <td colspan="3">
+                            <input id="jlmc" name="jlmc" class="easyui-textbox" data-options="width:'90%',required:true,missingMessage:'奖励名称不能为空！'" />
+                            <input id="id" name="id" type="hidden" />
+                            <input id="xh" name="xh" type="hidden" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="20%" class="bg">
+                            奖励级别:
+                        </td>
+                        <td width="30%">
+                            <input id="jljb" name="jljb" class="easyui-combobox" data-options="width:'90%',editable:false,data:[{&quot;tabletype&quot;:&quot;&quot;,&quot;dm&quot;:&quot;&quot;,&quot;dmmc&quot;:&quot;请选择&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;01&quot;,&quot;dmmc&quot;:&quot;国家级科学进步奖&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;02&quot;,&quot;dmmc&quot;:&quot;省级科学进步奖&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;03&quot;,&quot;dmmc&quot;:&quot;省(部、委)以下级&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;04&quot;,&quot;dmmc&quot;:&quot;国外奖励&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;05&quot;,&quot;dmmc&quot;:&quot;校级奖励&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null}],valueField:'dm',textField:'dmmc'" />
+                        </td>
+                        <td width="20%" class="bg">
+                            奖励等级:
+                        </td>
+                        <td width="30%">
+                            <input id="jldj" name="jldj" class="easyui-combobox" data-options="width:'90%',editable:false,data:[{&quot;tabletype&quot;:&quot;&quot;,&quot;dm&quot;:&quot;&quot;,&quot;dmmc&quot;:&quot;请选择&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;01&quot;,&quot;dmmc&quot;:&quot;一等奖&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;02&quot;,&quot;dmmc&quot;:&quot;二等奖&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;03&quot;,&quot;dmmc&quot;:&quot;三等奖&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;04&quot;,&quot;dmmc&quot;:&quot;四等奖&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;05&quot;,&quot;dmmc&quot;:&quot;其他&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null}],valueField:'dm',textField:'dmmc'" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="bg">
+                            <span class="red">*</span>奖励类别:
+                        </td>
+                        <td>
+                            <input id="jllb" name="jllb" class="easyui-combobox" validtype='ComboboxRequire["jllb"]' invalidmessage="奖励类别不能为空！" data-options="width:'90%',editable:false,data:[{&quot;tabletype&quot;:&quot;&quot;,&quot;dm&quot;:&quot;&quot;,&quot;dmmc&quot;:&quot;请选择&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;01&quot;,&quot;dmmc&quot;:&quot;国家级&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;02&quot;,&quot;dmmc&quot;:&quot;省部级&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;03&quot;,&quot;dmmc&quot;:&quot;厅局级&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null},{&quot;tabletype&quot;:null,&quot;dm&quot;:&quot;04&quot;,&quot;dmmc&quot;:&quot;其他&quot;,&quot;ywmc&quot;:null,&quot;othermc&quot;:null}],valueField:'dm',textField:'dmmc'" />
+                        </td>
+                       <td class="bg">
+                            获奖日期:
+                        </td>
+                        <td>
+                            <input id="hjrq" name="hjrq" class="easyui-datebox" data-options="width:'90%',required:true,missingMessage:'获奖日期不能为空！'" />
+                        </td>
+                    </tr>
+                    <tr>
+                         <td class="bg">
+                            学生排名:
+                        </td>
+                        <td>
+                            <select id="hjjs" name="hjjs" class="easyui-combobox" validtype='ComboboxRequire["hjjs"]' invalidmessage="学生排名不能为空！" data-options="width:'100',editable:false">
+                                <option value="">请选择</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                                <option value="其他">其他</option> 
+                            </select>
+                        </td>
+                        <td class="bg">
+                            导师排名:
+                        </td>
+                        <td>
+                            <select id="dspm" name="dspm" class="easyui-combobox" validtype='ComboboxRequire["dspm"]' invalidmessage="导师排名不能为空！" data-options="width:'100',editable:false">
+                                <option value="">请选择</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
+                            </select>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="bg">
+                            证书号:
+                        </td>
+                        <td>
+                            <input id="zsh" name="zsh" class="easyui-textbox" data-options="width:'90%'" />
+                        </td>
+                        <td class="bg">
+                           
+                        </td>
+                        <td>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="bg">
+                            颁奖单位:
+                        </td>
+                        <td colspan="3">
+                            <input id="bjdw" name="bjdw" class="easyui-textbox" data-options="width:'100%',required:true,missingMessage:'获奖日期不能为空！'" />
+                        </td>
+                    </tr>
+                     <tr>
+                            <td class="bg">
+                                       <span style=" color:Red">(注：必须上传）</span>
+附件:
+                            </td>
+                            <td colspan="3">
+                               
+                                <input id="hjfj" name="hjfj" class="easyui-filebox" style="width:200px;" data-options="buttonAlign: 'left',prompt:'未选择任何文件',buttonText:'选择文件'" />
+                                <label id="sfscfj" style="color:Red"></label>
+                            </td>
+                      </tr>
+                </table>
+                <div style="width: 100%; margin: 0px auto">
+                    <span id="editTip" style="float: left; color: Red; display: none">已审核，无法编辑！ </span>
+                    <div style="float: right">
+                        <a class="easyui-linkbutton" id="btn-save" data-options="iconCls:'icon-save'" onclick="submitForm()">保存</a>&nbsp;&nbsp;
+                        <a class="easyui-linkbutton" id="btn-cancle" data-options="iconCls:'icon-qx'" onclick="closewin()">取消</a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

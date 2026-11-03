@@ -1,0 +1,43 @@
+# macOS / 外置盘资源叉
+._*
+.DS_Store
+
+# 本地代理记忆
+.workbuddy/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# 登录会话、验证码和调试日志
+*cookies*
+cookies.txt
+cookie_header.txt
+session.pkl
+*.log
+*.gif
+*cap*.png
+after_*.png
+pw_login.png
+*_answer.txt
+c_*.txt
+sc.txt
+tmpcookies.txt
+
+# 含明文密码的临时候脚本
+gmis_login.py
+pw_login.js
+pw_stulogin.js
+py_login_test.py
+pw_capture_login.js
+
+# 含证件号、电话、住址或密码摘要的原始导出
+crawl_log.json
+demo_output/profile.json
+samples/xsxx_jbxx.json
+pages_all/student__grgl__xsrxdj.html
+pages_all/student__grgl__grxxxg.html
+pages_all/student__grgl__xslqfc.html
+pages_all/student__grgl__djksbm.html
+pages_all/student__grgl__zpxxhd.html

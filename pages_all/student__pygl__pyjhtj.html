@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>培养计划提交</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript">
+    var listcount = 0;
+    $(function () {
+        $.ajax({
+            type: 'get',
+            dataType: 'json',
+            url: 'pyjhtj_drop',
+            cache: false,
+            success: function (json) {
+                $('#pyfx').combobox({
+                    data: json.yjfxlist,
+                    panelHeight: 'auto',
+                    method: 'get',
+                    editable: false,
+                    valueField: 'yjfxm',
+                    textField: 'yjfxmc',
+                    onSelect: function (rec) {
+                        loadFormData();
+                    }
+                });
+                $('#pyfx').combobox("setValue", json.pyfx);
+                $('#searchyx').combobox({
+                    data: json.yxlist,
+                    method: 'get',
+                    editable: false,
+                    valueField: 'xsbh',
+                    textField: 'xsmc',
+                    onSelect: function (rec) {
+                        GetListkc();
+                    }
+                });
+                GetListkc();
+                loadFormData();
+            }
+        });
+        
+    });
+    var kkxq = [{ "dm": "1", "dmmc": "1" }, { "dm": "2", "dmmc": "2" }, { "dm": "3", "dmmc": "3" }, { "dm": "4", "dmmc": "4" }, { "dm": "5", "dmmc": "5" }, { "dm": "6", "dmmc": "6"}];
+    function loadFormData() {
+        var search = document.location.search;
+        var pyfx = $('#pyfx').combobox("getValue");
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "pyjhtjlist",
+            data: { 'pyfx': pyfx },
+            cache: false,
+            success: function (data) {
+                listcount = data.pyfakc.length;
+                var info = data.info;
+                $("#xwk_count").html(info.xwk_count);
+                $("#fxwk_count").html(info.fxwk_count);
+                $("#xwk_xf").html(info.xwk_xf);
+                $("#fxwk_xf").html(info.fxwk_xf);
+                $("#xwxf").html(info.xwxf);
+                $("#zxf").html(info.zxf);
+                $("#zgxf").html(info.zgxf);
+                GetList(data.pyfakc, info.sftj);
+                if (info.sftj == "0") {
+                    $('#lnksave').attr("disabled", false);
+                    $('#lnksubmit').attr("disabled", false);
+                    $('#pyfx').combobox("disable");
+                }
+                else {
+                    $('#pyfx').combobox("disable");
+                    $('#lnksave').attr("disabled", "disabled");
+                    $('#lnksubmit').attr("disabled", "disabled");
+                    $('#lnkaddfxwk').attr("disabled", "disabled");
+                    $('#pyfakc .aligncenter').remove();
+                }
+                GetList_pyhj(data.pyhj);
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+
+    }
+
+    function GetList(pyfakc, checknum) {
+        var html = '<table class="listtable">'
+                + '    <tr class="head">'
+                + '        <th style="width:30px;"></th>'
+                + '        <th>分组情况</th>'
+                + '        <th>课程编号</th>'
+                + '        <th>课程名称</th>'
+                + '        <th>课程类别</th>'
+                + '        <th>' + xwknames.title + '</th>'
+                + '        <th>学分</th>'
+                + '        <th>学时</th>'
+                + '        <th>学期</th>'
+                + '        <th>备注</th>'
+                + '        <th class="aligncenter">删除</th>'
+                + '    </tr>';
+        $.each(pyfakc, function (i, o) {
+            var a = '';
+            var b = '';
+            var c = '';
+            if (o.zu) {
+                a = "第" + o.zu + "组，";
+                if (o.zunum1 && o.zunum2) {
+                    b = "选" + o.zunum1 + "-" + o.zunum2 + "门";
+                }
+                else if (o.zunum1 && !o.zunum2) {
+                    b = "至少选" + o.zunum1 + "门";
+                }
+                else if (!o.zunum1 && o.zunum2) {
+                    b = "最多选" + o.zunum2 + "门";
+                }
+                if (o.zuxf1 && o.zuxf2) {
+                    c = "选" + o.zuxf1 + "-" + o.zuxf2 + "学分";
+                }
+                else if (o.zuxf1 && !o.zuxf2) {
+                    c = "至少选" + o.zuxf1 + "学分";
+                }
+                else if (!o.zuxf1 && o.zuxf2) {
+                    c = "最多选" + o.zuxf2 + "学分";
+                }
+                if (b != "") {
+                    a += b;
+                }
+                if (c != "") {
+                    a += c;
+                }
+                if (o.sm && o.sm != "") {
+                    a += "," + o.sm;
+                }
+            }
+            var dis = 'disabled = "disabled"'
+            if (o.kkxq == '9')
+                dis = '';
+            var strkkxq = '<select id="kkxq' + i + '" class="classkkxq" ' + dis + '>'
+            var values = o.kkxq;
+            if (o.xxxq)
+                values = o.xxxq;
+            $.each(kkxq, function (i, o1) {
+                if (o1.dm == values) {
+                    strkkxq += '<option value="' + o1.dm + '" selected="selected">' + o1.dmmc + '</option>';
+                }
+                else {
+                    strkkxq += '<option value="' + o1.dm + '">' + o1.dmmc + '</option>';
+                }
+            })
+            strkkxq += '</select>';
+            var chkdis = '', chkchk = '';
+            if (o.zu == '') {
+                chkdis = ' disabled = "disabled"';
+                chkchk = ' Checked="Checked"';
+            }
+            if (o.jhkcbh == o.kcbh)
+                chkchk = ' Checked="Checked"';
+            var bz = "";
+            if (o.bz)
+                bz = o.bz;
+            html += '<tr>'
+                + '       <td><input id="chk' + i + '" type="checkbox" ' + chkdis + chkchk + '/></td>'
+                + '       <td>' + a + '</td>'
+                + '       <td id="kcbh' + i + '">' + o.kcbh + '</td>';
+            if (o.filename && o.filename != "") {
+                html += '       <td style="text-align:left"><a title="下载教学大纲" href="jxdggl_down?kcbh=' + o.kcbh + '">' + o.kcmc + '</a></td>';
+            }
+            else {
+                html += '       <td style="text-align:left">' + o.kcmc + '</td>';
+            }
+            html += '       <td><input id="kclx' + i + '" type="hidden" value="' + o.kclx + '" />' + o.kclbmc + '</td>'
+                + '       <td><input id="xwk' + i + '" type="hidden" value="' + o.xwk + '" />' + (o.xwk == '1' ? xwknames.xwk : xwknames.fxwk) + '</td>'
+                + '       <td id="kcxf' + i + '">' + o.kcxf + '</td>'
+                + '       <td>' + o.kcxs + '</td>'
+                + '       <td>' + strkkxq + '</td>'
+                + '       <td id="bz' + i + '">' + bz + '</td>'
+                + '       <td class="aligncenter">';
+            if (checknum == 0 && o.fakc == "0") {
+                html += '      <a href="javascript:void(0)" class="but-link" onclick=delpyjh("' + o.kcbh + '")>删除</a>';
+            }
+            html += '     </td>'
+                 + '   </tr>';
+
+        });
+        html += '</table>';
+        $('#pyfakc').html(html);
+    }
+
+    function GetList_pyhj(pyhj) {
+        var html = '<table class="listtable">'
+                + '    <tr class="head">'
+                + '        <th>培养环节名称</th>'
+                + '        <th>培养环节类型</th>'
+                + '        <th>学分</th>'
+                + '        <th>备注</th>'
+                + '    </tr>';
+
+        $.each(pyhj, function (i, o) {
+            var pyhjxf = "";
+            if (o.pyhjxf)
+                pyhjxf = o.pyhjxf;
+            var bz = "";
+            if (o.bz)
+                bz = o.bz;
+            html += '<tr>'
+                + '       <td>' + o.pyhjmc + '</td>'
+                + '       <td>' + o.pyhjlxmc + '</td>'
+                + '       <td id="pyhjxf' + i + '">' + pyhjxf + '</td>'
+                + '       <td id="bz' + i + '">' + bz + '</td>'
+                + '   </tr>';
+        });
+        html += '</table>';
+        $('#pyhjlist').html(html);
+    }
+
+    //提交计划
+    function dosubmit() {
+        $.messager.confirm("提示", "提交后不可更改，你确定要提交吗?", function (r) {
+            if (r) {
+                dosave("1");
+            }
+        });
+    }
+    //保存
+    function dosave(dotype) {
+        var kcs = [];
+        for (var i = 0; i < listcount; i++) {
+            var kc = new Object();
+            if ($('#chk' + i).is(":checked")) {
+                kc.kcbh = $('#kcbh' + i).html();
+                kc.xwk = $('#xwk' + i).val();
+                kc.kclx = $('#kclx' + i).val();
+                kc.kcxf = $('#kcxf' + i).html();
+                kc.xxxq = $('#kkxq' + i).val();
+                kc.bz = $('#bz' + i).html();
+                kcs.push(kc);
+            }
+        }
+        var jsonObject = JSON.stringify(kcs);
+        var pyfx = $('#pyfx').combobox("getValue");
+        var yjfx = $('#pyfx').combobox("getText");
+        $.ajax({
+            type: 'post',
+            url: "pyjhtj_save",
+            data: { 'json': jsonObject, 'dotype': dotype, 'pyfx': pyfx, 'yjfx': yjfx },
+            cache: false,
+            success: function (json) {
+                if (json != "") {
+                    $.messager.alert("提示", json, "error");
+                }
+                else {
+                    if (dotype == "1") {
+                        $('#lnksave').attr('disabled', 'disabled');
+                        $('#lnksubmit').attr('disabled', 'disabled');
+                        $('#lnkaddfxwk').attr('disabled', 'disabled');
+                        $('#pyfakc .aligncenter').remove();
+                        $.messager.alert("提示", "提交成功！");
+                    }
+                    else {
+                        $.messager.alert("提示", "保存成功！");
+                    }
+                }
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+            }
+        });
+
+    }
+
+    function addfxwk() {
+        $('#w1').window({
+            width: 700,
+            modal: true
+        });
+        $('#w1').window('open');
+        $('#w1').window('center');
+    }
+
+    function GetListkc() {
+        var yxsh = $('#searchyx').combobox('getValue');
+        var kcbh = $('#searchkc').textbox('getValue');
+        $('#dgkc').datagrid({
+            width: '100%',
+            height: '500',
+            url: 'py_kclist',
+            queryParams: { 'yxsh': yxsh, 'kcbh': kcbh },
+            columns: [[
+                { field: 'kcbh', title: '课程编号', width: 100, sortable: false },
+                { field: 'kcmc', title: '课程名称', width: 120, sortable: false },
+                { field: 'kclbm', title: '类别', width: 40, sortable: false },
+                { field: 'kcxf', title: '学分', width: 40, sortable: false },
+                { field: 'kczxs', title: '学时', width: 40, sortable: false },
+                { field: 'sel', title: '选择', width: 40,
+                    formatter: function (value, row, index) {
+                        var e = '<a class="l-btn l-btn-small l-btn-plain" href="javascript:void(0)" onclick="selkc(this)"><span class="l-btn-left l-btn-icon-left"><span class="l-btn-text"></span><span class="l-btn-icon icon-ok">&nbsp;</span></span></a> ';
+                        return e;
+                    }
+                }
+            ]],
+            nowrap: false,
+            fitColumns: true,
+            striped: true,
+            rownumbers: false, //行号
+            singleSelect: true, //是否单选 
+            pageSize: 10,
+            pageList: [10, 20, 30, 50],
+            pagination: true, //分页控件 
+            onLoadError: function (e) {
+                $.messager.alert("提示", "加载失败", "error");
+            }
+        });
+        //设置分页控件 
+        dgpageInit('dgkc');
+    }
+
+    function selkc(target) {
+        var thisindex = getRowIndex(target);
+        var kcbh = $('#dgkc').datagrid('getRows')[thisindex]['kcbh'];
+        var pyfx = $('#pyfx').combobox("getValue");
+        $.ajax({
+            type: 'post',
+            dataType: 'json',
+            url: "py_pyjh_addkc",
+            data: { 'kcbh': kcbh, 'pyfx': pyfx },
+            cache: false,
+            success: function (data) {
+                if (data.zt == "1") {
+                    loadFormData();
+                    $.messager.alert("提示", "添加成功");
+                }
+                else if(data.msg){
+                    $.messager.alert("提示", data.msg, "error");
+                }
+                else {
+                    $.messager.alert("提示", "添加失败", "error");
+                }
+            }
+        });
+    }
+
+    function delpyjh(kcbh) {
+        //        var thisindex = getRowIndex(target);
+        //        var kcbh = $('#dg').datagrid('getRows')[thisindex]['kcbh'];
+        $.messager.confirm("提示", "确定要删除？", function (isok) {
+            if (isok) {
+                $.ajax({
+                    type: 'post',
+                    url: "py_pyjh_delkc",
+                    data: { 'kcbh': kcbh },
+                    cache: false,
+                    dataType: "json",
+                    success: function (Data) {
+                        if (Data.sign == "1") {
+                            loadFormData();
+                            $.messager.alert("提示", "删除成功");
+                        }
+                        else {
+                            $.messager.alert("提示", Data.msg, "error");
+                        }
+                    }
+                });
+            }
+        })
+    }
+    function getRowIndex(target) {
+        var tr = $(target).closest('tr.datagrid-row');
+        return parseInt(tr.attr('datagrid-row-index'));
+    }
+</script>
+<div class="Slayout">
+    <div class="container">
+        <div class="layout_box">
+            <div class="Operating_area">
+                当前学位课:<span id="xwk_count"></span>门,<span id="xwk_xf"></span>学分 非学位课:<span id="fxwk_count"></span>门,<span
+                id="fxwk_xf"></span>学分 <span id="zyzdyq" style="color: Red;">本专业最低要求(学位分:<span id="xwxf"></span>
+                总学分:<span id="zxf"></span> 最高学分:<span id="zgxf"></span>)</span>
+                培养方向：<input id="pyfx" type="text" class="easyui-combobox" />
+                <button id="lnksubmit" type="button" class="btn-primary floatright" onclick="dosubmit()" >提交</button>
+				<button id="lnkaddfxwk" type="button" class="btn-primary floatright marginright20" onclick="addfxwk()">添加非学位课</button>
+                <button id="lnksave" type="button" class="btn-primary floatright marginright20" onclick="dosave('0')">保存</button>
+				<div class="clear"></div>
+            </div>
+            <table id="dg">
+            </table>
+            <div id="pyfakc">
+            </div>
+            <div id="w1" class="easyui-window" title="选择课程" data-options="modal:true,closed:true,iconCls:'icon-save'">
+                <table>
+                    <tr>
+                        <td>
+                            所属院系：
+                        </td>
+                        <td>
+                            <input id="searchyx" class="easyui-combobox" />
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            课程编号(名称)：
+                        </td>
+                        <td>
+                            <input id="searchkc" type="text" class="easyui-textbox" />
+                            <a id="lnksearch" href="javascript:void(0)" class="easyui-linkbutton" iconcls="icon-search"
+                                onclick="GetListkc()">查询</a>
+                        </td>
+                    </tr>
+                </table>
+                <table id="dgkc">
+                </table>
+            </div>
+        </div>
+
+        <div class="row-inline">
+            <div class="col-md-12">
+				<div class="panel1 panel1-default">
+					<div class="panel1-head">
+						<h3 class="panel1-title">培养环节</h3>
+					</div>
+					<div id="pyhjlist" class="panel1-body">
+						
+					</div>
+				</div>
+			</div>
+        </div>
+    </div>
+    
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>xswsxk_kb</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<style type="text/css">
+    .elective_info
+    {
+        cursor: pointer;
+    }
+</style>
+<script type="text/javascript">
+
+
+    $(function () {
+//        var isjh = "";
+//        if (isjh=="0") {
+//            $.messager.alert("提示", "导师尚未审核计划！", "error");
+//            return;
+//        }
+        $("#win_xk").window("open").window("center");
+        $.ajax({
+            type: 'post',
+            dataType: 'json',
+            url: "xswsxk_kb_load",
+            data: {},
+            cache: false,
+            success: function (data) {
+                var lxoption = '<option value="">' +
+                    xwknames.title +
+                    '</option>' +
+                    '<option value="1">' +
+                    xwknames.xwk +
+                    '</option>' +
+                    '<option value="0">' +
+                    xwknames.fxwk +
+                    '</option>';
+                $("#xwk").html(lxoption);
+                var yxoption = '<option value="">请选择院系</option>' + getselectstr(data.yx, "xsmc", "xsbh");
+                $("#yxsh").html(yxoption);
+                var jcoption = getselectstr(data.jc, "mc", "id");
+                $("#jc1").html('<option value="">开始节次</option>' + jcoption);
+                $("#jc2").html('<option value="">结束节次</option>' + jcoption);
+                tab_xk("" == "1"?"3":"1");
+            },
+            error: function (e) {
+
+            }
+        });
+        getkb();
+    });
+
+    function add_xfevent(eve) {
+        $(".elective_info").mouseenter(function () {
+            var mbdiv = $("#tip");
+            if (mbdiv.length == 0) {
+                var html = $(this).find(".info_main").text();
+                var cursorDiv = $("<div id='tip'></div>");
+                cursorDiv.append(html);
+                cursorDiv.css({
+                    "position": "absolute",
+                    "display": "none",
+                    "background": "#00A7F7",
+                    "color": "white",
+                    "border-radius": "5px"
+                });
+                $(document.body).append(cursorDiv);
+                var e = window.event;
+                var PclientX = e.clientX;
+                var pclientY = e.clientY;
+                var scrollTop = document.body.scrollTop;
+                var scrollLeft = document.body.scrollLeft;
+                var divH = cursorDiv.css("height");
+                var divwh = cursorDiv.css("width");
+                divH = divH.replace('px', '');
+                divwh = divwh.replace('px', '');
+                var currentHeight = pclientY + scrollTop - divH - 10;
+                var currentWidth = PclientX + scrollLeft - (divwh / 2);
+                _top = currentHeight;
+                _width = currentWidth;
+                cursorDiv.css({ "top": _top, "left": _width });
+                cursorDiv.fadeIn("slow");
+            }
+        });
+        $(".elective_info").mouseleave(function () {
+            var mbdiv = $("#tip");
+            if (mbdiv.length > 0) {
+                mbdiv.fadeOut("slow");
+                mbdiv.remove();
+            }
+        });
+    }
+
+    var index;
+    //    function showlayer() {
+    //        var height = document.getElementById("w1").offsetHeight;
+    //        var width = "440px";
+    //        index=layer.open({
+    //            type: 1,
+    //            title: false,
+    //            area: [width, height],
+    //            content: $('#w1'),
+    //            shade: 0,
+    //            closeBtn: 0,
+    //            move: '#tabs_ul'
+    //        });
+    //    }
+
+    function tabs_arrow() {
+        $('#tabs_sm_content').slideToggle();
+    }
+
+    function getkb() {
+        $.ajax({
+            type: 'post',
+            dataType: 'json',
+            url: "xswsxk_kb_loadkb",
+            data: {},
+            cache: false,
+            success: function (data) {
+                $("#zxf").html(data.zxf);
+                $("#xwxf").html(data.xwxf);
+                $("#fxwxf").html(data.fxwxf);
+                var html = "";
+                $('#kb tbody').empty();
+                $.each(data.rows,
+                    function (i, o) {
+                        var tdhtml = ['', '', '', '', '', '', '', ''];
+                        var tdclass = ['', '', '', '', '', '', '', ''];
+                        var re = /\[/g;
+                        var re1 = /\]/g;
+                        for (var i = 1; i <= 7; i++) {
+                            if (o["z" + i]) {
+                                var kbxx = o["z" + i].replace(re, "<span>").replace(re1, '</span>').replace("##", "");
+                                if (o["z" + i].indexOf("##") > -1)
+                                    c1 = ' class="C_kc_subject C_kc_xuanke"';
+                                else
+                                    c1 = ' class="C_kc_subject"';
+                                tdhtml[i] = '<div ' + c1 + '><p>' + kbxx + '</p></div>';
+                                tdclass[i] = ' class="C_kc_rowspan"';
+                            }
+                        }
+                        html = '<tr>' +
+                            '<td class="C_kc">' +
+                            o.mc +
+                            '</td>' +
+                            '<td ' +
+                            tdclass[1] +
+                            '>' +
+                            tdhtml[1] +
+                            '</td>' +
+                            '<td ' +
+                            tdclass[2] +
+                            '>' +
+                            tdhtml[2] +
+                            '</td>' +
+                            '<td ' +
+                            tdclass[3] +
+                            '>' +
+                            tdhtml[3] +
+                            '</td>' +
+                            '<td ' +
+                            tdclass[4] +
+                            '>' +
+                            tdhtml[4] +
+                            '</td>' +
+                            '<td ' +
+                            tdclass[5] +
+                            '>' +
+                            tdhtml[5] +
+                            '</td>' +
+                            '<td ' +
+                            tdclass[6] +
+                            '>' +
+                            tdhtml[6] +
+                            '</td>' +
+                            '<td ' +
+                            tdclass[7] +
+                            '>' +
+                            tdhtml[7] +
+                            '</td>' +
+                            '</tr>';
+                        $('#kb tbody').append(html);
+                    });
+                var cells = [];
+                for (var i = 0; i <= 7; i++) {
+                    cells.push("z" + i);
+                }
+                mergeCells_table('kb', data, cells);
+                $.each($(".C_kc_subject"),
+                    function (i, o) {
+                        $(o).height($(o).parent().height() - 11);
+                    });
+
+            },
+            error: function (e) {
+
+            }
+        });
+    }
+
+    function tab_xk(tabid) {
+        for (var i = 1; i <= 3; i++) {
+            if (i == tabid) {
+                $("#dxkc" + i).show();
+                $("#tab" + i).attr('class', "current");
+            } else {
+                $("#dxkc" + i).hide();
+                $("#tab" + i).attr('class', "");
+            }
+        }
+        getkclist(tabid);
+        $('#hftabid').val(tabid);
+    }
+
+    function dosearch() {
+        var tabid = $('#hftabid').val();
+        tab_xk(tabid);
+    }
+
+    function getkclist(lb) {
+        var xwk = $("#xwk").val();
+        var zh = $("#zh").val();
+        var jc1 = $("#jc1").val();
+        var jc2 = $("#jc2").val();
+        var yxsh = $("#yxsh").val();
+        var kcbh = $("#kcbh").val();
+        var page = $("#hfpage").val();
+        var rows = $("#hfrows").val();
+        $.ajax({
+            type: 'post',
+            dataType: 'json',
+            url: "xswsxk_kb_list",
+            data: {
+                'lb': lb,
+                'xwk': xwk,
+                'zh': zh,
+                'jc1': jc1,
+                'jc2': jc2,
+                'yxsh': yxsh,
+                'kcbh': kcbh,
+                'page': page,
+                'rows': rows,
+                type: "2"//是否在选课时间
+            },
+            cache: false,
+            success: function (data) {
+                var html = "";
+                var kc = [];
+                if (data) kc = data.kc;
+
+                $.each(kc,
+                    function (i, o) {
+                        var classxwk = '<span class="tag_b">必</span>';
+                        if (o.xwk == "0")
+                            classxwk = '<span class="tag_x">选</span>';
+                        var re1 = /星期/g;
+                        var re2 = /上午/g;
+                        var re3 = /下午/g;
+                        var re4 = /晚上/g;
+                        var sjms = o.sjms.replace(re1, "周").replace(re2, "").replace(re3, "").replace(re4, "") + "节";
+                        var rnrs = 0;
+                        var xkrs = 0;
+                        try {
+                            rnrs = parseInt(o.rnrs);
+                        } catch (e) {
+                        }
+                        try {
+                            xkrs = parseInt(o.xkrs);
+                        } catch (e) {
+                        }
+                        html += '<li>' +
+                            '<div class="elective_info">' +
+                            '    <p class="info_main">' +
+                            classxwk +
+                            o.bjmc +
+                            '<span>[' +
+                            o.ksz +
+                            '-' +
+                            o.jsz +
+                            '周, ' +
+                            sjms +
+                            ']</span><span>[学时' +
+                            o.kczxs +
+                            ', 学分' +
+                            o.kcxf +
+                            ']</span></p>' +
+                            '    <p class="info_sub"><span>教室:</span>' +
+                            o.dz +
+                            '<span class="marginleft15">教师:</span>' +
+                            o.rkjsxm +
+//                            '<span class="marginleft15">容量:</span>' +
+//                            o.xkrs +
+//                            '/' +
+//                            o.rnrs +
+                            '</p>' +
+                            '</div>';
+
+                        if (lb != "3") {
+                            if (o.yxkc == "1") {
+                                if (o.xkfs == "2")
+                                    html += '<div class="elective_btn bg_cancel" onclick=wsxk("0","' +
+                                        o.bjid +
+                                        '")>' +
+                                        '    <span class="btn_bg"></span>' +
+                                        '    <span>退选</span>' +
+                                        '</div>';
+                                else {
+                                    if (o.cjs >0) {
+                                        html += '<div class="elective_btn bg_can" onclick=wsxk("1","' +
+                                            o.bjid +
+                                            '")>' +
+                                            '    <span class="btn_bg"></span>' +
+                                            '    <span>重修</span>' +
+                                            '</div>';
+                                    }
+                                    else {
+                                        html += '<div class="elective_btn bg_cancel" >' + '    <span>已选</span>' + '</div>';
+                                    }
+                                }
+
+                            } else if (xkrs >= rnrs) {
+                                html += '<div class="elective_btn bg_cannot" >' +
+                                    '    <span class="btn_bg"></span>' +
+                                    '    <span>人满</span>' +
+                                    '</div>'
+                            } else if (o.yxkc == "0") {
+                                html += '<div class="elective_btn bg_can" onclick=wsxk("1","' +
+                                    o.bjid +
+                                    '")>' +
+                                    '    <span class="btn_bg"></span>' +
+                                    '    <span>选课</span>' +
+                                    '</div>';
+                            } else if (o.yxkc == "2") {
+                                html += '<div class="elective_btn bg_can" onclick=wsxk("1","' +
+                                    o.bjid +
+                                    '")>' +
+                                    '    <span class="btn_bg"></span>' +
+                                    '    <span>重修</span>' +
+                                    '</div>'
+                            }
+                        } else {
+                            if (o.yxkc == "1") {
+                                if (o.xkfs == "2")
+                                    html += '<div class="elective_btn bg_cancel" onclick=wsxk("0","' +
+                                        o.bjid +
+                                        '")>' +
+                                        '    <span class="btn_bg"></span>' +
+                                        '    <span>退选</span>' +
+                                        '</div>';
+                                else
+                                    html += '<div class="elective_btn bg_cancel" >' + '    <span>已选</span>' + '</div>';
+                            } else if (xkrs >= rnrs) {
+                                html += '<div class="elective_btn bg_cannot" >' +
+                                    '    <span class="btn_bg"></span>' +
+                                    '    <span>人满</span>' +
+                                    '</div>'
+                            } else {
+                                html += '<div class="elective_btn bg_can" onclick=wsxk("1","' +
+                                    o.bjid +
+                                    '")>' +
+                                    '    <span class="btn_bg"></span>' +
+                                    '    <span>选课</span>' +
+                                    '</div>';
+                            }
+                        }
+                        html += '</li>';
+                    });
+                if (lb == "1") {
+                    $("#dxkc1").html(html);
+                    $("#pagediv").hide();
+                } else if (lb == "2") {
+                    $("#dxkc2").html(html);
+                    $("#pagediv").hide();
+                } else if (lb == "3") {
+                    $("#dxkc3").html(html);
+                    $("#pagediv").show();
+                    $("#page").pagination({
+                        total: data.total,
+                        pageSize: 10,
+                        layout: ['links'],
+                        onSelectPage: function (page, rows) {
+                            $("#hfpage").val(page);
+                            $("#hfrows").val(rows);
+                            getkclist(lb);
+                        }
+                    });
+                }
+                add_xfevent();
+            },
+            error: function (e) {
+
+            }
+        });
+    }
+
+    function getselectstr(jsondata, jsontext, jsonvalue) {
+        var selectstr = "";
+        if (jsondata != undefined && jsondata.length > 0) {
+            $.each(jsondata,
+                function (index, item) {
+                    selectstr += "<option value=\"" + item[jsonvalue] + "\">" + item[jsontext] + "</option>";
+                });
+        }
+        return selectstr;
+    }
+
+    function wsxk(lb, bjid) {
+        var yzm = $("#xkyzm").val();
+        var cssvalue = $('#spxkyzm').css('display');
+        //alert(value); return;
+        //if (lb == "1") {
+        //    if (yzm == "") {
+        //        $.messager.alert("提示", "选课时候请输入验证码！", "error");
+        //        return;
+        //    }
+        //}
+        $.ajax({
+            type: 'post',
+            dataType: "json", //返回json格式的数据
+            url: "xswsxk_kb_xk",
+            data: { 'lb': lb, 'bjid': bjid, 'xkyzm': yzm },
+            cache: false,
+            success: function (json) {
+                if (json.msg) {
+                    $.messager.alert("提示", "选课失败:" + json.msg, "error");
+                } else {
+                    dosearch();
+                    getkb();
+                }
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+            }
+        });
+    }
+
+    function lookxz() {
+        $("#win").window({
+            title: "选课须知",
+            width: 600, minimizable: false, collapsible: false, maximizable: false
+        }).window("open").window("center");
+    }
+
+     function changecode() {
+         $('#imgVerifi').attr('src', '/Home/VerificationCode' + '?t=' + new Date().getTime() +'&codetype=xkyzm');
+    }
+    $(function () {
+        changecode();
+    });
+</script>
+<div class="Slayout">
+    <div class="container">
+        <div class="layout_box">
+            <div class="alert_area">
+                <p>
+                    <b>已选总学分</b>: <span id="zxf"></span>(必修学分<span id="xwxf"></span>，选修学分<span id="fxwxf"></span>)</p>
+                <a href="javascript:void();" onclick="lookxz()" class="alert_link">选课须知</a>
+            </div>
+            <div class="curriculum_box">
+                <table id="kb" class="curriculum">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">
+                                课次
+                            </th>
+                            <th style="width: 14%;">
+                                <span>星期一</span> <span class="English">Monday</span>
+                            </th>
+                            <th style="width: 14%;">
+                                <span>星期二</span> <span class="English">Tuesday</span>
+                            </th>
+                            <th style="width: 14%;">
+                                <span>星期三</span> <span class="English">Wednesday</span>
+                            </th>
+                            <th style="width: 13%;">
+                                <span>星期四</span> <span class="English">Thursday</span>
+                            </th>
+                            <th style="width: 13%;">
+                                <span>星期五</span> <span class="English">Friday</span>
+                            </th>
+                            <th style="width: 13%;">
+                                <span>星期六</span> <span class="English">Saturday</span>
+                            </th>
+                            <th>
+                                <span>星期日</span> <span class="English">Sunday</span>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+                <div class="color_block">
+                    <span><span class="gary_block"></span>人工安排课程</span> <span><span class="blue_block"></span>
+                        自己选课的课程</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="w1" class="easyui-draggable elective" data-options="handle:'#tabs_title'">
+    <div id="tabs_title" class="tabs_title tabs_sm_title">
+        <ul id="tabs_ul">
+                <li id="tab1" class="current"><a href="javascript:void(0)" onclick="tab_xk(1)">公共课</a></li>
+                <li id="tab2"><a href="javascript:void(0)" onclick="tab_xk(2)">专业课</a></li>
+            
+        </ul>
+        <a class="tabs_arrow" href="javascript:void(0)" onclick="tabs_arrow()"></a>
+    </div>
+    <div id="tabs_sm_content" class="tabs_sm_content">
+        <div class="Operating_area">
+            <select id="xwk" class="form-control form-control-small select width120  marginbottom20">
+                <option>选课类型</option>
+                <option>必修课</option>
+                <option>选修课</option>
+            </select>
+            <select id="zh" class="form-control form-control-small select width120  marginbottom20">
+                <option value="">请选择星期</option>
+                <option value="1">星期一</option>
+                <option value="2">星期二</option>
+                <option value="3">星期三</option>
+                <option value="4">星期四</option>
+                <option value="5">星期五</option>
+                <option value="6">星期六</option>
+                <option value="7">星期日</option>
+            </select>
+            <select id="jc1" class="form-control form-control-small select width90  marginbottom20">
+            </select>
+            <select id="jc2" class="form-control form-control-small select width90  marginbottom20">
+                <option value="">结束节次</option>
+            </select>
+            <select id="yxsh" class="form-control form-control-small select width120  ">
+            </select>
+            <input id="kcbh" type="text" class="form-control form-control-small width170 " placeholder="请输入课程编号(名称)" />
+            <input id="hftabid" type="hidden" value="1" />
+            <button type="button" class="btn-primary btn-small" onclick="dosearch()">
+                查询
+            </button>
+        </div>
+        <span id="spxkyzm" style="display:none">
+            <img id="imgVerifi" title="单击换一张验证码" class="inputimage" onclick="changecode()" style="margin:2px 0px 0px 2px" />
+            <input id="xkyzm" type="text" class="form-control form-control-small width170 " placeholder="请输入验证码" style="position:relative;top:-17px;width:90px;height:30px;font-size:15px" />
+        </span>
+        <ul id="dxkc1" class="elective_view">
+        </ul>
+        <ul id="dxkc2" class="elective_view" style="display: none;">
+        </ul>
+        <ul id="dxkc3" class="elective_view" style="display: none;">
+        </ul>
+        <input id="hfpage" type="hidden" value="1" />
+        <input id="hfrows" type="hidden" value="10" />
+        <div id="pagediv" style="padding: 5px 0px 5px 10px; border-top: 1px solid #E7EEF0;">
+            <div id="page" class="easyui-pagination">
+            </div>
+        </div>
+    </div>
+</div>
+<div id="win" class="easyui-window" title="选课须知" data-options="modal:true,closed:true,width: 600, minimizable: false, collapsible: false, maximizable: false">
+    <div>
+        
+        1. 课程选课<br />
+        （1）在校研究生可使用校园网直接登陆研究生院网站（https://graduate.buct.edu.cn/），点击“研究生管理系统(学生端)”图标，登陆研究生管理系统进行个人培养计划制定，并经导师审核同意后方可进行网上选课。未能按时返校或不在校研究生需登录电脑端VPN软件后，按照上述步骤完成个人培养计划制定、审核与选课。
+        （注：个人培养计划制定与审核完成后方可进行选课，且在选课时无法选择个人培养计划中没有的课程。本科保研学生在大四期间已经修过的课程不需进行网上选课，但需将其添加进个人培养计划。）<br />
+        VPN软件下载及使用说明详见：https://vpn.buct.edu.cn/）  <br />
+        （2）2023-2024学年秋季学期集中选课时间：2023级专业学位硕士研究生(含全日制、非全日制)的选课时间为9月5日10:00~9月10日12:00，2023级其他类型研究生及非2023级研究生的选课时间为9月8日8:00~9月10日12:00。（注：选课完成后需及时进入系统核对个人课表与选课结果是否一致。全日制专业学位硕士研究生的课程学习原则上须在第一学期内全部完成。）
+        Eng52201《研究生英语写作》（学硕必修英语课程）、Eng52202《研究生专业英语》（专硕必修英语课程）网上免修申请时间为9月5日10:00~9月10日12:00，选课时间为9月11日8:00~9月15日12:00。<br />
+        （注：硕士研究生仅可在新生入学第一学期进行英语免修申请，审核通过的学生不需要再进行英语课程选课。秋季学期仅在东校区开设《研究生英语写作》，春季学期将在东校区及昌平校区开设《研究生英语写作》。）
+        2023级博士新生无必修英语课程，不需要进行英语课程免修申请。<br />
+        （3）集中选课期间可随时进行课程退补选，集中选课时间结束后可在每门课程的开课两周内进行退补选。例：第2周周一至周日开课的课程，退补选时段为第2周周一00:00至第3周周日24:00。<br />
+        （4）选课及退课完成后需及时进入系统核对个人课表与选课结果是否一致。<br />
+        2. 课程教学<br />
+        （1）本学期研究生课程自第二周（9月11日起）开课。<br />
+        （2）已在系统选修的课程必须参加课程考核。不参加考核或中途放弃，成绩为F，以零分记，不能获得学分；未选课程获得的成绩无效。<br />
+        （3）申请重修及办理过缓考的课程，学生必须重新进行网上选课进行课程学习，并参加考试。重修条件为课程成绩C+以下（含），高于该成绩或该课程不在本学期开课一览表中不能进行重修。<br />
+        （4）学生需在所选课程结束一个月内对该课程进行课堂教学质量网上评教，不在规定时间内参加研究生课堂教学质量网上评价，将影响该门课程成绩查询。<br />
+        （5）研究生毕业条件中关于课程成绩的规定：总GPA、学位课GPA均需达到2.50以上；总学分、学位课学分均需达到本学科培养方案要求；学位课课程若为F，需进行重修，不允许放弃或更换，重修通过方可申请毕业。<br />
+
+    </div>
+</div>
+<div id="win_xk" class="easyui-window" title="选课时间通知" data-options="width:350,modal:true,closed:true,minimizable: false, collapsible: false, maximizable: false">
+    <div>
+        免修选课时间：2026-09-01 09:00—2029-09-11 09:00
+    </div>
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

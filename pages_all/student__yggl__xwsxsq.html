@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>xwsxsq</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+ <script type="text/javascript" src="/Scripts/layer/layer.js"></script>
+<script type="text/javascript">
+    $(function () {
+        GetList();
+    });
+
+    function GetList() {
+        var search = document.location.search;
+        $('#dg').datagrid({
+            width: 'auto',
+            height: 'auto',
+            scrollbarSize: 0,
+            url: 'xwsxsq_list',
+            queryParams: {},
+            columns: [[
+                    { field: 'xh', title: '学号', width: 90 },
+                    { field: 'xm', title: '姓名', width: 90 },
+                    { field: 'xsmc', title: '学院', width: 90 },
+                    { field: 'zymc', title: '专业', width: 90 },
+                    { field: 'wcsy', title: '外出事由', width: 150 },
+                    { field: 'dwmc', title: '单位/基地名称', width: 150 },
+                    { field: 'dwlxr', title: '基地/单位联系人', width: 150 },
+                    { field: 'dwlxfs', title: '基地/单位联系方式', width: 150 },
+                    { field: 'shlmc', title: '审核状况', width: 80 },
+                    { field: 'xg', title: '修改', width: 60, align: 'center',
+                        formatter: function (value, row, index) {
+                            var e = '<a class="l-btn l-btn-small l-btn-plain" href="javascript:void(0)" onclick="btn_edit(' + row.id + ')">修改</a> ';
+                            if (row.dqzt == "" || row.dqzt == undefined)
+                                e += '<a class="l-btn l-btn-small l-btn-plain" href="javascript:void(0)" onclick="delbyid(' + row.id + ')">删除</a> ';
+                            return e;
+                        }
+                    }
+            ]],
+
+
+            nowrap: false,
+            fitColumns: true,
+            striped: true,
+            rownumbers: false, //行号
+            singleSelect: true, //是否单选
+            onLoadError: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+            },
+            onLoadSuccess: function (data) {
+
+            }
+        });
+    }
+
+    function delbyid(id) {
+        $.messager.confirm('提示', '确定要删除？', function (isok) {
+            if (isok) {
+                $.ajax({
+                    type: 'post',
+                    dataType: "json", //返回json格式的数据
+                    url: "xwsxsq_del",
+                    cache: false,
+                    data: { "id": id },
+                    success: function (data) {
+                        if (data.zt == "1") {
+                            reload();
+                            $.messager.alert("提示", "已删除！", "info");
+                        }
+                        else {
+                            $.messager.alert("提示", data.msg, "error");
+                        }
+                    },
+                    error: function (e) {
+                        var msg = responseTextTitle(e.responseText);
+                        $.messager.alert("提示", msg, "error");
+                    }
+                });
+            }
+        });
+
+    }
+
+    function reload() {
+
+        $("#dg").datagrid('reload');
+    }
+
+    function btn_edit(id) {
+        var url ="/student/yggl/xwsxsq_edit?id=" + id;
+        var height = $(window).height() * 0.95+"px";
+        var width = $(window).width() * 0.95 + "px";
+        parent.layer.open({
+            type: 2,
+            title: "校外实习申请",
+            area: [width, height],
+            //skin: 'layui-layer-rim', //加上边框
+            content: [url],
+            resize: true,
+            maxmin: true,
+            shadeClose: false,
+            zIndex:200,
+            closeBtn: 1,
+            end: function () {
+                reload();
+            }
+        });
+    }
+
+    function deleteById() {
+        $.messager.confirm("提示", "确定要删除？", function (booltip) {
+            if (booltip) {
+                var rows = $("#dg").datagrid('getChecked');
+                if (rows.length == 0) {
+                    $.messager.alert('提示', '请选择要删除的数据！', 'info');
+                    return;
+                }
+
+                var isdelete = true;
+                $.each(rows, function (index, row) {
+                    if (row.status == 1) {
+                        isdelete = false;
+                    }
+                })
+
+                if (!isdelete) {
+                    $.messager.alert("提示", "选择中存在申请已审核，无法删除！", "info");
+                    return;
+                }
+                var array = [];
+                $.each(rows, function (index, item) {
+                    array.push(item.id);
+                });
+                var idstr = array.join(',');
+                $.ajax({
+                    type: "post",
+                    url: "xwsxsq_del",
+                    data: { ids: idstr },
+                    dataType: "json",
+                    success: function (data) {
+                        if (data.flag == "1") {
+                            reload();
+                            $.messager.alert("提示", "删除成功！", "info");
+                        }
+                        else {
+                            $.messager.alert("提示", data.msg, "info");
+                        }
+                    }
+                })
+            }
+        })
+    }
+</script>
+<div class="Slayout">
+    <div class="container">
+        <div class="layout_box">
+            <div class="Operating_area">
+                <button id="lnksubmit" type="button" class="btn-primary floatright" onclick="btn_edit('')">新增</button>
+            </div>
+            <table id="dg">
+            </table>
+        </div>
+    </div>
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

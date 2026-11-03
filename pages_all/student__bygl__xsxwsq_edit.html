@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title></title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript">
+
+    var dqzt = "";
+
+    $(function () {
+        var id = $("#hfxwid").val();
+
+        if ("0" != "1") {
+            $.messager.alert("提示", "当前时间无法进行学位申请！", "error");
+            $('#btnsave').hide();
+            $('#btnsubmit').hide();
+        return;
+        }
+        $.ajax({
+            type: 'get',
+            dataType: 'json',
+            url: 'bindbypc',
+            cache: false,
+            success: function (json) {
+                $('#pcdm1').combobox({
+                    width: 150,
+                    data: json.pclist,
+                    editable: true,
+                    valueField: 'pcdm',
+                    textField: 'pcmc',
+                    panelHeight: 'auto'
+                });
+
+                if (json.dqpc != "") {
+                    $('#pcdm1').combobox('enable');
+                    $('#pcdm1').combobox("setValue", json.dqpc);
+                    $('#pcdm1').combobox('disable');
+                } else {
+                    //$('#pcdm').combobox('enable');
+                }
+                pageload();
+                pageload_tjyz();
+            }
+        });
+        //pageload();
+    });
+
+    function pageload() {
+        var search = document.location.search;
+        var id = $("#hfxwid").val();
+        if (id != "" && id != "0")
+            search = "?id=" + id;
+        console.log('search:'+search);
+        $.ajax({
+            type: 'get',
+            dataType: 'json',
+            url: "xsxwsq_edit_load" + search,
+            data: {},
+            cache: false,
+            success: function (data) {
+
+                var comboboxs = $(".easyui-combobox");
+                $.each(comboboxs, function (i, o) {
+                    var tabletype = $(o).attr("tabletype");
+                    try {
+                        $(o).combobox({
+                            width: 200,
+                            data: data.dropdic[tabletype]["data"],
+                            editable: false,
+                            valueField: 'dm',
+                            textField: 'dmmc'
+                        });
+                    } catch (ex) { }
+                });
+
+                var zydm = data.xjinfo.zydm;
+                $("#zydm").textbox('setValue',zydm);
+
+                var sfzh = data.xjinfo.sfzh;
+                $("#sfzh").textbox('setValue', sfzh);
+
+                //var xwlbm = data.xjinfo.xwlbm;
+                //$("#xwlbm").textbox('setValue', xwlbm);
+                $('#ff').form('load', data.xjinfo);
+
+
+                if (data.zt && data.zt == "0") {
+                    $.messager.alert('提示', data.msg, 'info', function () {
+                        document.location = "xsdbsq";
+                    });
+                }
+                if (data.shl) {
+                    if (data.shl.dqzt != "" && data.shl.dqzt_shlxx.sfkyxg != "1") {
+                        $("#btnsubmit").hide();
+                        $("#btnsave").hide();
+                        dqzt = data.shl.dqzt;
+                    }
+                    
+                }
+                if (data.dbxx) {
+                    var dbxx = data.dbxx;
+                    $('#hfid').val(dbxx.id);
+
+                    //学位申请的题目读取答辩的题目
+                    //$("#txtxwlwtm").textbox('setValue', dbxx.lwtm);
+                    //$("#txtlwzys").numberbox('setValue', dbxx.lwzys);
+                    //$("#txtckwxzs").numberbox('setValue', dbxx.ckwxzs);
+                    $("#txtlwztc").textbox('setValue', dbxx.lwztc);
+                    $("#txtlwzy").textbox('setValue', dbxx.lwzy);
+                    $("#txtywlwtm").textbox('setValue', dbxx.ywlwtm);
+                    $("#txtywztc").textbox('setValue', dbxx.ywztc);
+                    $("#txtywzy").textbox('setValue', dbxx.ywzy);
+                    //$('#ff').form('load', dbxx);
+                }
+
+                $('#lwlx').combobox('setValue', data.lwxxinfo.lwlx);
+                $('#lwxtly').combobox('setValue', data.lwxxinfo.lwxtly);
+                $('#syxxlwzxyz').combobox('setValue', data.lwxxinfo.syxxlwzxyz);
+
+                if (data.xwsqxx) {
+                    var xwsqxx = data.xwsqxx;
+                    console.log('data.xwsqxx:'+xwsqxx.id);
+                    $("#hfxwid").val(xwsqxx.id);
+                    if (dqzt != "") {
+                        $('#pcdm1').combobox('enable');
+                        $('#pcdm1').combobox("setValue", xwsqxx.pcdm);
+                        $('#pcdm1').combobox('disable');
+                    }
+                    $("#txtxwlwtm").textbox('setValue', xwsqxx.xwlwtm);
+                    //$("#txtlwzy").textbox('setValue', xwsqxx.ywzy);
+                    //$("#xtrq").textbox('setValue', xwsqxx.xtrq);
+                    $("#wcrq").textbox('setValue', xwsqxx.wcrq);
+                    $("#zswz").textbox('setValue', xwsqxx.zswz);
+                    $("#yjfx").textbox('setValue', xwsqxx.yjfx);
+
+                    $("#zwzy").textbox('setValue', xwsqxx.zwzy);
+                    $("#cxd1").textbox('setValue', xwsqxx.cxd1);
+                    $("#cxd2").textbox('setValue', xwsqxx.cxd2);
+                    $("#cxd3").textbox('setValue', xwsqxx.cxd3);
+                    $("#cxd4").textbox('setValue', xwsqxx.cxd4);
+                    $("#cxd5").textbox('setValue', xwsqxx.cxd5);
+
+                    $("#txtdsAdvise").textbox('setValue', xwsqxx.dsAdvise);
+
+                    $("[name='yxlwshtl'][value='" + xwsqxx.yxlwshtl + "'").prop("checked", true);
+
+                    if ($("#qydsxm").length > 0) {
+                        $("#qydsxm").textbox('setValue', xwsqxx.qydsxm);
+                        $("#qydsyx").textbox('setValue', xwsqxx.qydsyx);
+                        $("#qydsdw").textbox('setValue', xwsqxx.qydsdw);
+                        $("#qydsdwtyxydm").textbox('setValue', xwsqxx.qydsdwtyxydm);
+                    }
+                    $("#chk_lwmqr").prop("checked", xwsqxx.lwmqr == "1");
+                    if (xwsqxx.sytkqk == "1" || xwsqxx.sytkqk == "0")
+                        $("[name='sytkqk'][value='" + xwsqxx.sytkqk + "']").prop("checked", true);
+                    if (xwsqxx.sfzgbk == "1" || xwsqxx.sfzgbk == "0")
+                        $("[name='sfzgbk'][value='" + xwsqxx.sfzgbk + "']").prop("checked", true);
+
+                    //                    $("#lwzy").textbox('setValue', xwsqxx.lwzy);   //答辩里有了
+                }
+
+                if (data.shjl) {
+                    shlxx(data.shjl)
+                }
+            }
+        });
+
+    }
+
+    function pageload_tjyz() {
+        var search = document.location.search;
+        var id = $("#hfxwid").val();
+        if (id != "" && id != "0")
+            search = "?id=" + id;
+        $.ajax({
+            type: 'post',
+            dataType: 'json',
+            url: 'xsxwsq_edit_sqtj' + search,
+            data: {},
+            cache: false,
+            success: function (data) {
+                //if (data.zt == "0") {
+                //    //关闭 保存 提交按钮
+                //    $("#btnsave").hide();
+                //    $("#btnsubmit").hide();
+                //    $("#btnprint").hide();
+                //    $.messager.alert("提示", data.msg, "info", function () {
+                //        //document.location = 'xsdbsq_edit';
+                //    })
+                //}
+            },
+            error: function (e) {
+                var msg = responseTextTitle(e.responseText);
+                $.messager.alert("提示", msg, "error");
+            }
+
+        });
+
+    }
+
+    function print_word() {
+        var id = $("#hfxwid").val();
+        if (id == "" || id == "0") {
+            $.messager.alert("提示", "未保存，无法打印！", "error");
+            return;
+        }
+        $.post("xsxwsq_edit_dy", { "id": id, "sfcheck": "1" }, function (data) {
+            if (data.sign == "1") {
+                var form = $("<form action='xsxwsq_edit_dy'><input type='hidden' value='" + id + "' name='id'/></form>");
+                $("body").append(form);
+                form.submit();
+            }
+            else {
+                $.messager.alert("提示", data.msg, "error");
+            }
+        }, "json")
+    }
+
+    function shlxx(shl) {
+        var html = "";
+        var shz = true; //审核中
+        $.each(shl, function (i, o) {
+            html += '<li class="step_sm_done">';
+            if (o.shljb == "0") {
+                if (o.shsj != "")
+                    html += '<div class="step_sm_item step_sm_success"><span class="name">' + o.shlmc + '</span> <span class="time">' + o.shsj + '</span>';
+                else {
+                    shz = false;
+                    html += '<div class="step_sm_item step_sm_future"><span class="name">' + o.shlmc + '</span> <span class="time">等待提交…</span>';
+                }
+            }
+            else {
+                if (o.shsj != "")
+                    html += '<div class="step_sm_item step_sm_success"><span class="name">' + o.shlmc + '</span> <span class="time">' + o.shsj + '</span>';
+                else {
+                    if (shz) {
+                        html += '<div class="step_sm_item step_sm_processing"><span class="name">' + o.shlmc + '</span> <span class="time">审核中…</span>';
+                        shz = false;
+                    } else {
+                        html += '<div class="step_sm_item step_sm_future"><span class="name">' + o.shlmc + '</span> <span class="time">等待审核…</span>';
+                    }
+                }
+            }
+            html += '      </div>' +
+                '  </li>';
+        })
+        $("#step_sm").html(html);
+    }
+
+
+    function xwsq_save(zt) {
+        //pageloadms("正在保存,请稍候。。。");
+        if ($("#ff").form('enableValidation').form('validate')) {
+            $('#pcdm1').combobox('enable');
+            var info = $('#ff').serializeObject();
+            info.id = info.xwid;
+
+            if (info.id == "") {
+                info.id = "0";
+            }
+
+            info.pcdm = $('#pcdm1').combobox('getValue');
+            //info.xtrq = $('#xtrq').datebox('getValue');
+            info.wcrq = $('#wcrq').datebox('getValue');
+            info.zswz = $('#zswz').numberbox('getValue');
+            info.xwlwtm = $('#txtxwlwtm').textbox('getValue');
+
+            //获取终版论文信息
+
+            //info.lwzys = $('#txtlwzys').numberbox('getValue');
+            //info.ckwxzs = $('#txtckwxzs').numberbox('getValue');
+            info.lwztc = $('#txtlwztc').textbox('getValue');
+            info.lwzy = $('#txtlwzy').textbox('getValue');
+            info.ywlwtm = $('#txtywlwtm').textbox('getValue');
+            info.ywztc = $('#txtywztc').textbox('getValue');
+            info.ywzy = $('#txtywzy').textbox('getValue');
+            var yjfx = $('#yjfx').textbox('getValue');
+
+
+         var zwzy = $('#zwzy').textbox('getValue');
+         var cxd1 = $('#cxd1').textbox('getValue');
+         var cxd2 = $('#cxd2').textbox('getValue');
+         var cxd3 = $('#cxd3').textbox('getValue');
+         var cxd4 = $('#cxd4').textbox('getValue');
+         var cxd5 = $('#cxd5').textbox('getValue');
+            
+
+           
+            info.gbm = $("#gbm").combobox("getValue");
+            if (info.gbm == "") {
+                $.messager.alert("提示", "请选择国家!", "info");
+                return;
+            }
+
+            info.mzm = $("#mzm").combobox("getValue");
+            if (info.mzm == "") {
+                $.messager.alert("提示", "请选择民族!", "info");
+                return;
+            }
+
+            info.zjlx = $("#zjlx").combobox("getValue");
+            if (info.zjlx == "") {
+                $.messager.alert("提示", "请选择证件类型!", "info");
+                return;
+            }
+
+            info.lwlx = $("#lwlx").combobox("getValue");
+            info.lwxtly = $("#lwxtly").combobox("getValue");
+            info.syxxlwzxyz = $("#syxxlwzxyz").combobox("getValue");
+            if (info.lwlx == "") {
+                $.messager.alert("提示", "论文类型不能为空!", "info");
+                return;
+            }
+            if (info.lwxtly == "") {
+                $.messager.alert("提示", "题目来源不能为空!", "info");
+                return;
+            }
+            if (info.syxxlwzxyz == "") {
+                $.messager.alert("提示", "论文撰写语种不能为空!", "info");
+                return;
+            }
+
+            if (cxd1 == "") {
+                $.messager.alert("提示", "创新点1不能为空!", "info");
+                return;
+            }
+            if (cxd2 == "") {
+                $.messager.alert("提示", "创新点2不能为空!", "info");
+                return;
+            }
+
+            if (cxd1 && cxd1.length > 300) {
+                $.messager.alert("提示", `创新点1字数不能超过300!\n(当前${cxd1.length})`, "info");
+                return;
+            }
+            if (cxd2 && cxd2.length > 300) {
+                $.messager.alert("提示", `创新点2字数不能超过300!\n(当前${cxd2.length})`, "info");
+                return;
+            }
+            if (cxd3 && cxd3.length > 300) {
+                $.messager.alert("提示", `创新点3字数不能超过300!\n(当前${cxd3.length})`, "info");
+                return;
+            }
+            if (cxd4 && cxd4.length > 300) {
+                $.messager.alert("提示", `创新点4字数不能超过300!\n(当前${cxd4.length})`, "info");
+                return;
+            }
+            if (cxd5 && cxd5.length > 300) {
+                $.messager.alert("提示", `创新点5字数不能超过300!\n(当前${cxd5.length})`, "info");
+                return;
+            }
+
+
+
+
+
+
+            var tsxx = "保存";
+            if (zt == "0")
+                tsxx = "提交";
+            var yxlwshtl = $("[name = 'yxlwshtl']:checked").val();
+            if (yxlwshtl == "" || yxlwshtl == undefined) {
+                $.messager.alert("提示", "请选择是否优秀论文上会讨论!", "info");
+                return;
+            }
+            //企业导师信息（专硕/专博）
+            if ($("#qydsxm").length > 0) {
+                info.qydsxm = $("#qydsxm").textbox("getValue");
+                info.qydsyx = $("#qydsyx").textbox("getValue");
+                info.qydsdw = $("#qydsdw").textbox("getValue");
+                info.qydsdwtyxydm = $("#qydsdwtyxydm").textbox("getValue");
+            }
+            //论文材料确认、使用授权声明勾选情况
+            info.lwmqr = $("#chk_lwmqr").is(":checked") ? "1" : "0";
+            var sytkqk = $("[name='sytkqk']:checked").val();
+            if (sytkqk == "" || sytkqk == undefined) {
+                $.messager.alert("提示", "请选择学位论文中的使用授权声明（同意授权/不同意授权）!", "info");
+                return;
+            }
+            var sfzgbk = $("[name='sfzgbk']:checked").val();
+            if (sfzgbk == "" || sfzgbk == undefined) {
+                $.messager.alert("提示", "请选择学位论文是否暂不公开（暂不公开/非暂不公开）!", "info");
+                return;
+            }
+            info.sytkqk = sytkqk;
+            info.sfzgbk = sfzgbk;
+            //提交时必须确认论文材料完整，未确认只能保存
+            if (zt == "0" && !$("#chk_lwmqr").is(":checked")) {
+                $.messager.alert("提示", "论文中必须包含签字、填写、勾选完整的封面、数据集、授权页、答辩委员会决议，请勾选确认后再提交!", "info");
+                return;
+            }
+            var jsonObject = JSON.stringify(info);
+            $('#pcdm1').combobox('disable');
+            var obj = {};
+            dbid = $('#hfid').val();
+            var jsondbid = JSON.stringify(obj);
+            
+            $("#ff").ajaxSubmit({
+                type: 'post',
+                url: "xsxwsq_edit_save",
+                dataType: "json",
+                data: { 'json': jsonObject, 'zt': zt, 'yxlwshtl': yxlwshtl, 'dbid': dbid, 'yjfx': yjfx, zwzy: 'zwzy', 'cxd1': cxd1, 'cxd2': cxd2, 'cxd3': cxd3, 'cxd4': cxd4, 'cxd5': cxd5 },
+                //data: { 'json': jsonObject, 'zt': zt,  'dbid': obj.dbid },
+                cache: false,
+                success: function (json) {
+                    if (json.zt != "1") {
+                        $.messager.alert("提示", json.msg, "error");
+                        //dispageload();
+                    }
+                    else if (json.zt == "1") {
+
+                        console.log('json:' + json.id);
+                        $("#hfxwid").val(json.id);
+                        $.messager.alert("提示", tsxx + "成功");
+                        pageload();
+                        //dispageload();
+                    }
+                },
+                error: function (e) {
+                    var msg = responseTextTitle(e.responseText); $.messager.alert("提示", msg, "error");
+                }
+            });
+        }
+    }
+
+    function scxwlw_down(type) {
+        var dbid = $("#hfid").val();
+        $.post("scxwlw_down", { "id": dbid, "type": type, "sfck": "1" }, function (data) {
+            if (data.sign == "1") {
+                var form = $("<form action='scxwlw_down' method='post'></form>");
+                var param_id = $("<input type='hidden' value='" + dbid + "' name='id'/>");
+                var param_type = $("<input type='hidden' value='" + type + "' name='type'/>");
+                form.append(param_id);
+                form.append(param_type);
+                $("body").append(form);
+                form.submit();
+            }
+            else {
+                $.messager.alert("提示", data.msg, "error");
+            }
+        }, "json")
+    }
+
+
+</script>
+<div class="Slayout">
+    <div class="container">
+        <div class="header_area">
+            <div class="step_sm_view">
+                <ul id="step_sm" class="step_sm">
+                </ul>
+            </div>
+            
+            <button id="btnsubmit" type="button" class="btn-primary floatright marginright20" onclick="xwsq_save('0')">
+                提交
+            </button>
+            <button id="btnsave" type="button" class="btn-primary floatright marginright20" onclick="xwsq_save()">
+                保存
+            </button>
+
+        </div>
+        <div class="block">
+            <div class="block-box">
+                <form id="ff">
+                    <table cellpadding="0" cellspacing="0" class="basictable">
+
+                        
+                        <tr>
+                            <td style="width: 150px; text-align: right" class="bg">
+                                批次
+                            </td>
+                            <td>
+                                <select id="pcdm1" name="pcdm" style="width:150px" disabled>
+                                </select>
+                            </td>
+                            
+                        </tr>
+
+
+                        <tr>
+                            <td class="bg">
+                                国家或地区：
+                            </td>
+                            <td>
+                                <input id="gbm" name="gbm" class="easyui-combobox" tabletype="gbm" validType="comboxValidate['gbm','请选择']" />
+                            </td>
+                            <td class="bg">
+                                民族：
+                            </td>
+                            <td>
+                                <input id="mzm" name="mzm" class="easyui-combobox" tabletype="mzm" />
+                            </td>
+
+                        </tr>
+
+
+                        <tr>
+                            <td class="bg">
+                                身份证件类型：
+                            </td>
+                            <td>
+                                <input id="zjlx" name="zjlx" class="easyui-combobox" tabletype="zjlxhdxx" validType="comboxValidate['zjlx','请选择']" />
+                            </td>
+                            <td class="bg">
+                                证件号码：
+                            </td>
+                            <td>
+                                <input id="sfzh" name="sfzh" class="easyui-textbox" data-options="required:true,width:'200'" disabled="disabled" />
+                            </td>
+                        </tr>
+
+
+                        <tr>
+                            <td class="bg">
+                                专业代码：
+                            </td>
+                            <td>
+                                <input id="zydm" name="zydm" type="text" class="easyui-textbox" disabled="disabled" style="width:200px;" />
+                            </td>
+
+                            <td class="bg">
+                                学位类别码：
+                            </td>
+                            <td>
+                                <input id="xwlbm" name="xwlbm" class="easyui-combobox" tabletype="xwlbm" disabled="disabled" />
+                            </td>
+                        </tr>
+
+
+
+
+                        <tr>
+                            <td class="bg">
+                                学位论文题目：
+                            </td>
+                            <td colspan="3">
+                                <input id="hfxwid" name="xwid" type="hidden" value="0" />
+                                <input id="hfid" name="id" type="hidden" value="" />
+                                <input id="txtxwlwtm" name="xwlwtm" type="text" class="easyui-textbox" style="width: 80%"
+                                       data-options="required:true,missingMessage:'[学位论文题目不能为空]'" validtype='ValidateLength["400"]'
+                                       invalidmessage="学位论文题目限制为400字符！" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                研究方向（不可与学科/专业名称一致）：
+                            </td>
+                            <td>
+                                <input id="yjfx" name="yjfx" type="text" class="easyui-textbox" style="width: 80%" data-options="required:true" />
+                            </td>
+
+                            <td class="bg">
+                                论文撰写语种：
+                            </td>
+                            <td style="border-bottom:0px;">
+                                <input id="syxxlwzxyz" name="syxxlwzxyz" style="width: 200px" class="easyui-combobox" tabletype="syxxlwzxyz" />
+
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                创新点1：
+                                <br /><span style="font-size:12px;color:#808080">(限300字)</span>
+                            </td>
+                            <td>
+                                <input id="cxd1" name="cxd1" type="text" class="easyui-textbox" style="width: 50%" data-options="required:true" />
+                            </td>
+                            <td class="bg">
+                                创新点2：
+                                <br /><span style="font-size:12px;color:#808080">(限300字)</span>
+                            </td>
+                            <td>
+                                <input id="cxd2" name="cxd2" type="text" class="easyui-textbox" style="width: 50%" data-options="required:true" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                创新点3：
+                                <br /><span style="font-size:12px;color:#808080">(限300字)</span>
+                            </td>
+                            <td>
+                                <input id="cxd3" name="cxd3" type="text" class="easyui-textbox" style="width: 50% " />
+                            </td>
+                            <td class="bg">
+                                创新点4：
+                                <br /><span style="font-size:12px;color:#808080">(限300字)</span>
+                            </td>
+                            <td>
+                                <input id="cxd4" name="cxd4" type="text" class="easyui-textbox" style="width: 50%" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                创新点5：
+                                <br /><span style="font-size:12px;color:#808080">(限300字)</span>
+                            </td>
+                            <td>
+                                <input id="cxd5" name="cxd5" type="text" class="easyui-textbox" style="width: 50%" />
+                            </td>
+
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                论文类型：
+                            </td>
+                            <td style="border-bottom:0px;">
+                                <input id="lwlx" name="lwlx" style="width: 200px" class="easyui-combobox" tabletype="lwlx" />
+                            </td>
+                            <td class="bg">
+                                题目来源：
+                            </td>
+                            <td style="border-bottom:0px;">
+                                <input id="lwxtly" name="lwxtly" style="width: 200px" class="easyui-combobox" tabletype="lwxtly" />
+
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td style="width: 150px; text-align: right" class="bg">
+                                完成日期：
+                            </td>
+                            <td>
+                                <input id="wcrq" name="wcrq" type="text" class="easyui-datebox" style="width: 150px"
+                                       data-options="required:true" />
+                            </td>
+                            <td style="width: 150px; text-align: right" class="bg">
+                                字数：
+                            </td>
+                            <td>
+                                <input id="zswz" name="zswz" type="text" class="easyui-numberbox" style="width: 100px" data-options="required:true" />(单位:万字)
+                            </td>
+                        </tr>
+
+                        
+
+                        
+                        <tr>
+                            <td class="bg">
+                                指导教师意见:
+                            </td>
+                            <td colspan="3">
+                                <input id="txtdsAdvise" name="dsAdvise" type="text" class="easyui-textbox" disabled="disabled" data-options="multiline:true"
+                                       style="width: 80%; height: 80px;" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                是否优秀论文上会讨论：
+                            </td>
+                            <td colspan="3">
+                                <input id="rdoyes" type="radio" name="yxlwshtl" value="0" /><label for="rdoyes">是</label>
+                                <input id="rdono" type="radio" name="yxlwshtl" value="1" /><label for="rdoyno">否</label>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                关键词 <span style="color: Red;">(3-5个,用"，"隔开)</span>
+                                
+                            </td>
+                            <td colspan="3">
+                                <input id="txtlwztc" name="lwztc" type="text" class="easyui-textbox" style="width: 80%" data-options="required:true" />
+                            </td>
+                        </tr>
+                        <tr style="display:none">
+            <td class="bg" >
+                中文详细摘要<span style="color: Red;">(请输入文本格式,硕士1000-1500字博士3000-5000字)</span>
+            </td>
+            <td colspan="3">
+                <input id="txtlwzy" name="lwzy" style="width: 80%; height: 80px" class="easyui-textbox" data-options="multiline:true, required:true" />
+            </td>
+        </tr>
+        <tr style="display:none">
+            <td class="bg">
+                英文题目：
+            </td>
+            <td colspan="3">
+                <input id="txtywlwtm" name="ywlwtm" type="text" class="easyui-textbox" style="width: 80%" data-options="required:true" />
+            </td>
+        </tr>
+        <tr  style="display:none">
+            <td class="bg">
+                英文关键词：
+            </td>
+            <td colspan="3">
+                <input id="txtywztc" name="ywztc" type="text" class="easyui-textbox" style="width: 80%" data-options="required:true" />
+            </td>
+        </tr>
+        <tr  style="display:none">
+            <td class="bg">
+                英文详细摘要<span style="color: Red;">(请输入文本格式,硕士1000-1500字博士3000-5000字)</span>
+            </td>
+            <td colspan="3">
+                <input id="txtywzy" name="ywzy" style="width: 80%; height: 80px" class="easyui-textbox" data-options="multiline:true,required:true" />
+            </td>
+        </tr>
+                        <tr>
+                            <td class="bg">
+                                论文摘要<span style="color: Red;"></span>
+                            </td>
+                            <td colspan="3">
+                                <input id="zwzy" name="zwzy" style="width: 80%; height: 80px" class="easyui-textbox" data-options="multiline:true,required:true" />
+                            </td>
+                        </tr>
+                        <tr> <!-- 20261021 -->
+                            <td class="bg">
+                                论文材料确认<span style="color: Red;">*</span>：
+                            </td>
+                            <td colspan="3">
+                                <input id="chk_lwmqr" name="lwmqr" type="checkbox" value="1" />
+                                <label for="chk_lwmqr">论文中已确认包含签字、填写、勾选完整的封面、数据集、授权页、答辩委员会决议</label>
+                            </td>
+                        </tr>
+                        <tr> <!-- 20261021 -->
+                            <td class="bg">
+                                学位论文中的使用授权声明勾选情况<span style="color: Red;">*</span>：
+                            </td>
+                            <td colspan="3">
+                                <input id="sytkqk1" type="radio" name="sytkqk" value="1" /><label for="sytkqk1">同意授权</label>
+                                <input id="sytkqk0" type="radio" name="sytkqk" value="0" /><label for="sytkqk0">不同意授权</label>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <input id="sfzgbk1" type="radio" name="sfzgbk" value="1" /><label for="sfzgbk1">暂不公开</label>
+                                <input id="sfzgbk0" type="radio" name="sfzgbk" value="0" /><label for="sfzgbk0">非暂不公开</label>
+                            </td>
+                        </tr>
+                        <tr style="display:none">
+                            <td class="bg">
+                                上传学位论文终稿 <span style="color:red;font-size:18px">(word)</span>：
+                            </td>
+                            <td colspan="3">
+                                <input id="file_pdf" name="file_pdf" class="easyui-filebox" style="width:200px;" data-options="buttonAlign: 'left',prompt:'未选择任何文件',buttonText:'选择文件'" />
+                                <span id="span_file_pdf"><a href='javascript:void(0)' onclick="scxwlw_down('pdf')"></a></span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="bg">
+                                上传学位论文终稿 <span style="color:red;font-size:18px">(pdf)</span>：
+                            </td>
+                            <td colspan="3">
+                                <input id="file_doc" name="file_doc" class="easyui-filebox" style="width:200px;" data-options="buttonAlign: 'left',prompt:'未选择任何文件',buttonText:'选择文件'" />
+                                <span id="span_file_doc"><a href='javascript:void(0)' onclick="scxwlw_down('word')"></a></span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="4">
+                                <span style="color: Red;">注意：请确保论文终稿包含：信息填写完整的封皮、使用授权声明扫描件（填写完整并包含签字）、学位论文数据集、答辩委员会决议扫描件，且电子版本和提交的纸质版本论文需完全一致。</span>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td colspan="4">
+                                温馨提示1：《关于向中国学术期刊（光盘版）电子杂志社领取学位论文稿酬的通告》详情链接：<a href="https://www.cnki.net/other/gonggao/GCTG/%E5%85%A8%E5%9B%BD%E5%90%84%E4%BD%8D%E7%A0%94%E7%A9%B6%E7%94%9F%E6%95%AC%E5%90%AF2.html">https://www.cnki.net/other/gonggao/GCTG/%E5%85%A8%E5%9B%BD%E5%90%84%E4%BD%8D%E7%A0%94%E7%A9%B6%E7%94%9F%E6%95%AC%E5%90%AF2.html</a>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td colspan="4">
+                                温馨提示2：《中国学位论文全文数据库研究生学位论文录用及稿酬领取的说明》详细链接：<a href="https://w.wanfangdata.com.cn/Royalties">https://w.wanfangdata.com.cn/Royalties</a>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>

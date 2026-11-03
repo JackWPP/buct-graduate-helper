@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="renderer" content="webkit|ie-comp|ie-stand" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1" />
+    <title>xnjddj</title>
+    <!--[if lte IE 7]>
+    <!--[if lte IE 7]>
+    <link rel="stylesheet" type="text/css" href="/Content/css/ie.css">
+    <![endif]-->
+    
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/student.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/css/font.css" />
+    <link rel="stylesheet" type="text/css" href="/Content/themes/student/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="/Content/themes/icon.css" />
+	<script type="text/javascript" src="/Scripts/jquery.min.js"></script>
+	<script type="text/javascript" src="/Scripts/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="/Scripts/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="/Scripts/validatebox.js"></script>
+    <script type="text/javascript" src="/Scripts/tablePage.js"></script>
+    <script type="text/javascript" src="/Scripts/aes.js"></script>
+    <script type="text/javascript" src="/Scripts/app_pub.js"></script>
+    <script type="text/javascript" src="/Scripts/gmis.config.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.cookie.js"></script>
+    <script type="text/javascript" src="/Scripts/json2.js"></script>
+    <script type="text/javascript" src="/Scripts/My97DatePicker/WdatePicker.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.unobtrusive-ajax.min.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.form.js"></script>
+    <script type="text/javascript" src="/Scripts/pageLoader.js"></script>
+    <script type="text/javascript" src="/Scripts/jquery.jqzoom.js"></script>
+    
+</head>
+<body>
+    <div>
+      
+<script type="text/javascript">
+    $(function () {
+        $.ajax({
+            type: 'get',
+            dataType: 'json',
+            url: "xnjddj_load",
+            data: {},
+            cache: false,
+            success: function (json) {
+                var xsxx = json.xsxx;
+                var xftj = json.xftj[0];
+                $("#xh").html(xsxx.xh);
+                $("#xm").html(xsxx.xm);
+                $("#xsmc").html(xsxx.xsmc);
+                $("#zymc").html(xsxx.zymc);
+                $("#pycc").html(xsxx.pycc);
+                $("#dsxm").html(xsxx.dsxm);
+                $("#yxzxf").html(xftj.yxzxf);
+                $("#zxf").html(xftj.zxf);
+                getlist();
+                $('#dg_lw').datagrid("loadData", json.lw);
+                $('#dg_zz').datagrid("loadData", json.zz);
+                $('#dg_jc').datagrid("loadData", json.jc);
+                $('#dg_zl').datagrid("loadData", json.zl);
+                $('#dg_hj').datagrid("loadData", json.hj);
+                if (json.lw.length > 0)
+                    $("#empty_lw").hide();
+                if (json.zz.length > 0)
+                    $("#empty_zz").hide();
+                if (json.jc.length > 0)
+                    $("#empty_jc").hide();
+                if (json.zl.length > 0)
+                    $("#empty_zl").hide();
+                if (json.hj.length > 0)
+                    $("#empty_hj").hide();
+            }
+        });
+
+    });
+
+    function getlist() {
+        $('#dg_lw').datagrid({
+            width: 'auto',
+            height: 'auto',
+            autoRowHeight: false,
+            scrollbarSize: 0,
+            queryParams: {},
+            columns: [[
+                { field: 'lwmc', title: '名称', width: 200 },
+                { field: 'zzpm', title: '作者排名', width: 100 },
+                { field: 'kwmc', title: '期刊名称', width: 200 },
+                { field: 'fbsj', title: '发表时间', width: 100 },
+                { field: 'fblbmc', title: '等级', width: 100 }
+
+            ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件 
+            rownumbers: false, //行号
+            singleSelect: false, //是否单选 
+            onBeforeSelect: function () {
+                return false;
+            }
+        });
+        $('#dg_zz').datagrid({
+            width: 'auto',
+            height: 'auto',
+            autoRowHeight: false,
+            scrollbarSize: 0,
+            queryParams: {},
+            columns: [[
+                { field: 'zzjcmc', title: '名称', width: 200 },
+                { field: 'zzpx', title: '作者排名', width: 100 },
+                { field: 'cbsmc', title: '出版社名称', width: 200 },
+                { field: 'cbsj', title: '出版时间', width: 100 },
+                { field: 'skh', title: '书刊号', width: 100 }
+
+            ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件 
+            rownumbers: false, //行号
+            singleSelect: false, //是否单选 
+            onBeforeSelect: function () {
+                return false;
+            }
+        });
+        $('#dg_jc').datagrid({
+            width: 'auto',
+            height: 'auto',
+            autoRowHeight: false,
+            scrollbarSize: 0,
+            queryParams: {},
+            columns: [[
+                { field: 'zzjcmc', title: '名称', width: 200 },
+                { field: 'zzpx', title: '作者排名', width: 100 },
+                { field: 'cbsmc', title: '出版社名称', width: 200 },
+                { field: 'cbsj', title: '出版时间', width: 100 },
+                { field: 'skh', title: '书刊号', width: 100 }
+
+            ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件 
+            rownumbers: false, //行号
+            singleSelect: false, //是否单选 
+            onBeforeSelect: function () {
+                return false;
+            }
+        });
+        $('#dg_zl').datagrid({
+            width: 'auto',
+            height: 'auto',
+            autoRowHeight: false,
+            scrollbarSize: 0,
+            queryParams: {},
+            columns: [[
+                { field: 'zlh', title: '申请号', width: 200 },
+                { field: 'pm', title: '作者排名', width: 100 },
+                { field: 'zlmc', title: '专利名称', width: 200 },
+                { field: 'sqny', title: '授权时间', width: 100 },
+                { field: 'zllxmc', title: '专利类型', width: 100 }
+
+            ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件 
+            rownumbers: false, //行号
+            singleSelect: false, //是否单选 
+            onBeforeSelect: function () {
+                return false;
+            }
+        });
+        $('#dg_hj').datagrid({
+            width: 'auto',
+            height: 'auto',
+            autoRowHeight: false,
+            scrollbarSize: 0,
+            queryParams: {},
+            columns: [[
+                { field: 'jlmc', title: '获奖名称', width: 200 },
+                { field: 'hjrq', title: '获奖时间', width: 100 },
+                { field: 'bjdw', title: '奖励单位', width: 200 }
+
+            ]],
+            fitColumns: true,
+            striped: true,
+            pagination: false, //分页控件 
+            rownumbers: false, //行号
+            singleSelect: false, //是否单选 
+            onBeforeSelect: function () {
+                return false;
+            }
+        });
+    }
+
+    function dcword() {
+
+        var form = $("<form id='exportToExcelForm' style='display:none' method='post'>"); //定义一个form表单
+        $("body").append(form); //将表单放置在web中
+        form.attr("action", "xnjddj_dcword");
+        form.submit();
+        $("#exportToExcelForm").remove();
+
+    }
+</script>
+<div class="tabs_content">
+    <form id="xjform" method="post" data-options="height:36,novalidate:true">
+    <div style="margin: 0 auto">
+        <div style="padding: 0px 20px 15px 0px; float: left; width: 100%;">
+            <button type="button" class="btn-primary floatright" onclick="dcword()">
+                Word打印</button>
+        </div>
+        <table class="basictable marginbottom30" style="width: 100%; border-collapse: collapse;
+            padding: 10px auto auto auto;">
+            <thead>
+                <th colspan="4" class="title">
+                    学年鉴定
+                </th>
+            </thead>
+            <tr>
+                <td style="width: 15%" class="bg">
+                    学号
+                </td>
+                <td style="width: 35%">
+                    <label id="xh">
+                    </label>
+                </td>
+                <td style="width: 15%;" class="bg">
+                    姓名
+                </td>
+                <td style="width: 35%;">
+                    <label id="xm">
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td class="bg">
+                    院系
+                </td>
+                <td>
+                    <label id="xsmc">
+                    </label>
+                </td>
+                <td class="bg">
+                    专业
+                </td>
+                <td>
+                    <label id="zymc">
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td class="bg">
+                    类别(硕、博)
+                </td>
+                <td>
+                    <label id="pycc">
+                    </label>
+                </td>
+                <td class="bg">
+                    导师
+                </td>
+                <td>
+                    <label id="dsxm">
+                    </label>
+                </td>
+            </tr>
+            <tr>
+                <td class="bg">
+                    应修学分
+                </td>
+                <td>
+                    <label id="yxzxf">
+                    </label>
+                </td>
+                <td class="bg">
+                    已修学分
+                </td>
+                <td>
+                    <label id="zxf">
+                    </label>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <div class="T_view marginbottom30">
+        <div class="T_title">
+            论文</div>
+        <div class="table_box">
+            <table id="dg_lw">
+            </table>
+            <div id="empty_lw" class="emptyDiv" style="border: 0px solid #E5E5E5; height: 60px;
+                margin-top: 1px; background: #FFF;">
+                <div style="margin: 0px auto; width: 100px; padding: 20px">
+                    无数据！
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="T_view marginbottom30">
+        <div class="T_title">
+            著作
+        </div>
+        <div class="table_box">
+            <table id="dg_zz">
+            </table>
+            <div id="empty_zz" class="emptyDiv" style="border: 0px solid #E5E5E5; height: 60px;
+                margin-top: 1px; background: #FFF">
+                <div style="margin: 0px auto; width: 100px; padding: 20px">
+                    无数据！
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="T_view marginbottom30">
+        <div class="block-title">
+            教材
+        </div>
+        <div class="table_box">
+            <table id="dg_jc">
+            </table>
+            <div id="empty_jc" class="emptyDiv" style="border: 0px solid #E5E5E5; height: 60px;
+                margin-top: 1px; background: #FFF">
+                <div style="margin: 0px auto; width: 100px; padding: 20px">
+                    无数据！
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="T_view marginbottom30">
+        <div class="block-title">
+            专利
+        </div>
+        <div class="table_box">
+            <table id="dg_zl">
+            </table>
+            <div id="empty_zl" class="emptyDiv" style="border: 0px solid #E5E5E5; height: 60px;
+                margin-top: 1px; background: #FFF">
+                <div style="margin: 0px auto; width: 100px; padding: 20px">
+                    无数据！
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="T_view marginbottom30">
+        <div class="block-title">
+            获奖情况
+        </div>
+        <div class="table_box">
+            <table id="dg_hj">
+            </table>
+            <div id="empty_hj" class="emptyDiv" style="border: 0px solid #E5E5E5; height: 60px;
+                margin-top: 1px; background: #FFF">
+                <div style="margin: 0px auto; width: 100px; padding: 20px">
+                    无数据！
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    </div>
+    <script type="text/javascript" src="/Content/themes/student/font.js"></script>
+</body>
+</html>
