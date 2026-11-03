@@ -41,6 +41,16 @@ python3 gmis_cli.py timetable --cookies cookies.json
 
 网页预览打开 http://127.0.0.1:8899/ 。云端接着做的约定在 [AGENTS.md](AGENTS.md)。
 
+Flutter 壳在 `app/`。本机装好 Flutter 3.47 后：
+
+```bash
+cd app
+flutter test
+flutter build web
+```
+
+`flutter build apk` 还需要 Android SDK。这台云端镜像没有 Android SDK，也没有 Xcode。
+
 ## Python 调用
 
 ```python
