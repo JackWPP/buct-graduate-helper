@@ -66,8 +66,9 @@ button:disabled { cursor: default; transform: none; }
   overscroll-behavior: contain;
   padding: max(18px, var(--safe-t)) 20px 28px;
 }
-.screen.with-tabs { padding-bottom: calc(var(--tab-h) + var(--safe-b) + 18px); }
-.screen.timetable { padding-left: 6px; padding-right: 8px; }
+.screen.with-tabs { padding-bottom: 0; }
+.screen-body { padding-bottom: calc(var(--tab-h) + var(--safe-b) + 18px); }
+.screen.timetable { padding-left: 4px; padding-right: 4px; }
 .screen.plain { background: #fff; }
 .screen.center { display: flex; flex-direction: column; }
 .screen.course { display: flex; flex-direction: column; padding-bottom: max(16px, var(--safe-b)); }
@@ -606,10 +607,10 @@ button:disabled { cursor: default; transform: none; }
   flex: none;
 }
 
-.tt { touch-action: pan-y; min-width: 0; }
+.tt { --time-w: 24px; touch-action: pan-y; min-width: 0; }
 .tt-head, .tt-cols {
   display: grid;
-  grid-template-columns: 30px repeat(var(--days), minmax(0, 1fr));
+  grid-template-columns: var(--time-w) repeat(var(--days), minmax(0, 1fr));
 }
 .day {
   text-align: center;
@@ -634,12 +635,13 @@ button:disabled { cursor: default; transform: none; }
 .tick {
   position: absolute;
   left: 0;
-  width: 30px;
+  width: var(--time-w);
   color: var(--faint);
   font-size: 8px;
   line-height: 1;
   text-align: center;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
   transform: translateY(2px);
 }
 .col { position: relative; min-width: 0; }
@@ -652,7 +654,7 @@ button:disabled { cursor: default; transform: none; }
   border: 1px solid color-mix(in srgb, var(--c) 32%, white);
   background: color-mix(in srgb, var(--c) 14%, white);
   color: color-mix(in srgb, var(--c) 78%, #14171f);
-  padding: 4px 3px 3px;
+  padding: 2px 1px;
   overflow: hidden;
   text-align: left;
 }
@@ -662,15 +664,18 @@ button:disabled { cursor: default; transform: none; }
   display: block;
   font-style: normal;
   font-weight: 600;
-  font-size: 11px;
-  line-height: 1.25;
-  letter-spacing: -0.03em;
+  font-size: 9px;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
   overflow: hidden;
+}
+.block strong {
+  word-break: break-all;
+  overflow-wrap: anywhere;
 }
 .block em {
   margin-top: 2px;
   font-weight: 500;
-  font-size: 10px;
   letter-spacing: 0;
   opacity: 0.82;
   white-space: nowrap;

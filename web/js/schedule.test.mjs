@@ -66,6 +66,12 @@ test("ics exports offline courses only", () => {
   assert.doesNotMatch(ics, /英文科技论文/);
 });
 
+test("timetable renders the full course name instead of a four-character hard wrap", () => {
+  const app = fs.readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  assert.equal(app.includes("function blockTitle"), false);
+  assert.match(app, /<strong>\$\{esc\(block\.name\)\}<\/strong>/);
+});
+
 test("credit buckets and snapshot stay free of contact data", () => {
   const selected = snap.credits.categories.reduce((sum, item) => sum + item.got, 0) + snap.credits.orphanCredits;
   assert.equal(selected, snap.credits.selected);

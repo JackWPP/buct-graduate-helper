@@ -297,17 +297,6 @@ function serviceGlyph(id) {
   return icon(SERVICE_ICON[id] || "file");
 }
 
-function blockTitle(name) {
-  const chars = [...name];
-  const per = 4;
-  if (chars.length <= per) return esc(name);
-  const lines = [];
-  for (let i = 0; i < chars.length; i += per) lines.push(chars.slice(i, i + per));
-  const last = lines[lines.length - 1];
-  if (lines.length > 1 && last.length === 1) last.unshift(lines[lines.length - 2].pop());
-  return lines.map((line) => esc(line.join(""))).join("<br>");
-}
-
 let toastTimer = 0;
 let ignoreClick = false;
 function toast(message) {
@@ -381,8 +370,9 @@ function shell(route, body) {
   const center = ["start", "guide"].includes(route.parts[0]);
   const timetable = route.parts[0] === "timetable";
   const course = route.parts[0] === "course";
+  const content = tabs ? `<div class="screen-body">${body}</div>` : body;
   return `
-    <div class="screen${tabs ? " with-tabs" : ""}${plain ? " plain" : ""}${center ? " center" : ""}${timetable ? " timetable" : ""}${course ? " course" : ""}">${body}</div>
+    <div class="screen${tabs ? " with-tabs" : ""}${plain ? " plain" : ""}${center ? " center" : ""}${timetable ? " timetable" : ""}${course ? " course" : ""}">${content}</div>
     ${tabs ? tabbar(route.parts[0]) : ""}
     ${state.sheet ? sheet() : ""}
     ${state.confirm ? dialog() : ""}
@@ -597,7 +587,7 @@ function viewTimetable() {
     const cell = blocks.filter((block) => block.weekday === day).map((block) => {
       const course = findCourse(block.courseId);
       return `<button class="block${block.active ? "" : " off"}" style="--c:${colorOf(course)};top:${periodTop(block.startPeriod)}px;height:${spanHeight(block.startPeriod, block.endPeriod)}px" data-act="sheet" data-id="${block.courseId}" title="${esc(block.name)} ${esc(block.room)}">
-        <strong>${blockTitle(block.name)}</strong>${block.room ? `<em>${esc(block.room)}</em>` : ""}
+        <strong>${esc(block.name)}</strong>${block.room ? `<em>${esc(block.room)}</em>` : ""}
       </button>`;
     }).join("");
     return `<div class="col">${cell}</div>`;
