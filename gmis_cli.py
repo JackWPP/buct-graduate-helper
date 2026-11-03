@@ -37,31 +37,51 @@ def _save(c: GmisClient, path: str) -> None:
 
 
 def _solve_captcha(gif: bytes, name: str = "captcha") -> str:
-    suffix = ".gif"
-    fd, path = tempfile.mkstemp(prefix=name + "_", suffix=suffix)
+    """验证码只用学校返回的图，看完就从临时目录删掉。"""
+    fd, path = tempfile.mkstemp(prefix=name + "_", suffix=".gif")
     os.close(fd)
-    Path(path).write_bytes(gif)
-    png = str(Path(path).with_suffix(".png"))
+    gif_path = Path(path)
+    gif_path.write_bytes(gif)
+    shown = gif_path
     try:
         from PIL import Image
-        Image.open(path).convert("RGB").save(png)
-        print("验证码图片: %s" % png)
+        png = gif_path.with_suffix(".png")
+        Image.open(gif_path).convert("RGB").save(png)
+        gif_path.unlink(missing_ok=True)
+        shown = png
     except Exception:
-        print("验证码 GIF: %s" % path)
-    return input("验证码: ").strip()
+        pass
+    print("验证码图片: %s" % shown)
+    try:
+        return input("验证码: ").strip()
+    finally:
+        shown.unlink(missing_ok=True)
+
+
+def _password() -> str:
+    """密码只来自 GMIS_PASSWORD 或交互输入，不接受命令行参数。"""
+    password = os.environ.get("GMIS_PASSWORD", "")
+    if password:
+        return password
+    if not sys.stdin.isatty():
+        raise GmisError("没有 GMIS_PASSWORD，当前也不是交互终端。不要把密码写进命令行。")
+    password = getpass.getpass("密码: ")
+    if not password:
+        raise GmisError("密码为空。")
+    return password
 
 
 def cmd_login(args) -> int:
-    c = GmisClient(timeout=args.timeout)
     user = args.user or os.environ.get("GMIS_USER", "")
-    password = args.password or os.environ.get("GMIS_PASSWORD", "")
+    password = _password()
     if not user:
+        if not sys.stdin.isatty():
+            raise GmisError("没有学号。请传 --user，或设置 GMIS_USER。")
         user = input("学号: ").strip()
-    if not password:
-        password = getpass.getpass("密码: ")
+    c = GmisClient(timeout=args.timeout)
     body = c.login(lambda gif: _solve_captcha(gif, "stucode"), user, password)
     _save(c, args.cookies)
-    print(json.dumps(body, ensure_ascii=False))
+    print(json.dumps({"jg": body.get("jg"), "url": body.get("url")}, ensure_ascii=False))
     return 0
 
 
@@ -123,6 +143,42 @@ def cmd_select(args) -> int:
     return 0
 
 
+def cmd_timetable(args) -> int:
+    cookie_file = Path(args.cookies)
+    if not cookie_file.exists():
+        raise GmisError("还没有本地 Cookie。先运行 login。密码用 GMIS_PASSWORD 或交互输入，成功后的 Cookie 留在 %s。" % cookie_file)
+    c = _client(args)
+    sys.path.insert(0, str(Path(__file__).resolve().parent / "web"))
+    from timetable_pull import apply_live_timetable, load_json, periods_from_meta, write_snapshot
+
+    base_path = Path(args.base)
+    base = load_json(base_path)
+    terms = c.terms()
+    if not terms:
+        raise GmisError("学校没有返回学期。")
+    current = next((item for item in terms if item.get("selected")), terms[0])
+    code = args.term or str(current.get("termcode") or "")
+    term = next((item for item in terms if str(item.get("termcode")) == code), current)
+    selected = c.selected_courses(code)
+    plan_body = c.training_plan()
+    plan = plan_body.get("pyjh") if isinstance(plan_body, dict) else []
+    periods = periods_from_meta(c.selection_meta())
+    start = args.start or (base.get("term") or {}).get("start") or ""
+    if not start:
+        raise GmisError("快照里没有开学日。请用 --start YYYY-MM-DD 指定第 1 周周一。")
+    live = apply_live_timetable(
+        base,
+        selected=selected,
+        plan=plan or [],
+        term=term,
+        periods=periods,
+        term_start=start,
+    )
+    write_snapshot(args.out, live)
+    print("courses=%s periods=%s -> %s" % (len(live["courses"]), len(live.get("periods") or []), args.out))
+    return 0
+
+
 def cmd_drop(args) -> int:
     c = _client(args)
     gif = c.get_captcha("xkyzm")
@@ -138,9 +194,8 @@ def main() -> int:
     p.add_argument("--timeout", type=int, default=30)
     sub = p.add_subparsers(dest="cmd", required=True)
 
-    q = sub.add_parser("login")
+    q = sub.add_parser("login", help="验证码用学校返回的图。密码只读 GMIS_PASSWORD 或交互输入")
     q.add_argument("--user", default="")
-    q.add_argument("--password", default="")
     q.set_defaults(func=cmd_login)
 
     q = sub.add_parser("dump")
@@ -173,6 +228,13 @@ def main() -> int:
     q = sub.add_parser("drop")
     q.add_argument("--bjid", required=True, help="班级 id")
     q.set_defaults(func=cmd_drop)
+
+    q = sub.add_parser("timetable", help="用本地 Cookie 拉只读课表，写成不提交的 live.json")
+    q.add_argument("--term", default="")
+    q.add_argument("--start", default="", help="第 1 周周一 YYYY-MM-DD，默认沿用快照里的开学日")
+    q.add_argument("--base", default="web/data/snapshot.json")
+    q.add_argument("--out", default="web/data/live.json")
+    q.set_defaults(func=cmd_timetable)
 
     args = p.parse_args()
     try:

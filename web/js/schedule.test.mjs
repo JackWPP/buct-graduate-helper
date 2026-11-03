@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import test from "node:test";
 import {
+  PERIODS,
   blocksForWeek,
   buildIcs,
   decorateCourse,
@@ -15,7 +16,7 @@ import {
 
 const raw = fs.readFileSync(new URL("../data/snapshot.json", import.meta.url), "utf8");
 const snap = JSON.parse(raw);
-const courses = snap.courses.map(decorateCourse);
+const courses = snap.courses.map((course) => decorateCourse(course));
 
 test("2026-11-03 is week 10 and that week starts on Nov 2", () => {
   assert.equal(weekIndex(new Date(2026, 10, 3, 11, 37), snap.term.start), 10);
@@ -64,6 +65,14 @@ test("ics exports offline courses only", () => {
   assert.match(ics, /RRULE:FREQ=WEEKLY/);
   assert.doesNotMatch(ics, /科研伦理/);
   assert.doesNotMatch(ics, /英文科技论文/);
+});
+
+test("parseSjms uses period times supplied with the snapshot", () => {
+  const periods = PERIODS.map((period) => ({ ...period }));
+  periods[0] = { ...periods[0], start: "08:05", end: "08:50" };
+  const segments = parseSjms("星期二 上午1 -上午2", periods);
+  assert.equal(segments[0].startTime, "08:05");
+  assert.equal(segments[0].endTime, "09:35");
 });
 
 test("timetable renders the full course name instead of a four-character hard wrap", () => {

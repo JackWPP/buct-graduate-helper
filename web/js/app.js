@@ -592,7 +592,7 @@ function viewTimetable() {
     }).join("");
     return `<div class="col">${cell}</div>`;
   }).join("");
-  const ticks = PERIODS.map((period) => `<span class="tick" style="top:${periodTop(period.n)}px">${period.start}</span>`).join("");
+  const ticks = (state.periods || PERIODS).map((period) => `<span class="tick" style="top:${periodTop(period.n)}px">${period.start}</span>`).join("");
   const max = maxWeek();
   return `
     <div class="weekbar">
@@ -1242,9 +1242,16 @@ function onSubmit(event) {
   go(ret.startsWith("#/") ? ret : "#/home");
 }
 
+function activePeriods(snap) {
+  const list = snap && snap.periods;
+  if (!Array.isArray(list) || !list.length) return PERIODS;
+  return list;
+}
+
 function boot(snap) {
   state.snap = snap;
-  state.courses = snap.courses.map(decorateCourse);
+  state.periods = activePeriods(snap);
+  state.courses = snap.courses.map((course) => decorateCourse(course, state.periods));
   state.settings = loadSettings();
   state.login.sid = localStorage.getItem("buct_sid") || snap.demoStudentId;
   state.login.remember = true;
@@ -1292,12 +1299,19 @@ function boot(snap) {
   maybeRemind();
 }
 
-const snapUrl = new URL("../data/snapshot.json", import.meta.url);
-fetch(snapUrl)
-  .then((response) => {
-    if (!response.ok) throw new Error("快照没有加载");
-    return response.json();
-  })
+function loadSnapshot() {
+  const liveUrl = new URL("../data/live.json", import.meta.url);
+  const snapUrl = new URL("../data/snapshot.json", import.meta.url);
+  return fetch(liveUrl).then((live) => {
+    if (live.ok) return live.json();
+    return fetch(snapUrl).then((response) => {
+      if (!response.ok) throw new Error("快照没有加载");
+      return response.json();
+    });
+  });
+}
+
+loadSnapshot()
   .then(boot)
   .catch((error) => {
     app.innerHTML = `<div class="screen">${empty("数据没有载入", error.message || "请从 web 目录打开这个页面")}</div>`;
