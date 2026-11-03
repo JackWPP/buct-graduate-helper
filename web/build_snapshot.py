@@ -8,13 +8,12 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
+from timetable_pull import course_from_row
+
 ROOT = Path(__file__).resolve().parents[1]
 DEMO = ROOT / "demo_output"
 SAMPLES = ROOT / "samples"
 OUT = Path(__file__).resolve().parent / "data" / "snapshot.json"
-
-# 原型把「教617」标为朝阳校区；「科」字头班级带「东区」。未识别楼名不猜测。
-CAMPUS = {"教": "朝阳校区", "科": "朝阳校区"}
 
 NATIVE = {
     "/student/pygl/xskbcx": "timetable",
@@ -36,12 +35,6 @@ CATEGORY_ORDER = ["A公共基础课", "B专业核心课", "I学科交叉课", "J
 
 def load(path: Path):
     return json.loads(path.read_text(encoding="utf-8"))
-
-
-def campus_of(room: str) -> str | None:
-    if not room or room == "网络课程":
-        return None
-    return CAMPUS.get(room[:1])
 
 
 def app_status(item: dict) -> dict:
@@ -77,41 +70,16 @@ def main() -> None:
     orphans = []
     courses = []
     for raw in selected:
-        plan_item = by_code.get(raw["kcbh"])
-        online = raw.get("dz") == "网络课程" or raw.get("rkjsxm") == "网络课程"
-        if plan_item:
-            got[plan_item["kclbmc"]] += float(raw["kcxf"])
-            category = plan_item["kclbmc"]
-            hours = plan_item.get("kczxs")
-            degree = str(plan_item.get("xwk")) == "1"
+        course = course_from_row(raw, by_code)
+        if course["category"]:
+            got[course["category"]] += float(course["credits"])
         else:
-            category = ""
-            hours = None
-            degree = False
             orphans.append({
-                "name": raw["kcmc"],
-                "credits": raw["kcxf"],
-                "code": raw["kcbh"],
+                "name": course["name"],
+                "credits": course["credits"],
+                "code": course["code"],
             })
-        courses.append({
-            "id": raw["bjid"],
-            "name": raw["kcmc"],
-            "className": raw["bjmc"],
-            "code": raw["kcbh"],
-            "credits": raw["kcxf"],
-            "hours": hours,
-            "teacher": raw["rkjsxm"],
-            "room": raw["dz"],
-            "campus": campus_of(raw.get("dz") or ""),
-            "online": online,
-            "ksz": raw["ksz"],
-            "jsz": raw["jsz"],
-            "pattern": raw.get("lxfs") or "连续周",
-            "enrolled": raw.get("xkrs"),
-            "sjms": raw.get("sjms") or "",
-            "category": category,
-            "degree": degree,
-        })
+        courses.append(course)
 
     categories = []
     for key in CATEGORY_ORDER:

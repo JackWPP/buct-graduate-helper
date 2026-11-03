@@ -25,10 +25,19 @@ python3 -m pip install -r requirements.txt
 python3 gmis_cli.py login --user 2026201060 --cookies cookies.json
 python3 gmis_cli.py dump --cookies cookies.json --out demo_output
 python3 gmis_cli.py ics --cookies cookies.json --term 55 --start 2026-08-31 --out demo_output/timetable_term55.ics
+python3 gmis_cli.py timetable --cookies cookies.json
 cd web && python3 -m http.server 8899
 ```
 
-登录命令会先把验证码 GIF 存成 `captcha_*.png`，终端输入 4 位数字即可。密码在提示符输入，或放到环境变量 `GMIS_PASSWORD`，不要写进仓库。`login` 成功后 Cookie 写入 `cookies.json`；后续命令复用该文件，接口返回 302 时重新执行 `login`。
+登录会把学校返回的验证码图存进临时目录，终端输入 4 位数字后图片即删。密码只从环境变量 `GMIS_PASSWORD` 或交互提示读取，不要写进命令行或仓库。`login` 成功后 Cookie 写入 `cookies.json`（已被忽略）；后续命令复用该文件，接口返回 302 时重新执行 `login`。
+
+只读课表给网页预览用，不改已提交的快照：
+
+```bash
+python3 gmis_cli.py timetable --cookies cookies.json
+```
+
+这会写成 `web/data/live.json`。预览优先读它，没有就继续用 `web/data/snapshot.json`。`live.json` 不提交。
 
 网页预览打开 http://127.0.0.1:8899/ 。云端接着做的约定在 [AGENTS.md](AGENTS.md)。
 

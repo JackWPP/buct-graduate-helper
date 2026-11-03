@@ -12,6 +12,7 @@ __pycache__/
 
 # 登录会话、验证码和调试日志
 *cookies*
+web/data/live.json
 cookies.txt
 cookie_header.txt
 session.pkl

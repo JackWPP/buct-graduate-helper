@@ -15,7 +15,13 @@ export const PERIODS = [
   { n: 12, name: "晚上12", start: "19:40", end: "20:25", group: "晚上" },
 ];
 
-const PERIOD_BY_NAME = Object.fromEntries(PERIODS.map((p) => [p.name, p]));
+function asPeriods(periods) {
+  return Array.isArray(periods) && periods.length ? periods : PERIODS;
+}
+
+function periodTable(periods = PERIODS) {
+  return Object.fromEntries(asPeriods(periods).map((period) => [String(period.name).trim(), period]));
+}
 const WEEKDAY = { 一: 0, 二: 1, 三: 2, 四: 3, 五: 4, 六: 5, 日: 6, 天: 6 };
 export const WEEKDAY_LABEL = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
 
@@ -71,7 +77,8 @@ export function courseWeeks(course) {
   return weeks;
 }
 
-export function parseSjms(sjms) {
+export function parseSjms(sjms, periods = PERIODS) {
+  const byName = periodTable(periods);
   const out = [];
   const text = String(sjms || "").replace(/，/g, ",");
   const re = /星期([一二三四五六日天])\s*(上午|下午|晚上)\s*(\d+)\s*[-~至]\s*(上午|下午|晚上)\s*(\d+)/g;
@@ -79,8 +86,8 @@ export function parseSjms(sjms) {
   while (match) {
     const startName = `${match[2]}${match[3]}`;
     const endName = `${match[4]}${match[5]}`;
-    const start = PERIOD_BY_NAME[startName];
-    const end = PERIOD_BY_NAME[endName];
+    const start = byName[startName];
+    const end = byName[endName];
     if (start && end) {
       out.push({
         weekday: WEEKDAY[match[1]],
@@ -97,11 +104,11 @@ export function parseSjms(sjms) {
   return out;
 }
 
-export function decorateCourse(course) {
+export function decorateCourse(course, periods = PERIODS) {
   return {
     ...course,
     weeks: courseWeeks(course),
-    segments: parseSjms(course.sjms),
+    segments: parseSjms(course.sjms, periods),
   };
 }
 
