@@ -12,12 +12,12 @@
 
 只读课表可以接到 `gmis_client.py`：`gmis_cli.py login` 用学校返回的验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`gmis_cli.py timetable` 把课表写到被忽略的 `web/data/live.json`，预览优先读它，没有则仍用 `web/data/snapshot.json`。通知和考试保持空态。
 
-Flutter 壳在 `app/`，课表计算与 `web/js/schedule.mjs` 同一套规则，读的是同一份 `web/data/snapshot.json`。考试和通知页保持空态。云端镜像不预装 Flutter，也不带 Android SDK 和 Xcode，所以这里只能 `flutter test` 和 `flutter build web`。APK 和 IPA 要到有对应 SDK 的机器上再打。
+Flutter 壳在 `app/`，和网页预览同一套底部导航：首页、周课表、服务、我的。首页用快照里的今日课程和学分，课表是带节次时间的周网格，点课程只弹层。服务目录来自快照，没有单独页面的入口停在空态。考试和通知仍然是空态。课表计算与 `web/js/schedule.mjs` 同一套规则，读的是同一份 `web/data/snapshot.json`。有 Android SDK 时在 `app/` 里 `flutter build apk --release`；模板工程的 release 仍用 debug 签名。没有 SDK 的环境先跑 `flutter test`。iOS 包要在 macOS 上用 Xcode 打。
 
 ## 下一轮按这个顺序
 
 1. 选课三屏、考试倒计时、真实通知列表，设计稿没画完之前不要编数据。导出文件是空的，页面保持空态。
-2. 有 Android SDK 后再打 APK。iOS 包要在 macOS 上用 Xcode 打。
+2. iOS 包要在 macOS 上用 Xcode 打。Android release 目前仍用模板的 debug 签名。
 
 ## 不能碰的数据
 

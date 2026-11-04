@@ -16,7 +16,13 @@ class Period {
   final String group;
 
   Period copyWith({String? start, String? end}) {
-    return Period(n: n, name: name, start: start ?? this.start, end: end ?? this.end, group: group);
+    return Period(
+      n: n,
+      name: name,
+      start: start ?? this.start,
+      end: end ?? this.end,
+      group: group,
+    );
   }
 }
 
@@ -37,7 +43,16 @@ const periods = <Period>[
 
 const weekdayLabel = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
-const _weekday = {'一': 0, '二': 1, '三': 2, '四': 3, '五': 4, '六': 5, '日': 6, '天': 6};
+const _weekday = {
+  '一': 0,
+  '二': 1,
+  '三': 2,
+  '四': 3,
+  '五': 4,
+  '六': 5,
+  '日': 6,
+  '天': 6,
+};
 
 List<Period> asPeriods(List<Period>? value) {
   if (value == null || value.isEmpty) return periods;
@@ -55,7 +70,8 @@ DateTime parseIsoDate(String value) {
 
 DateTime startOfDay(DateTime date) => DateTime(date.year, date.month, date.day);
 
-DateTime addDays(DateTime date, int days) => startOfDay(date).add(Duration(days: days));
+DateTime addDays(DateTime date, int days) =>
+    startOfDay(date).add(Duration(days: days));
 
 /// 第 1 周周一为 [termStart]。返回值可以小于 1 或大于学期长度。
 int weekIndex(DateTime date, String termStart) {
@@ -183,14 +199,18 @@ List<int> courseWeeks(Course course) {
   final weeks = [for (var week = course.ksz; week <= course.jsz; week++) week];
   final pattern = course.pattern.replaceAll(RegExp(r'\s'), '');
   if (pattern.contains('单周')) return weeks.where((week) => week.isOdd).toList();
-  if (pattern.contains('双周')) return weeks.where((week) => week.isEven).toList();
+  if (pattern.contains('双周')) {
+    return weeks.where((week) => week.isEven).toList();
+  }
   return weeks;
 }
 
 List<Segment> parseSjms(String? sjms, [List<Period>? periodList]) {
   final byName = _periodTable(periodList);
   final text = (sjms ?? '').replaceAll('，', ',');
-  final re = RegExp(r'星期([一二三四五六日天])\s*(上午|下午|晚上)\s*(\d+)\s*[-~至]\s*(上午|下午|晚上)\s*(\d+)');
+  final re = RegExp(
+    r'星期([一二三四五六日天])\s*(上午|下午|晚上)\s*(\d+)\s*[-~至]\s*(上午|下午|晚上)\s*(\d+)',
+  );
   final out = <Segment>[];
   for (final match in re.allMatches(text)) {
     final startName = '${match[2]}${match[3]}';
@@ -198,15 +218,17 @@ List<Segment> parseSjms(String? sjms, [List<Period>? periodList]) {
     final start = byName[startName];
     final end = byName[endName];
     if (start == null || end == null) continue;
-    out.add(Segment(
-      weekday: _weekday[match[1]]!,
-      startName: startName,
-      endName: endName,
-      startPeriod: start.n,
-      endPeriod: end.n,
-      startTime: start.start,
-      endTime: end.end,
-    ));
+    out.add(
+      Segment(
+        weekday: _weekday[match[1]]!,
+        startName: startName,
+        endName: endName,
+        startPeriod: start.n,
+        endPeriod: end.n,
+        startTime: start.start,
+        endTime: end.end,
+      ),
+    );
   }
   return out;
 }
@@ -227,7 +249,15 @@ List<int> visibleWeekdays(List<Course> courses) {
       used.add(seg.weekday);
     }
   }
-  return [0, 1, 2, 3, 4, 5, 6].where((day) => day != 6 || used.contains(6)).toList();
+  return [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+  ].where((day) => day != 6 || used.contains(6)).toList();
 }
 
 class Block {
@@ -256,32 +286,43 @@ class Block {
   final bool active;
 }
 
-List<Block> blocksForWeek(List<Course> courses, int week, {bool showOffWeek = false}) {
+List<Block> blocksForWeek(
+  List<Course> courses,
+  int week, {
+  bool showOffWeek = false,
+}) {
   final blocks = <Block>[];
   for (final course in courses) {
     if (course.online) continue;
     final active = course.weeks.contains(week);
     if (!active && !showOffWeek) continue;
     for (final seg in course.segments) {
-      blocks.add(Block(
-        id: '${course.id}-${seg.weekday}-${seg.startPeriod}',
-        courseId: course.id,
-        name: course.name,
-        room: course.room,
-        weekday: seg.weekday,
-        startPeriod: seg.startPeriod,
-        endPeriod: seg.endPeriod,
-        startTime: seg.startTime,
-        endTime: seg.endTime,
-        active: active,
-      ));
+      blocks.add(
+        Block(
+          id: '${course.id}-${seg.weekday}-${seg.startPeriod}',
+          courseId: course.id,
+          name: course.name,
+          room: course.room,
+          weekday: seg.weekday,
+          startPeriod: seg.startPeriod,
+          endPeriod: seg.endPeriod,
+          startTime: seg.startTime,
+          endTime: seg.endTime,
+          active: active,
+        ),
+      );
     }
   }
   return blocks;
 }
 
 class Session {
-  const Session({required this.course, required this.seg, required this.startMin, required this.endMin});
+  const Session({
+    required this.course,
+    required this.seg,
+    required this.startMin,
+    required this.endMin,
+  });
 
   final Course course;
   final Segment seg;
@@ -290,7 +331,11 @@ class Session {
 }
 
 class DaySessions {
-  const DaySessions({required this.week, required this.weekday, required this.items});
+  const DaySessions({
+    required this.week,
+    required this.weekday,
+    required this.items,
+  });
 
   final int week;
   final int weekday;
@@ -311,12 +356,14 @@ DaySessions sessionsOn(List<Course> courses, DateTime date, String termStart) {
     if (!course.weeks.contains(week)) continue;
     for (final seg in course.segments) {
       if (seg.weekday != weekday) continue;
-      items.add(Session(
-        course: course,
-        seg: seg,
-        startMin: toMinutes(seg.startTime),
-        endMin: toMinutes(seg.endTime),
-      ));
+      items.add(
+        Session(
+          course: course,
+          seg: seg,
+          startMin: toMinutes(seg.startTime),
+          endMin: toMinutes(seg.endTime),
+        ),
+      );
     }
   }
   items.sort((a, b) => a.startMin.compareTo(b.startMin));
@@ -335,28 +382,47 @@ HeroPick pickHero(List<Session> items, DateTime now) {
   final nowMin = now.hour * 60 + now.minute;
   for (final item in items) {
     if (nowMin >= item.startMin && nowMin < item.endMin) {
-      return HeroPick(kind: 'ongoing', item: item, minutes: (item.endMin - nowMin).clamp(0, 1 << 30));
+      return HeroPick(
+        kind: 'ongoing',
+        item: item,
+        minutes: (item.endMin - nowMin).clamp(0, 1 << 30),
+      );
     }
   }
   for (final item in items) {
     if (item.startMin > nowMin) {
-      return HeroPick(kind: 'next', item: item, minutes: item.startMin - nowMin);
+      return HeroPick(
+        kind: 'next',
+        item: item,
+        minutes: item.startMin - nowMin,
+      );
     }
   }
-  if (items.isNotEmpty) return HeroPick(kind: 'done', item: items.last, minutes: 0);
+  if (items.isNotEmpty) {
+    return HeroPick(kind: 'done', item: items.last, minutes: 0);
+  }
   return const HeroPick(kind: 'empty', minutes: 0);
 }
 
 String _icsEscape(String value) {
-  return value.replaceAll(r'\', r'\\').replaceAll(';', r'\;').replaceAll(',', r'\,').replaceAll('\n', r'\n');
+  return value
+      .replaceAll(r'\', r'\\')
+      .replaceAll(';', r'\;')
+      .replaceAll(',', r'\,')
+      .replaceAll('\n', r'\n');
 }
 
 String _pad(int n) => n.toString().padLeft(2, '0');
 
-String _icsStamp(DateTime date) => '${date.year}${_pad(date.month)}${_pad(date.day)}';
+String _icsStamp(DateTime date) =>
+    '${date.year}${_pad(date.month)}${_pad(date.day)}';
 
 /// 只导出线下课。线上课的节次是占位，写进日历会把周五下午填满。
-String buildIcs(List<Course> courses, String termStart, {String calendarName = '化研助手课表'}) {
+String buildIcs(
+  List<Course> courses,
+  String termStart, {
+  String calendarName = '化研助手课表',
+}) {
   final start0 = parseIsoDate(termStart);
   final lines = <String>[
     'BEGIN:VCALENDAR',
@@ -377,7 +443,8 @@ String buildIcs(List<Course> courses, String termStart, {String calendarName = '
     'END:VTIMEZONE',
   ];
   final now = DateTime.now().toUtc();
-  final stamp = '${now.year}${_pad(now.month)}${_pad(now.day)}T${_pad(now.hour)}${_pad(now.minute)}${_pad(now.second)}Z';
+  final stamp =
+      '${now.year}${_pad(now.month)}${_pad(now.day)}T${_pad(now.hour)}${_pad(now.minute)}${_pad(now.second)}Z';
   for (final course in courses) {
     if (course.online || course.weeks.isEmpty) continue;
     final odd = course.pattern.contains('单周') || course.pattern.contains('双周');
@@ -386,7 +453,10 @@ String buildIcs(List<Course> courses, String termStart, {String calendarName = '
       final ymd = _icsStamp(day);
       final start = seg.startTime.replaceAll(':', '');
       final end = seg.endTime.replaceAll(':', '');
-      final place = [course.room, course.campus].whereType<String>().where((part) => part.isNotEmpty).join(' ');
+      final place = [
+        course.room,
+        course.campus,
+      ].whereType<String>().where((part) => part.isNotEmpty).join(' ');
       lines.addAll([
         'BEGIN:VEVENT',
         'UID:${course.id}-${seg.weekday}-${seg.startPeriod}@buct-graduate-helper',
@@ -403,4 +473,153 @@ String buildIcs(List<Course> courses, String termStart, {String calendarName = '
   }
   lines.add('END:VCALENDAR');
   return '${lines.join('\r\n')}\r\n';
+}
+
+/// 与 web/js/schedule.mjs 的网格几何一致。课表块按节次定位，不另写一套时间表。
+const rowHeight = 46.0;
+const rowGaps = <int, double>{2: 10, 5: 10, 9: 10};
+
+double periodTop(int n) {
+  var y = 0.0;
+  for (var i = 1; i < n; i++) {
+    y += rowHeight;
+    final gap = rowGaps[i];
+    if (gap != null) y += gap;
+  }
+  return y;
+}
+
+double spanHeight(int startPeriod, int endPeriod) {
+  return periodTop(endPeriod) + rowHeight - periodTop(startPeriod) - 3;
+}
+
+final double gridHeight = periodTop(12) + rowHeight;
+
+const coursePalette = [
+  '#2F6BFF',
+  '#7C5CFF',
+  '#E8618C',
+  '#F0853A',
+  '#12A05C',
+  '#0E9FB5',
+  '#F0654E',
+  '#7D9B2E',
+];
+
+const preferredCourseColors = <String, String>{
+  '数值分析': '#2F6BFF',
+  '分子探针与诊疗新技术': '#7C5CFF',
+  '应用电化学': '#12A05C',
+  '催化化学': '#0E9FB5',
+  '化学生物学导论': '#F0853A',
+  '学术英语读写': '#E8618C',
+  '太阳能材料与化学': '#F0654E',
+};
+
+String courseColor(String name, [Map<String, String> overrides = const {}]) {
+  final override = overrides[name];
+  if (override != null && override.isNotEmpty) return override;
+  final preferred = preferredCourseColors[name];
+  if (preferred != null) return preferred;
+  var hash = 0;
+  for (final code in name.runes) {
+    hash = (hash * 33 + code) % coursePalette.length;
+  }
+  return coursePalette[hash];
+}
+
+/// 快照里的 `periods` 优先。缺字段或空列表时退回 [periods]，不另造节次。
+List<Period> periodsFromJson(Object? raw) {
+  if (raw is! List || raw.isEmpty) return periods;
+  final parsed = <Period>[];
+  for (final item in raw) {
+    if (item is! Map) continue;
+    final map = Map<String, dynamic>.from(item);
+    final name = '${map['name'] ?? ''}'.trim();
+    final start = '${map['start'] ?? ''}'.trim();
+    final end = '${map['end'] ?? ''}'.trim();
+    final n = (map['n'] as num?)?.toInt();
+    if (name.isEmpty || start.isEmpty || end.isEmpty || n == null) continue;
+    parsed.add(
+      Period(
+        n: n,
+        name: name,
+        start: start,
+        end: end,
+        group: '${map['group'] ?? ''}',
+      ),
+    );
+  }
+  return parsed.isEmpty ? periods : parsed;
+}
+
+String formatMonthDay(DateTime date) => '${date.month}月${date.day}日';
+
+String formatDuration(num minutes) {
+  final value = minutes.round() < 0 ? 0 : minutes.round();
+  if (value < 60) return '$value 分钟';
+  final hours = value ~/ 60;
+  final remain = value % 60;
+  return remain == 0 ? '$hours 小时' : '$hours 小时 $remain 分钟';
+}
+
+class WeekProgress {
+  const WeekProgress({
+    required this.done,
+    required this.total,
+    required this.remain,
+    required this.phase,
+  });
+
+  final int done;
+  final int total;
+  final int remain;
+  final String phase;
+}
+
+WeekProgress weekProgress(Course course, int week) {
+  final weeks = course.weeks;
+  if (weeks.isEmpty) {
+    return const WeekProgress(done: 0, total: 0, remain: 0, phase: 'empty');
+  }
+  final total = weeks.length;
+  final first = weeks.first;
+  final last = weeks.last;
+  if (week < first) {
+    return WeekProgress(
+      done: 0,
+      total: total,
+      remain: total,
+      phase: 'upcoming',
+    );
+  }
+  if (week > last) {
+    return WeekProgress(done: total, total: total, remain: 0, phase: 'ended');
+  }
+  final done = weeks.where((item) => item <= week).length;
+  return WeekProgress(
+    done: done,
+    total: total,
+    remain: last - week,
+    phase: 'current',
+  );
+}
+
+int termMaxWeek(List<Course> courses, DateTime now, String termStart) {
+  var fromCourses = 1;
+  for (final course in courses) {
+    if (course.jsz > fromCourses) fromCourses = course.jsz;
+  }
+  final current = weekIndex(now, termStart);
+  var maxWeek = 20;
+  if (fromCourses > maxWeek) maxWeek = fromCourses;
+  if (current > maxWeek) maxWeek = current;
+  if (maxWeek < 1) maxWeek = 1;
+  return maxWeek;
+}
+
+int clampWeek(int week, int maxWeek) {
+  if (week < 1) return 1;
+  if (week > maxWeek) return maxWeek;
+  return week;
 }
