@@ -12,12 +12,13 @@
 
 只读课表可以接到 `gmis_client.py`：`gmis_cli.py login` 用学校返回的验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`gmis_cli.py timetable` 把课表写到被忽略的 `web/data/live.json`，预览优先读它，没有则仍用 `web/data/snapshot.json`。通知和考试保持空态。
 
-Flutter 壳在 `app/`，和网页预览同一套底部导航：首页、周课表、服务、我的。首页用快照里的今日课程和学分，课表是带节次时间的周网格，点课程只弹层。服务目录来自快照，没有单独页面的入口停在空态。考试和通知仍然是空态。课表计算与 `web/js/schedule.mjs` 同一套规则，读的是同一份 `web/data/snapshot.json`。有 Android SDK 时在 `app/` 里 `flutter build apk --release`；模板工程的 release 仍用 debug 签名。没有 SDK 的环境先跑 `flutter test`。iOS 包要在 macOS 上用 Xcode 打。
+Flutter 壳在 `app/`，和网页预览同一套流程：引导、演示登录、首页、周课表、服务、我的。第一次打开先看引导。登录只核对快照里的演示学号、非空密码和按钮上的本地验证码，密码只留在内存里，提交后清掉，不进偏好。记住的学号、提醒、课程颜色写在本机 `shared_preferences`。首页在有未评课程时显示评教卡。课表可以横滑换周。课程详情可以开关单课提醒，并分享 ICS；提醒只在应用打开时出现，22:00–07:00 不提示，没有后台闹钟。学校入口只说明会打开 `gmis.buct.edu.cn` 上 `/student/` 开头的页面，不内嵌网页，也不代持会话。考试和通知仍然是空态。课表计算与 `web/js/schedule.mjs` 同一套规则，读的是同一份 `web/data/snapshot.json`。有 Android SDK 时在 `app/` 里 `flutter build apk --release`；模板工程的 release 仍用 debug 签名。没有 SDK 的环境先跑 `flutter test`。iOS 包要在 macOS 上用 Xcode 打。
 
 ## 下一轮按这个顺序
 
 1. 选课三屏、考试倒计时、真实通知列表，设计稿没画完之前不要编数据。导出文件是空的，页面保持空态。
 2. iOS 包要在 macOS 上用 Xcode 打。Android release 目前仍用模板的 debug 签名。
+3. 深色模式设计写了跟随系统，网页预览还没做，这版壳也先保持浅色。
 
 ## 不能碰的数据
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'export_ics.dart';
 import 'format.dart';
 import 'schedule.dart';
+import 'settings.dart';
 import 'theme.dart';
 import 'widgets.dart';
 
@@ -11,6 +13,8 @@ void openCourseSheet(
   required int week,
   required DateTime now,
   required String termStart,
+  required AppSettings settings,
+  required VoidCallback onChanged,
 }) {
   final navigator = Navigator.of(context);
   showModalBottomSheet<void>(
@@ -21,14 +25,24 @@ void openCourseSheet(
       return CourseSheet(
         course: course,
         week: week,
+        onExport: () => shareIcs(
+          sheetContext,
+          courses: [course],
+          termStart: termStart,
+          filename: '${course.name}.ics',
+          calendarName: course.name,
+          successMessage: '已导出这门课的日历文件',
+        ),
         onDetail: () {
           Navigator.of(sheetContext).pop();
           navigator.push(
-            MaterialPageRoute<void>(
-              builder: (_) => CourseDetailPage(
+            huayanRoute<void>(
+              CourseDetailPage(
                 course: course,
                 now: now,
                 termStart: termStart,
+                settings: settings,
+                onChanged: onChanged,
               ),
             ),
           );
@@ -44,11 +58,13 @@ class CourseSheet extends StatelessWidget {
     required this.course,
     required this.week,
     this.onDetail,
+    this.onExport,
   });
 
   final Course course;
   final int week;
   final VoidCallback? onDetail;
+  final VoidCallback? onExport;
 
   @override
   Widget build(BuildContext context) {
@@ -106,21 +122,46 @@ class CourseSheet extends StatelessWidget {
                 label: '上课周次',
                 value: '${course.ksz}–${course.jsz} 周 · $thisWeek',
               ),
-              if (onDetail != null) ...[
+              if (onDetail != null || onExport != null) ...[
                 const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: FilledButton(
-                    onPressed: onDetail,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: HuayanColors.blue,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                Row(
+                  children: [
+                    if (onDetail != null)
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: OutlinedButton(
+                            onPressed: onDetail,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: HuayanColors.ink,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              side: const BorderSide(color: HuayanColors.line),
+                            ),
+                            child: const Text('查看完整详情'),
+                          ),
+                        ),
                       ),
-                    ),
-                    child: const Text('查看完整详情'),
-                  ),
+                    if (onDetail != null && onExport != null)
+                      const SizedBox(width: 10),
+                    if (onExport != null)
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: FilledButton(
+                            onPressed: onExport,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: HuayanColors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text('加入日历'),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ],
@@ -131,17 +172,32 @@ class CourseSheet extends StatelessWidget {
   }
 }
 
-class CourseDetailPage extends StatelessWidget {
+class CourseDetailPage extends StatefulWidget {
   const CourseDetailPage({
     super.key,
     required this.course,
     required this.now,
     required this.termStart,
+    required this.settings,
+    required this.onChanged,
   });
 
   final Course course;
   final DateTime now;
   final String termStart;
+  final AppSettings settings;
+  final VoidCallback onChanged;
+
+  @override
+  State<CourseDetailPage> createState() => _CourseDetailPageState();
+}
+
+class _CourseDetailPageState extends State<CourseDetailPage> {
+  Course get course => widget.course;
+  DateTime get now => widget.now;
+  String get termStart => widget.termStart;
+  AppSettings get settings => widget.settings;
+  VoidCallback get onChanged => widget.onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -156,9 +212,64 @@ class CourseDetailPage extends StatelessWidget {
     };
     final thisWeek = course.weeks.contains(week) ? '本周有课' : '本周无课';
     final ratio = progress.total == 0 ? 0.0 : progress.done / progress.total;
-    final tone = CourseTone.fromHex(courseColor(course.name));
+    final tone = CourseTone.fromHex(courseColor(course.name, settings.colors));
+    final remind = settings.courseRemindOn(course.id);
     return Subpage(
       title: '课程',
+      footer: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+        child: Column(
+          children: [
+            const Text(
+              '导出的日历不会自动响铃，上课前提示只在这个应用打开时出现。',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: HuayanColors.faint,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: () => _toggleRemind(context, remind),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: HuayanColors.ink,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        side: const BorderSide(color: HuayanColors.line),
+                      ),
+                      child: Text(remind ? '关闭提醒' : '上课提醒'),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: FilledButton(
+                      onPressed: () => shareIcs(
+                        context,
+                        courses: [course],
+                        termStart: termStart,
+                        filename: '${course.name}.ics',
+                        calendarName: course.name,
+                        successMessage: '已导出这门课的日历文件',
+                      ),
+                      child: const Text('导出到日历'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
       children: [
         Text(
           course.name,
@@ -261,15 +372,59 @@ class CourseDetailPage extends StatelessWidget {
             ],
           ),
         ),
-        const Text(
-          '上课提醒留在设置里。这版不会在后台响铃。',
-          style: TextStyle(
-            fontSize: 12,
-            height: 1.45,
-            color: HuayanColors.faint,
+        HuayanCard(
+          margin: EdgeInsets.zero,
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '上课提醒',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: HuayanColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '提前 ${settings.reminderMin} 分钟 · 应用打开时才会提示',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: HuayanColors.faint,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Switch(
+                key: const Key('switch-course-remind'),
+                value: remind,
+                activeThumbColor: Colors.white,
+                activeTrackColor: HuayanColors.blue,
+                onChanged: (_) => _toggleRemind(context, remind),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  void _toggleRemind(BuildContext context, bool remind) {
+    final next = !remind;
+    setState(() => settings.courseRemind[course.id] = next);
+    onChanged();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          next ? '上课前 ${settings.reminderMin} 分钟提醒，应用打开时才会响' : '这门课不再提醒',
+        ),
+        duration: const Duration(milliseconds: 900),
+      ),
     );
   }
 }

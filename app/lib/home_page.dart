@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'format.dart';
+import 'icons.dart';
 import 'schedule.dart';
 import 'snapshot.dart';
 import 'theme.dart';
@@ -14,6 +15,7 @@ class HomePage extends StatelessWidget {
     required this.onCourse,
     required this.onProgress,
     required this.onNotices,
+    required this.onEval,
   });
 
   final Snapshot snap;
@@ -21,6 +23,7 @@ class HomePage extends StatelessWidget {
   final ValueChanged<Course> onCourse;
   final VoidCallback onProgress;
   final VoidCallback onNotices;
+  final VoidCallback onEval;
 
   @override
   Widget build(BuildContext context) {
@@ -64,15 +67,14 @@ class HomePage extends StatelessWidget {
               key: const Key('notices-button'),
               onPressed: onNotices,
               tooltip: '通知',
-              icon: const Icon(
-                Icons.notifications_none,
-                color: HuayanColors.ink,
-              ),
+              icon: const HuayanIcon('bell', size: 22, color: HuayanColors.ink),
             ),
           ],
         ),
         const SizedBox(height: 4),
         _HeroCard(now: now, hero: hero, items: day.items, onCourse: onCourse),
+        if (pendingEvalCount(snap.evaluations) > 0)
+          _EvalCard(count: pendingEvalCount(snap.evaluations), onTap: onEval),
         if (snap.credits != null) _CreditCard(snap: snap, onTap: onProgress),
       ],
     );
@@ -303,6 +305,81 @@ class _HeroFoot extends StatelessWidget {
               fontSize: 13,
               height: 1.45,
               color: HuayanColors.sub,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _EvalCard extends StatelessWidget {
+  const _EvalCard({required this.count, required this.onTap});
+
+  final int count;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
+        color: HuayanColors.amberSoft,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFFF4E3C4)),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          key: const Key('eval-card'),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        '最要紧的一件事',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuayanColors.amberInk,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '去评教',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: HuayanColors.amberInk,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '还有 $count 门课没评',
+                  style: const TextStyle(
+                    fontSize: 17,
+                    height: 1.35,
+                    fontWeight: FontWeight.w700,
+                    color: HuayanColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '课程结束后一个月内需要评完，否则可能影响查成绩。学校没有返回具体截止日期。',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.55,
+                    color: Color(0xFF6F5424),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

@@ -26,7 +26,12 @@ void main() {
   Future<void> boot(WidgetTester tester, {int tab = 0, Snapshot? data}) async {
     await phone(tester);
     await tester.pumpWidget(
-      HuayanApp(now: now, snapshot: data ?? snap, initialTab: tab),
+      HuayanApp(
+        now: now,
+        snapshot: data ?? snap,
+        initialTab: tab,
+        skipGate: true,
+      ),
     );
     await tester.pumpAndSettle();
   }
@@ -139,12 +144,16 @@ void main() {
     expect(item.bottom, lessThanOrEqualTo(bar.top + 1));
     await tester.tap(find.byKey(const Key('service-wskscp')));
     await tester.pumpAndSettle();
-    expect(find.text('这个入口还没有单独页面'), findsOneWidget);
+    expect(find.text('会在学校网站打开'), findsOneWidget);
+    expect(
+      find.textContaining('https://gmis.buct.edu.cn/student/wsks/wskscp'),
+      findsOneWidget,
+    );
     expect(find.textContaining('网上考试测评'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('nav-back')));
     await tester.pumpAndSettle();
-    expect(find.text('这个入口还没有单独页面'), findsNothing);
+    expect(find.text('会在学校网站打开'), findsNothing);
     await tester.fling(
       find.byKey(const Key('services-scroll')),
       const Offset(0, 1600),
@@ -174,9 +183,9 @@ void main() {
     expect(find.textContaining('化学学院'), findsOneWidget);
     expect(find.textContaining('手机'), findsNothing);
     expect(find.textContaining('邮箱'), findsNothing);
-    await tester.ensureVisible(find.text('设置').last);
+    await tester.ensureVisible(find.byKey(const Key('me-settings')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('设置').last);
+    await tester.tap(find.byKey(const Key('me-settings')));
     await tester.pumpAndSettle();
     expect(find.text('上课提醒'), findsOneWidget);
     expect(find.text('显示非本周课程'), findsOneWidget);
@@ -321,7 +330,7 @@ void main() {
 
   testWidgets('the bundled asset snapshot loads', (tester) async {
     await phone(tester);
-    await tester.pumpWidget(HuayanApp(now: now));
+    await tester.pumpWidget(HuayanApp(now: now, skipGate: true));
     await tester.pumpAndSettle();
     expect(find.text('上午好，王海翔'), findsOneWidget);
     expect(find.text('28 / 40'), findsOneWidget);
