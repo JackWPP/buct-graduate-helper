@@ -1,5 +1,8 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
+import 'icons.dart';
 import 'theme.dart';
 
 class HuayanCard extends StatelessWidget {
@@ -21,20 +24,32 @@ class HuayanCard extends StatelessWidget {
     final radius = BorderRadius.circular(18);
     return Padding(
       padding: margin,
-      child: Material(
-        color: HuayanColors.card,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
+      child: DecoratedBox(
+        decoration: BoxDecoration(
           borderRadius: radius,
-          side: const BorderSide(color: HuayanColors.lineSoft),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x0A14171F),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: Padding(
-            padding: padding,
-            child: SizedBox(width: double.infinity, child: child),
+        child: Material(
+          color: HuayanColors.card,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: radius,
+            side: const BorderSide(color: HuayanColors.lineSoft),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: radius,
+            child: Padding(
+              padding: padding,
+              child: SizedBox(width: double.infinity, child: child),
+            ),
           ),
         ),
       ),
@@ -69,8 +84,8 @@ class Subpage extends StatelessWidget {
                     key: const Key('nav-back'),
                     onPressed: () => Navigator.of(context).pop(),
                     tooltip: '返回',
-                    icon: const Icon(
-                      Icons.arrow_back,
+                    icon: const HuayanIcon(
+                      'back',
                       size: 18,
                       color: HuayanColors.ink,
                     ),
@@ -111,11 +126,13 @@ class EmptyHint extends StatelessWidget {
     required this.title,
     required this.text,
     this.icon = Icons.description_outlined,
+    this.glyph,
   });
 
   final String title;
   final String text;
   final IconData icon;
+  final String? glyph;
 
   @override
   Widget build(BuildContext context) {
@@ -123,7 +140,9 @@ class EmptyHint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 28),
       child: Column(
         children: [
-          Icon(icon, size: 36, color: HuayanColors.placeholder),
+          glyph == null
+              ? Icon(icon, size: 36, color: HuayanColors.placeholder)
+              : HuayanIcon(glyph!, size: 36, color: HuayanColors.placeholder),
           const SizedBox(height: 12),
           Text(
             title,
@@ -261,19 +280,17 @@ class HuayanTabBar extends StatelessWidget {
   final ValueChanged<int> onChanged;
 
   static const _items = [
-    (key: 'tab-home', icon: Icons.home_outlined, label: '首页'),
-    (key: 'tab-timetable', icon: Icons.calendar_today_outlined, label: '课表'),
-    (key: 'tab-services', icon: Icons.grid_view_outlined, label: '服务'),
-    (key: 'tab-me', icon: Icons.person_outline, label: '我的'),
+    (key: 'tab-home', icon: 'home', label: '首页'),
+    (key: 'tab-timetable', icon: 'cal', label: '课表'),
+    (key: 'tab-services', icon: 'grid', label: '服务'),
+    (key: 'tab-me', icon: 'user', label: '我的'),
   ];
 
   @override
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xF5FFFFFF),
         borderRadius: BorderRadius.circular(36),
-        border: Border.all(color: const Color(0xE6E6E9F0)),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1414171F),
@@ -282,21 +299,34 @@ class HuayanTabBar extends StatelessWidget {
           ),
         ],
       ),
-      child: SizedBox(
-        height: 64,
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Row(
-            children: [
-              for (var i = 0; i < _items.length; i++)
-                Expanded(
-                  child: _TabButton(
-                    item: _items[i],
-                    active: i == index,
-                    onTap: () => onChanged(i),
-                  ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(36),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: const Color(0xF5FFFFFF),
+              borderRadius: BorderRadius.circular(36),
+              border: Border.all(color: const Color(0xE6E6E9F0)),
+            ),
+            child: SizedBox(
+              height: 64,
+              child: Padding(
+                padding: const EdgeInsets.all(4),
+                child: Row(
+                  children: [
+                    for (var i = 0; i < _items.length; i++)
+                      Expanded(
+                        child: _TabButton(
+                          item: _items[i],
+                          active: i == index,
+                          onTap: () => onChanged(i),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
+              ),
+            ),
           ),
         ),
       ),
@@ -311,7 +341,7 @@ class _TabButton extends StatelessWidget {
     required this.onTap,
   });
 
-  final ({String key, IconData icon, String label}) item;
+  final ({String key, String icon, String label}) item;
   final bool active;
   final VoidCallback onTap;
 
@@ -328,7 +358,7 @@ class _TabButton extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(item.icon, size: 20, color: color),
+            HuayanIcon(item.icon, size: 20, color: color),
             const SizedBox(height: 2),
             Text(
               item.label,

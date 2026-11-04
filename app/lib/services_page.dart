@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'icons.dart';
 import 'schedule.dart';
 import 'snapshot.dart';
 import 'theme.dart';
@@ -50,10 +51,17 @@ class _ServicesPageState extends State<ServicesPage> {
               color: HuayanColors.placeholder,
               fontSize: 15,
             ),
-            prefixIcon: const Icon(
-              Icons.search,
-              color: HuayanColors.placeholder,
-              size: 20,
+            prefixIcon: const Padding(
+              padding: EdgeInsets.only(left: 12, right: 8),
+              child: HuayanIcon(
+                'search',
+                size: 20,
+                color: HuayanColors.placeholder,
+              ),
+            ),
+            prefixIconConstraints: const BoxConstraints(
+              minWidth: 40,
+              minHeight: 20,
             ),
             filled: true,
             fillColor: HuayanColors.card,
@@ -110,31 +118,23 @@ class _Shortcuts extends StatelessWidget {
             children: [
               Expanded(
                 child: _Shortcut(
-                  icon: Icons.calendar_today_outlined,
+                  glyph: 'cal',
                   label: '课表',
                   native: 'timetable',
                 ),
               ),
               Expanded(
-                child: _Shortcut(
-                  icon: Icons.bar_chart_outlined,
-                  label: '成绩',
-                  native: 'grades',
-                ),
+                child: _Shortcut(glyph: 'chart', label: '成绩', native: 'grades'),
               ),
               Expanded(
                 child: _Shortcut(
-                  icon: Icons.check_circle_outline,
+                  glyph: 'check',
                   label: '选课',
                   native: 'selected',
                 ),
               ),
               Expanded(
-                child: _Shortcut(
-                  icon: Icons.star_outline,
-                  label: '评教',
-                  native: 'eval',
-                ),
+                child: _Shortcut(glyph: 'star', label: '评教', native: 'eval'),
               ),
             ],
           ),
@@ -146,12 +146,12 @@ class _Shortcuts extends StatelessWidget {
 
 class _Shortcut extends StatelessWidget {
   const _Shortcut({
-    required this.icon,
+    required this.glyph,
     required this.label,
     required this.native,
   });
 
-  final IconData icon;
+  final String glyph;
   final String label;
   final String native;
 
@@ -168,7 +168,7 @@ class _Shortcut extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           children: [
-            Icon(icon, color: HuayanColors.blue, size: 24),
+            HuayanIcon(glyph, color: HuayanColors.blue, size: 22),
             const SizedBox(height: 6),
             Text(
               label,
@@ -297,8 +297,8 @@ class _Mini extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Icon(
-              serviceIcon(item.id),
+            HuayanIcon(
+              serviceGlyph(item.id),
               size: 22,
               color: const Color(0xFF8B93A7),
             ),
@@ -390,7 +390,7 @@ class _ServiceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final where = hit.item.native == null ? '学校网页还没接到这版' : '本机页面';
+    final where = hit.item.native == null ? '学校网页' : '本机页面';
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Material(
@@ -408,7 +408,10 @@ class _ServiceRow extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(serviceIcon(hit.item.id), color: const Color(0xFF8B93A7)),
+                HuayanIcon(
+                  serviceGlyph(hit.item.id),
+                  color: const Color(0xFF8B93A7),
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -492,44 +495,5 @@ class _CourseHit extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-IconData serviceIcon(String id) {
-  switch (id) {
-    case 'grjbxx':
-    case 'xsrxdj':
-    case 'zpxxhd':
-    case 'zyzfwbm':
-      return Icons.person_outline;
-    case 'xyjc':
-    case 'ccqjwh':
-    case 'xjydsq':
-    case 'ttkcx':
-      return Icons.swap_horiz;
-    case 'xsxqzc':
-    case 'xslqfc':
-    case 'xswsxk_kb':
-    case 'xkjgcx':
-    case 'tyydbm':
-      return Icons.check_circle_outline;
-    case 'pyfacx':
-    case 'qxkczml':
-      return Icons.menu_book_outlined;
-    case 'xskbcx':
-      return Icons.calendar_today_outlined;
-    case 'xscjcx':
-    case 'djkscj':
-      return Icons.bar_chart_outlined;
-    case 'wsjxpj':
-      return Icons.star_outline;
-    case 'kckccx':
-    case 'djksbm':
-    case 'zqkhsq':
-      return Icons.assignment_outlined;
-    case 'wskscp':
-      return Icons.edit_outlined;
-    default:
-      return Icons.description_outlined;
   }
 }

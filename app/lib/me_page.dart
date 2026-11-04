@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'format.dart';
+import 'icons.dart';
 import 'snapshot.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -211,7 +212,12 @@ class MePage extends StatelessWidget {
               value: snap.notices == 0 ? '暂无通知' : '${snap.notices} 条',
               onTap: onNotices,
             ),
-            _MenuRow(title: '设置', value: '提醒与课表', onTap: onSettings),
+            _MenuRow(
+              key: const Key('me-settings'),
+              title: '设置',
+              value: '提醒与课表',
+              onTap: onSettings,
+            ),
           ],
         ),
       ],
@@ -287,6 +293,7 @@ class _MenuGroup extends StatelessWidget {
 
 class _MenuRow extends StatelessWidget {
   const _MenuRow({
+    super.key,
     required this.title,
     required this.value,
     required this.onTap,
@@ -314,11 +321,7 @@ class _MenuRow extends StatelessWidget {
               value,
               style: const TextStyle(fontSize: 13, color: HuayanColors.faint),
             ),
-            const Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: HuayanColors.placeholder,
-            ),
+            const HuayanChevron(),
           ],
         ),
       ),

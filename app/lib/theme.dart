@@ -44,15 +44,23 @@ Color parseHex(String hex) {
   return Color(int.parse('FF$value', radix: 16));
 }
 
+const appVersionLabel = '1.1.0';
+
 ThemeData huayanTheme({String? fontFamily}) {
+  final family = fontFamily ?? 'Noto Sans SC';
   final scheme = ColorScheme.fromSeed(
     seedColor: HuayanColors.blue,
     brightness: Brightness.light,
   );
+  final buttonText = TextStyle(
+    fontFamily: family,
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+  );
   return ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    fontFamily: fontFamily,
+    fontFamily: family,
     scaffoldBackgroundColor: HuayanColors.bg,
     colorScheme: scheme.copyWith(
       primary: HuayanColors.blue,
@@ -62,5 +70,76 @@ ThemeData huayanTheme({String? fontFamily}) {
     ),
     dividerColor: HuayanColors.lineSoft,
     splashFactory: InkRipple.splashFactory,
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(64, 52),
+        backgroundColor: HuayanColors.blue,
+        foregroundColor: Colors.white,
+        textStyle: buttonText,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    ),
+    pageTransitionsTheme: const PageTransitionsTheme(
+      builders: {
+        TargetPlatform.android: HuayanPageTransitionsBuilder(),
+        TargetPlatform.iOS: HuayanPageTransitionsBuilder(),
+        TargetPlatform.linux: HuayanPageTransitionsBuilder(),
+        TargetPlatform.macOS: HuayanPageTransitionsBuilder(),
+        TargetPlatform.windows: HuayanPageTransitionsBuilder(),
+        TargetPlatform.fuchsia: HuayanPageTransitionsBuilder(),
+      },
+    ),
+  );
+}
+
+class HuayanPageTransitionsBuilder extends PageTransitionsBuilder {
+  const HuayanPageTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    final curved = CurvedAnimation(
+      parent: animation,
+      curve: Curves.easeOutCubic,
+    );
+    return FadeTransition(
+      opacity: curved,
+      child: SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0.08, 0),
+          end: Offset.zero,
+        ).animate(curved),
+        child: child,
+      ),
+    );
+  }
+}
+
+Route<T> huayanRoute<T>(Widget page) {
+  return PageRouteBuilder<T>(
+    pageBuilder: (context, animation, secondaryAnimation) => page,
+    transitionDuration: const Duration(milliseconds: 220),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0.08, 0),
+            end: Offset.zero,
+          ).animate(curved),
+          child: child,
+        ),
+      );
+    },
   );
 }

@@ -261,6 +261,7 @@ class Snapshot {
     required this.student,
     required this.courses,
     this.updatedLabel = '',
+    this.demoStudentId = '',
     this.campusNote = '',
     this.notices = 0,
     this.exams = 0,
@@ -274,7 +275,11 @@ class Snapshot {
   final String termName;
   final String termStart;
   final String updatedLabel;
+  final String demoStudentId;
   final String campusNote;
+
+  String get loginStudentId =>
+      demoStudentId.isEmpty ? student.id : demoStudentId;
   final Student student;
   final List<Course> courses;
   final int notices;
@@ -303,6 +308,7 @@ class Snapshot {
       termName: '${term['name'] ?? ''}',
       termStart: '${term['start'] ?? ''}',
       updatedLabel: '${json['updatedLabel'] ?? ''}',
+      demoStudentId: '${json['demoStudentId'] ?? ''}',
       campusNote: '${json['campusNote'] ?? ''}',
       student: Student.fromJson(
         json['student'] is Map

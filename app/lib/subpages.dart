@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import 'export_ics.dart';
 import 'format.dart';
+import 'icons.dart';
 import 'schedule.dart';
-import 'services_page.dart';
 import 'settings.dart';
 import 'snapshot.dart';
 import 'theme.dart';
@@ -540,8 +541,8 @@ class GroupPage extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(
-                        serviceIcon(item.id),
+                      HuayanIcon(
+                        serviceGlyph(item.id),
                         color: const Color(0xFF8B93A7),
                       ),
                       const SizedBox(width: 12),
@@ -673,12 +674,14 @@ class SettingsPage extends StatefulWidget {
     required this.settings,
     required this.now,
     required this.onChanged,
+    required this.onLogout,
   });
 
   final Snapshot snap;
   final AppSettings settings;
   final DateTime now;
   final VoidCallback onChanged;
+  final VoidCallback onLogout;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -693,18 +696,15 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {});
   }
 
-  Future<void> _copyIcs() async {
-    final offline = widget.snap.courses
-        .where((course) => !course.online)
-        .toList();
-    if (offline.isEmpty || offline.every((course) => course.segments.isEmpty)) {
-      _toast('线上课的节次是占位，没有写进日历');
-      return;
-    }
-    await Clipboard.setData(
-      ClipboardData(text: buildIcs(widget.snap.courses, widget.snap.termStart)),
+  Future<void> _copyIcs() {
+    return shareIcs(
+      context,
+      courses: widget.snap.courses,
+      termStart: widget.snap.termStart,
+      filename: '化研助手课表.ics',
+      calendarName: '化研助手课表',
+      successMessage: '已导出线下课日历，线上课已跳过',
     );
-    _toast('已复制线下课日历，线上课已跳过');
   }
 
   void _toast(String message) {
@@ -712,12 +712,36 @@ class _SettingsPageState extends State<SettingsPage> {
         .showSnackBar(SnackBar(content: Text(message)));
   }
 
+  Future<void> _confirmLogout() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('退出登录？'),
+        content: const Text('需要重新输入验证码才能回来。记住的学号会留下，密码不会。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              '退出',
+              style: TextStyle(color: HuayanColors.danger),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) widget.onLogout();
+  }
+
   Future<void> _confirmReset() async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('清理本机偏好？'),
-        content: const Text('提醒开关和课程颜色会恢复默认。课表快照还在。'),
+        content: const Text('提醒开关和课程颜色会恢复默认。登录状态和快照还在。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -750,20 +774,24 @@ class _SettingsPageState extends State<SettingsPage> {
               contentPadding: EdgeInsets.zero,
               title: const Text('个人资料'),
               subtitle: Text('${student.name} · ${student.id}'),
-              trailing: const Icon(
-                Icons.chevron_right,
-                color: HuayanColors.placeholder,
-              ),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => ProfilePage(student: student),
-                ),
-              ),
+              trailing: const HuayanChevron(),
+              onTap: () =>
+                  Navigator.of(context)
+                      .push(huayanRoute<void>(ProfilePage(student: student))),
             ),
             const ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text('登录状态', style: TextStyle(fontSize: 15)),
               subtitle: Text('这版直接读本机快照，没有学校登录会话。'),
+            ),
+            ListTile(
+              key: const Key('logout-button'),
+              contentPadding: EdgeInsets.zero,
+              title: const Text(
+                '退出登录',
+                style: TextStyle(color: HuayanColors.danger, fontSize: 15),
+              ),
+              onTap: _confirmLogout,
             ),
           ],
         ),
@@ -817,13 +845,10 @@ class _SettingsPageState extends State<SettingsPage> {
               contentPadding: EdgeInsets.zero,
               title: const Text('课程外观'),
               subtitle: const Text('配色跟着课走，不跟着格子走'),
-              trailing: const Icon(
-                Icons.chevron_right,
-                color: HuayanColors.placeholder,
-              ),
+              trailing: const HuayanChevron(),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => CourseLookPage(
+                huayanRoute<void>(
+                  CourseLookPage(
                     snap: widget.snap,
                     settings: settings,
                     onChanged: widget.onChanged,
@@ -833,8 +858,8 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             ListTile(
               contentPadding: EdgeInsets.zero,
-              title: const Text('复制全部线下课'),
-              subtitle: const Text('生成 ICS 文本，线上课会跳过'),
+              title: const Text('导出全部线下课'),
+              subtitle: const Text('生成 ICS 文件，线上课会跳过'),
               onTap: _copyIcs,
             ),
           ],
@@ -855,14 +880,10 @@ class _SettingsPageState extends State<SettingsPage> {
               contentPadding: EdgeInsets.zero,
               title: const Text('桌面小组件'),
               subtitle: const Text('今日课程、下一节课'),
-              trailing: const Icon(
-                Icons.chevron_right,
-                color: HuayanColors.placeholder,
-              ),
+              trailing: const HuayanChevron(),
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) =>
-                      WidgetPreviewPage(snap: widget.snap, now: widget.now),
+                huayanRoute<void>(
+                  WidgetPreviewPage(snap: widget.snap, now: widget.now),
                 ),
               ),
             ),
@@ -875,21 +896,16 @@ class _SettingsPageState extends State<SettingsPage> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('我们读取了哪些数据'),
-              trailing: const Icon(
-                Icons.chevron_right,
-                color: HuayanColors.placeholder,
-              ),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute<void>(
-                  builder: (_) => DataPage(snap: widget.snap),
-                ),
-              ),
+              trailing: const HuayanChevron(),
+              onTap: () =>
+                  Navigator.of(context)
+                      .push(huayanRoute<void>(DataPage(snap: widget.snap))),
             ),
             const ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text('版本'),
               trailing: Text(
-                '1.0.0',
+                appVersionLabel,
                 style: TextStyle(color: HuayanColors.faint),
               ),
             ),
@@ -1189,5 +1205,96 @@ class WidgetPreviewPage extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+bool schoolPathAllowed(String path) {
+  return path.startsWith('/student/') &&
+      !path.contains('..') &&
+      !path.contains('\\') &&
+      !path.contains('://');
+}
+
+class SchoolPage extends StatelessWidget {
+  const SchoolPage({super.key, required this.title, required this.path});
+
+  final String title;
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    final allowed = schoolPathAllowed(path);
+    final url = allowed ? 'https://gmis.buct.edu.cn$path' : '';
+    return Subpage(
+      title: title,
+      children: [
+        if (!allowed)
+          const EmptyHint(
+            glyph: 'shield',
+            title: '链接已拦住',
+            text: '只允许打开 gmis.buct.edu.cn 上的学生页面。',
+          )
+        else ...[
+          HuayanCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '会在学校网站打开',
+                  style: TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: HuayanColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  '这份预览不会代持学校登录。打开后如果学校要求登录，需要你自己再登一次。',
+                  style: TextStyle(
+                    fontSize: 14,
+                    height: 1.55,
+                    color: HuayanColors.sub,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  url,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.4,
+                    color: HuayanColors.faint,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton(
+              key: const Key('school-open'),
+              onPressed: () => _open(context, url),
+              child: const Text('在浏览器中打开'),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Future<void> _open(BuildContext context, String url) async {
+    final uri = Uri.tryParse(url);
+    if (uri == null || uri.host != 'gmis.buct.edu.cn') return;
+    try {
+      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!ok && context.mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text('没有打开浏览器')));
+      }
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('没有打开浏览器')));
+    }
   }
 }

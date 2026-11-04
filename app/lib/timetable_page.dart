@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'icons.dart';
 import 'schedule.dart';
 import 'settings.dart';
 import 'snapshot.dart';
@@ -29,6 +30,7 @@ class TimetablePage extends StatefulWidget {
 
 class _TimetablePageState extends State<TimetablePage> {
   late int _week;
+  double _dragDx = 0;
 
   @override
   void initState() {
@@ -118,7 +120,14 @@ class _TimetablePageState extends State<TimetablePage> {
                       minimumSize: const Size(28, 28),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    icon: const Icon(Icons.chevron_left),
+                    icon: const RotatedBox(
+                      quarterTurns: 2,
+                      child: HuayanIcon(
+                        'chev',
+                        size: 22,
+                        color: HuayanColors.ink,
+                      ),
+                    ),
                   ),
                   Text(
                     '第 $_week 周',
@@ -138,7 +147,11 @@ class _TimetablePageState extends State<TimetablePage> {
                       minimumSize: const Size(28, 28),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    icon: const Icon(Icons.chevron_right),
+                    icon: const HuayanIcon(
+                      'chev',
+                      size: 22,
+                      color: HuayanColors.ink,
+                    ),
                   ),
                   const Spacer(),
                   Text(
@@ -174,10 +187,14 @@ class _TimetablePageState extends State<TimetablePage> {
         ),
         Expanded(
           child: GestureDetector(
+            onHorizontalDragStart: (_) => _dragDx = 0,
+            onHorizontalDragUpdate: (details) => _dragDx += details.delta.dx,
             onHorizontalDragEnd: (details) {
               final velocity = details.primaryVelocity ?? 0;
-              if (velocity.abs() < 240) return;
-              _shift(velocity < 0 ? 1 : -1);
+              final dx = _dragDx;
+              if (dx.abs() < 56 && velocity.abs() < 240) return;
+              final forward = dx.abs() >= 56 ? dx < 0 : velocity < 0;
+              _shift(forward ? 1 : -1);
             },
             child: ListView(
               key: const Key('timetable-scroll'),
