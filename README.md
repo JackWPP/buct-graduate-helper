@@ -6,11 +6,11 @@
 
 <p align="center">北京化工大学研究生管理系统的移动层。<br>课表、培养进度和办事入口先在手机上读清。密码不离开自己的设备。</p>
 
-网页预览用 2026-10-30 导出的课表快照，本身不连接学校服务器。Flutter 壳读同一份快照，周次和节次用同一套规则。学校接口是可选的只读补充。
+**Android 版在 `app/`，是项目主线。** `web/` 保留为 390px 可点击设计预览和回归参照，不再承担功能主线。Android 版目前读 2026-10-30 导出的演示快照（`app/assets/snapshot.json`），真实 GMIS 适配层按 PRD 的 M0 逐步接入。
 
 ## 界面
 
-390px 宽的网页预览。长课名在格子里折成两行，服务页最后一组停在底部导航上方。
+下面是网页预览截图，Android 版使用同一套布局、周次和节次规则。长课名在格子里折成两行，服务页最后一组停在底部导航上方。
 
 <table>
   <tr>
@@ -29,7 +29,9 @@
 
 ## 三块怎么接在一起
 
-<img src="docs/images/layers.png" alt="网页预览、Flutter 壳和学校接口共用 web/data/snapshot.json">
+<img src="docs/images/layers.png" alt="Android 主线、网页预览和学校接口的关系">
+
+Android 版读 `app/assets/snapshot.json`，网页预览读 `web/data/snapshot.json`；两份都是演示快照，不会带着密码或 Cookie。`gmis_cli.py` 只做可选的只读导出，把 `web/data/live.json` 留给网页预览覆盖。
 
 ## 标志
 
@@ -47,40 +49,51 @@ python3 design/brand/render_logo.py
 
 ## 跑起来
 
+### Android（主线）
+
+本机装好 Flutter 3.47 和 Android SDK 后：
+
+```bash
+cd app
+flutter pub get
+flutter test
+flutter analyze
+flutter build apk --debug
+```
+
+debug 产物在 `app/build/app/outputs/flutter-apk/app-debug.apk`；打 release 包用 `flutter build apk --release`，产物在 `app/build/app/outputs/flutter-apk/app-release.apk`。正式包还需要在 `app/android/app/build.gradle.kts` 里换成自己的 release 签名密钥；当前 release 仍用模板的 debug 签名。当前源码版本是 `1.1.0+2`；已发布的 [v1.0.0](https://github.com/JackWPP/buct-graduate-helper/releases/tag/v1.0.0) Android 包只用于侧载试装，`v1.1.0` 标签尚无独立 APK。
+
+### 网页预览（设计参照）
+
+```bash
+cd web && python3 -m http.server 8899
+```
+
+打开 http://127.0.0.1:8899/ 。预览优先读 `web/data/live.json`，没有就继续用 `web/data/snapshot.json`；`live.json` 不提交。
+
+### Python 只读导出
+
 ```bash
 python3 -m pip install -r requirements.txt
 python3 gmis_cli.py login --user 2026201060 --cookies cookies.json
 python3 gmis_cli.py timetable --cookies cookies.json
-cd web && python3 -m http.server 8899
 ```
 
-登录会把学校返回的验证码图存进临时目录，终端输入 4 位数字后图片即删。密码只从环境变量 `GMIS_PASSWORD` 或交互提示读取。`login` 成功后 Cookie 写入 `cookies.json`（已被忽略）。接口返回 302 时重新执行 `login`。
+登录会把学校返回的验证码图存进临时目录，终端输入 4 位数字后图片即删。密码只从环境变量 `GMIS_PASSWORD` 或交互提示读取。`login` 成功后 Cookie 写入 `cookies.json`（已被忽略）。接口返回 302 时重新执行 `login`。`timetable` 写成 `web/data/live.json`，只供网页预览使用。
 
-`timetable` 写成 `web/data/live.json`。预览优先读它，没有就继续用 `web/data/snapshot.json`。`live.json` 不提交。
-
-网页预览打开 http://127.0.0.1:8899/ 。云端接着做的约定在 [AGENTS.md](AGENTS.md)。
-
-Flutter 壳在 `app/`。本机装好 Flutter 3.47 后：
-
-```bash
-cd app
-flutter test
-flutter build web
-```
-
-`flutter build apk` 还需要 Android SDK。已发布的 Android 包在 [v1.0.0](https://github.com/JackWPP/buct-graduate-helper/releases/tag/v1.0.0)，用调试证书签名，用来侧载试装。
+云端接着做的约定在 [AGENTS.md](AGENTS.md)。
 
 ## 仓库里有什么
 
 | 文件 | 内容 |
 | --- | --- |
-| `web/` | 可点击的手机网页预览 |
-| `app/` | Flutter 壳，Android、iOS、Web |
+| `app/` | **项目主线**：Flutter Android/iOS 客户端 |
+| `web/` | 390px 可点击的手机网页预览，设计参照和回归页 |
 | `gmis_client.py` | Python 客户端：RSA 登录、Cookie、主要接口、ICS |
 | `gmis_cli.py` | 命令行：登录、导出、课表 ICS、课程查询 |
 | `GMIS_API.md` | 接口文档：登录、培养、选课、课表、成绩、研工、科研、毕业 |
 | `API_INDEX.md` | 按 49 个页面分组的接口索引 |
-| `PRD.md` | 产品需求 v0.3 |
+| `PRD.md` | 产品需求 v0.4 |
 | `design/` | 设计说明、导出稿和标志 |
 | `research/` | 竞品调研和功能-接口对照 |
 

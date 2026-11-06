@@ -1,5 +1,5 @@
 name: huayan
-description: "化研助手。课表计算与网页预览同一套规则，壳里先读已导出的快照。"
+description: "化研助手 Android/iOS 客户端（项目主线）。当前读演示快照，真实 GMIS 适配层按 PRD 接入。"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev

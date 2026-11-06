@@ -1,1 +1,854 @@
-../../web/data/snapshot.json
+{
+  "updatedAt": "2026-10-30T14:32:00+08:00",
+  "updatedLabel": "10月30日 14:32",
+  "source": "GMIS 导出快照，演示版不连接学校服务器",
+  "student": {
+    "xh": "2026201060",
+    "xm": "王海翔",
+    "college": "化学学院",
+    "major": "化学工程与技术",
+    "advisor": "孙晓明",
+    "grade": "2026",
+    "kind": "全日制学术学位硕士"
+  },
+  "term": {
+    "code": "55",
+    "name": "2026-2027秋季学期",
+    "start": "2026-08-31",
+    "startLabel": "第 1 周周一 2026-08-31"
+  },
+  "demoStudentId": "2026201060",
+  "courses": [
+    {
+      "id": "97779bae-e90d-420e-9ce5-d6bd1941f6da",
+      "name": "催化化学",
+      "className": "催化化学1班",
+      "code": "ACh511",
+      "credits": 2.0,
+      "hours": 32,
+      "teacher": "何静",
+      "room": "科402",
+      "campus": "朝阳校区",
+      "online": false,
+      "ksz": 7,
+      "jsz": 14,
+      "pattern": "连续周",
+      "enrolled": 53,
+      "sjms": "星期一 下午6-下午9",
+      "category": "B专业核心课",
+      "degree": true
+    },
+    {
+      "id": "527ccee9-2487-4c98-8c97-21f34e5463eb",
+      "name": "应用电化学",
+      "className": "应用电化学1班",
+      "code": "ACh513",
+      "credits": 3.0,
+      "hours": 48,
+      "teacher": "刘硕",
+      "room": "科303",
+      "campus": "朝阳校区",
+      "online": false,
+      "ksz": 3,
+      "jsz": 15,
+      "pattern": "连续周",
+      "enrolled": 90,
+      "sjms": "星期五 上午2-上午5",
+      "category": "I学科交叉课",
+      "degree": false
+    },
+    {
+      "id": "98bacd3b-411e-4458-a82a-2dcd13c6126e",
+      "name": "分子探针与诊疗新技术",
+      "className": "分子探针与诊疗新技术1班",
+      "code": "ACh52501",
+      "credits": 3.0,
+      "hours": 48,
+      "teacher": "宋继彬",
+      "room": "教617",
+      "campus": "朝阳校区",
+      "online": false,
+      "ksz": 3,
+      "jsz": 18,
+      "pattern": "连续周",
+      "enrolled": 84,
+      "sjms": "星期一 上午3-上午5",
+      "category": "I学科交叉课",
+      "degree": false
+    },
+    {
+      "id": "9a13df23-f1e3-4f56-bb95-50852e3482c1",
+      "name": "化学生物学导论",
+      "className": "化学生物学导论1班",
+      "code": "Chem51703",
+      "credits": 2.0,
+      "hours": 32,
+      "teacher": "王卓",
+      "room": "教423",
+      "campus": "朝阳校区",
+      "online": false,
+      "ksz": 10,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 61,
+      "sjms": "星期二 下午6-下午9",
+      "category": "I学科交叉课",
+      "degree": false
+    },
+    {
+      "id": "a86dbf26-2561-4a51-a2e8-40378af3aab4",
+      "name": "太阳能材料与化学",
+      "className": "太阳能材料与化学1班",
+      "code": "Chem52202",
+      "credits": 2.0,
+      "hours": 32,
+      "teacher": "白晓觉",
+      "room": "科401",
+      "campus": "朝阳校区",
+      "online": false,
+      "ksz": 9,
+      "jsz": 16,
+      "pattern": "连续周",
+      "enrolled": 126,
+      "sjms": "星期五 下午6-下午9",
+      "category": "B专业核心课",
+      "degree": true
+    },
+    {
+      "id": "243abd22-ccb3-4a5b-83b3-3d1b537debbe",
+      "name": "学术英语读写",
+      "className": "学术英语读写化学硕士3班",
+      "code": "Eng52501",
+      "credits": 2.0,
+      "hours": 32,
+      "teacher": "胡沛",
+      "room": "教617",
+      "campus": "朝阳校区",
+      "online": false,
+      "ksz": 3,
+      "jsz": 10,
+      "pattern": "连续周",
+      "enrolled": 70,
+      "sjms": "星期三 下午6-下午9",
+      "category": "A公共基础课",
+      "degree": true
+    },
+    {
+      "id": "b2b13503-0a45-49d7-8ec2-02f7d0c5e6e8",
+      "name": "数值分析",
+      "className": "数值分析C1班东区",
+      "code": "Math504c",
+      "credits": 2.5,
+      "hours": 40,
+      "teacher": "常延贞",
+      "room": "科303",
+      "campus": "朝阳校区",
+      "online": false,
+      "ksz": 10,
+      "jsz": 16,
+      "pattern": "连续周",
+      "enrolled": 161,
+      "sjms": "星期二 上午1 -上午2,星期六 上午3-上午5",
+      "category": "A公共基础课",
+      "degree": true
+    },
+    {
+      "id": "b48bed08-db6f-4b00-bff6-4d9a648d0dbf",
+      "name": "英文科技论文写作与学术报告",
+      "className": "英文科技论文写作与学术报告1班",
+      "code": "OL52101",
+      "credits": 2.0,
+      "hours": null,
+      "teacher": "网络课程",
+      "room": "网络课程",
+      "campus": null,
+      "online": true,
+      "ksz": 4,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 3068,
+      "sjms": "星期五 下午8-下午9",
+      "category": "",
+      "degree": false
+    },
+    {
+      "id": "223f8ffb-3573-4e70-b3b0-e601509e3d8f",
+      "name": "科研伦理与学术规范",
+      "className": "科研伦理与学术规范1班",
+      "code": "OL52102",
+      "credits": 2.0,
+      "hours": null,
+      "teacher": "网络课程",
+      "room": "网络课程",
+      "campus": null,
+      "online": true,
+      "ksz": 4,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 3193,
+      "sjms": "星期五 下午8-下午9",
+      "category": "",
+      "degree": false
+    },
+    {
+      "id": "b00774ae-12cd-40cb-8333-7c7ec4aaf873",
+      "name": "不朽的艺术：走进大师与经典",
+      "className": "不朽的艺术：走进大师与经典1班",
+      "code": "OL52105",
+      "credits": 2.0,
+      "hours": 35,
+      "teacher": "网络课程",
+      "room": "网络课程",
+      "campus": null,
+      "online": true,
+      "ksz": 4,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 1002,
+      "sjms": "星期五 下午8-下午9",
+      "category": "L五育融合课程",
+      "degree": false
+    },
+    {
+      "id": "f3339d27-e9ae-47df-8778-3aa82d38d697",
+      "name": "西方哲学精神探源",
+      "className": "西方哲学精神探源1班",
+      "code": "OL52111",
+      "credits": 3.0,
+      "hours": 43,
+      "teacher": "网络课程",
+      "room": "网络课程",
+      "campus": null,
+      "online": true,
+      "ksz": 4,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 94,
+      "sjms": "星期五 下午8-下午9",
+      "category": "L五育融合课程",
+      "degree": false
+    },
+    {
+      "id": "9741e348-71c6-47f2-9edd-067d2344053e",
+      "name": "人工智能",
+      "className": "人工智能1班",
+      "code": "OL52601",
+      "credits": 1.0,
+      "hours": 19,
+      "teacher": "网络课程",
+      "room": "网络课程",
+      "campus": null,
+      "online": true,
+      "ksz": 4,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 2975,
+      "sjms": "星期五 下午8-下午9",
+      "category": "L五育融合课程",
+      "degree": false
+    },
+    {
+      "id": "af7c5da3-eb88-4d42-81fd-dbc594a7cbe5",
+      "name": "实验室安全教育",
+      "className": "实验室安全教育1班",
+      "code": "OL52603",
+      "credits": 0.5,
+      "hours": 16,
+      "teacher": "网络课程",
+      "room": "网络课程",
+      "campus": null,
+      "online": true,
+      "ksz": 4,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 2181,
+      "sjms": "星期五 下午8-下午9",
+      "category": "L五育融合课程",
+      "degree": false
+    },
+    {
+      "id": "b028c245-9c94-4c3d-b3c6-e52cf6e23dc5",
+      "name": "劳动教育",
+      "className": "劳动教育1班",
+      "code": "OL52604",
+      "credits": 1.0,
+      "hours": 13,
+      "teacher": "网络课程",
+      "room": "网络课程",
+      "campus": null,
+      "online": true,
+      "ksz": 4,
+      "jsz": 17,
+      "pattern": "连续周",
+      "enrolled": 4505,
+      "sjms": "星期五 下午8-下午9",
+      "category": "L五育融合课程",
+      "degree": false
+    }
+  ],
+  "credits": {
+    "selected": 28.0,
+    "required": 40.0,
+    "categories": [
+      {
+        "key": "A公共基础课",
+        "name": "公共基础课",
+        "got": 4.5,
+        "need": 9.5
+      },
+      {
+        "key": "B专业核心课",
+        "name": "专业核心课",
+        "got": 4.0,
+        "need": 9.0
+      },
+      {
+        "key": "I学科交叉课",
+        "name": "学科交叉课",
+        "got": 8.0,
+        "need": 8.0
+      },
+      {
+        "key": "J前沿课程",
+        "name": "前沿课程",
+        "got": 0,
+        "need": 6.0
+      },
+      {
+        "key": "L五育融合课程",
+        "name": "五育融合课程",
+        "got": 7.5,
+        "need": 7.5
+      }
+    ],
+    "orphans": [
+      {
+        "name": "英文科技论文写作与学术报告",
+        "credits": 2.0,
+        "code": "OL52101"
+      },
+      {
+        "name": "科研伦理与学术规范",
+        "credits": 2.0,
+        "code": "OL52102"
+      }
+    ],
+    "orphanCredits": 4.0,
+    "recorded": 0,
+    "degreeRecorded": 0,
+    "nonDegreeRecorded": 0,
+    "degreeRequired": 18.5,
+    "nonDegreeRequired": 21.5,
+    "gpa": null,
+    "degreeGpa": null
+  },
+  "evaluations": [
+    {
+      "name": "催化化学",
+      "className": "催化化学1班",
+      "teacher": "何静",
+      "credits": 2.0,
+      "code": "ACh511",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "应用电化学",
+      "className": "应用电化学1班",
+      "teacher": "刘硕",
+      "credits": 3.0,
+      "code": "ACh513",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "分子探针与诊疗新技术",
+      "className": "分子探针与诊疗新技术1班",
+      "teacher": "宋继彬",
+      "credits": 3.0,
+      "code": "ACh52501",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "化学生物学导论",
+      "className": "化学生物学导论1班",
+      "teacher": "王卓",
+      "credits": 2.0,
+      "code": "Chem51703",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "太阳能材料与化学",
+      "className": "太阳能材料与化学1班",
+      "teacher": "白晓觉",
+      "credits": 2.0,
+      "code": "Chem52202",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "学术英语读写",
+      "className": "学术英语读写化学硕士3班",
+      "teacher": "胡沛",
+      "credits": 2.0,
+      "code": "Eng52501",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "数值分析",
+      "className": "数值分析C1班东区",
+      "teacher": "常延贞",
+      "credits": 2.5,
+      "code": "Math504c",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "英文科技论文写作与学术报告",
+      "className": "英文科技论文写作与学术报告1班",
+      "teacher": "网络课程",
+      "credits": 2.0,
+      "code": "OL52101",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "科研伦理与学术规范",
+      "className": "科研伦理与学术规范1班",
+      "teacher": "网络课程",
+      "credits": 2.0,
+      "code": "OL52102",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "不朽的艺术：走进大师与经典",
+      "className": "不朽的艺术：走进大师与经典1班",
+      "teacher": "网络课程",
+      "credits": 2.0,
+      "code": "OL52105",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "西方哲学精神探源",
+      "className": "西方哲学精神探源1班",
+      "teacher": "网络课程",
+      "credits": 3.0,
+      "code": "OL52111",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "人工智能",
+      "className": "人工智能1班",
+      "teacher": "网络课程",
+      "credits": 1.0,
+      "code": "OL52601",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "实验室安全教育",
+      "className": "实验室安全教育1班",
+      "teacher": "网络课程",
+      "credits": 0.5,
+      "code": "OL52603",
+      "rated": false,
+      "open": true
+    },
+    {
+      "name": "劳动教育",
+      "className": "劳动教育1班",
+      "teacher": "网络课程",
+      "credits": 1.0,
+      "code": "OL52604",
+      "rated": false,
+      "open": true
+    }
+  ],
+  "applications": [
+    {
+      "id": "zc",
+      "name": "注册",
+      "label": "院系审核已通过",
+      "tone": "ok",
+      "time": "2026-09-21 16:48:40"
+    },
+    {
+      "id": "pyjh",
+      "name": "培养计划",
+      "label": "导师审核已通过",
+      "tone": "ok",
+      "time": "2026-09-11 11:44:49"
+    },
+    {
+      "id": "xyjxj",
+      "name": "学业奖学金",
+      "label": "未提交",
+      "tone": "amber",
+      "time": ""
+    },
+    {
+      "id": "gjjxj",
+      "name": "国家奖学金",
+      "label": "未提交",
+      "tone": "amber",
+      "time": ""
+    },
+    {
+      "id": "knzz",
+      "name": "困难资助申请",
+      "label": "未提交",
+      "tone": "amber",
+      "time": ""
+    },
+    {
+      "id": "lwdb",
+      "name": "论文答辩",
+      "label": "未提交",
+      "tone": "amber",
+      "time": ""
+    },
+    {
+      "id": "lwkt",
+      "name": "论文开题",
+      "label": "未提交",
+      "tone": "amber",
+      "time": ""
+    }
+  ],
+  "notices": [],
+  "exams": [],
+  "adjustments": [],
+  "services": [
+    {
+      "id": "gr",
+      "name": "个人管理",
+      "items": [
+        {
+          "id": "grjbxx",
+          "name": "个人基本信息",
+          "path": "/student/grgl/xsxx",
+          "native": "profile"
+        },
+        {
+          "id": "xyjc",
+          "name": "学业进程查看",
+          "path": "/student/grgl/xyjc",
+          "native": "progress"
+        },
+        {
+          "id": "xsxqzc",
+          "name": "学期报到注册",
+          "path": "/student/grgl/xsxqzc",
+          "native": null
+        },
+        {
+          "id": "xsrxdj",
+          "name": "新生入学登记",
+          "path": "/student/grgl/xsrxdj",
+          "native": null
+        },
+        {
+          "id": "xslqfc",
+          "name": "新生录取复查",
+          "path": "/student/grgl/xslqfc",
+          "native": null
+        },
+        {
+          "id": "grxxxg",
+          "name": "个人信息维护",
+          "path": "/student/grgl/grxxxg",
+          "native": null
+        },
+        {
+          "id": "ccqjwh",
+          "name": "乘车区间维护",
+          "path": "/student/grgl/ccqjwh",
+          "native": null
+        },
+        {
+          "id": "xjydsq",
+          "name": "学籍异动申请",
+          "path": "/student/grgl/xjydsq",
+          "native": null
+        },
+        {
+          "id": "djksbm",
+          "name": "等级考试管理",
+          "path": "/student/grgl/djksbm",
+          "native": null
+        },
+        {
+          "id": "djkscj",
+          "name": "等级考试成绩",
+          "path": "/student/grgl/djkscj",
+          "native": null
+        },
+        {
+          "id": "zpxxhd",
+          "name": "照片信息核对",
+          "path": "/student/grgl/zpxxhd",
+          "native": null
+        }
+      ]
+    },
+    {
+      "id": "py",
+      "name": "培养管理",
+      "items": [
+        {
+          "id": "pyfacx",
+          "name": "培养方案查看",
+          "path": "/student/pygl/pyfacx",
+          "native": "progress"
+        },
+        {
+          "id": "pyjhtj",
+          "name": "培养计划提交",
+          "path": "/student/pygl/pyjhtj",
+          "native": null
+        },
+        {
+          "id": "pyjhcx",
+          "name": "培养计划查询",
+          "path": "/student/pygl/pyjhcx",
+          "native": "progress"
+        },
+        {
+          "id": "kcmxsq",
+          "name": "课程免修申请",
+          "path": "/student/pygl/kcmxsq",
+          "native": null
+        },
+        {
+          "id": "xswsxk",
+          "name": "课程开课一览",
+          "path": "/student/pygl/xswsxk",
+          "native": "selected"
+        },
+        {
+          "id": "xswsxk_kb",
+          "name": "学生网上选课",
+          "path": "/student/pygl/xswsxk_kb",
+          "native": "selected"
+        },
+        {
+          "id": "xkjgcx",
+          "name": "选课结果查询",
+          "path": "/student/pygl/xkjgcx",
+          "native": "selected"
+        },
+        {
+          "id": "xskbcx",
+          "name": "学生课表查询",
+          "path": "/student/pygl/xskbcx",
+          "native": "timetable"
+        },
+        {
+          "id": "ttkcx",
+          "name": "调课信息查询",
+          "path": "/student/pygl/ttkcx",
+          "native": "exams"
+        },
+        {
+          "id": "kckccx",
+          "name": "课程考场查询",
+          "path": "/student/pygl/kckccx",
+          "native": "exams"
+        },
+        {
+          "id": "xscjcx",
+          "name": "课程成绩查询",
+          "path": "/student/pygl/xscjcx",
+          "native": "grades"
+        },
+        {
+          "id": "qxkczml",
+          "name": "全校课程总目录",
+          "path": "/student/pygl/qxkczml",
+          "native": null
+        },
+        {
+          "id": "cxhkbksq",
+          "name": "重缓补考申请",
+          "path": "/student/pygl/cxhkbksq",
+          "native": null
+        },
+        {
+          "id": "wsjxpj",
+          "name": "课程教学评价",
+          "path": "/student/pygl/wsjxpj",
+          "native": "eval"
+        },
+        {
+          "id": "gjxsjlhd",
+          "name": "国际学术交流申请",
+          "path": "/student/pygl/gjxsjlhd",
+          "native": null
+        },
+        {
+          "id": "py_zysjwc",
+          "name": "专业实践（科研/学习）外出审核",
+          "path": "/student/pygl/py_zysjwc",
+          "native": null
+        }
+      ]
+    },
+    {
+      "id": "yg",
+      "name": "研工管理",
+      "items": [
+        {
+          "id": "xnjddj",
+          "name": "学年鉴定登记",
+          "path": "/student/yggl/xnjddj",
+          "native": null
+        },
+        {
+          "id": "pypgsq",
+          "name": "评优评干申请",
+          "path": "/student/yggl/pypgsq",
+          "native": null
+        },
+        {
+          "id": "knzzsq",
+          "name": "困难资助申请",
+          "path": "/student/yggl/knzzsq",
+          "native": null
+        },
+        {
+          "id": "szgwsq",
+          "name": "三助岗位申请",
+          "path": "/student/yggl/szgwsq",
+          "native": null
+        },
+        {
+          "id": "xshdbm",
+          "name": "学术报告申请",
+          "path": "/student/yggl/xshdbm",
+          "native": null
+        },
+        {
+          "id": "xwsxsq",
+          "name": "校外实习申请",
+          "path": "/student/yggl/xwsxsq",
+          "native": null
+        },
+        {
+          "id": "zyzfwbm",
+          "name": "劳动实践申请",
+          "path": "/student/yggl/zyzfwbm",
+          "native": null
+        },
+        {
+          "id": "tyydbm",
+          "name": "体育活动申请",
+          "path": "/student/yggl/tyydbm",
+          "native": null
+        },
+        {
+          "id": "tyydmxsq",
+          "name": "体育运动免修申请",
+          "path": "/student/yggl/tyyd_mxsq",
+          "native": null
+        }
+      ]
+    },
+    {
+      "id": "ky",
+      "name": "科研管理",
+      "items": [
+        {
+          "id": "xsfblwdj",
+          "name": "发表论文登记",
+          "path": "/student/bygl/xsfblwdj",
+          "native": null
+        },
+        {
+          "id": "xskycgdj",
+          "name": "其他创新性成果登记",
+          "path": "/student/bygl/xskyxmdj",
+          "native": null
+        },
+        {
+          "id": "xszlcgdj",
+          "name": "专利情况登记",
+          "path": "/student/bygl/xszlcgdj",
+          "native": null
+        },
+        {
+          "id": "xshjcgdj",
+          "name": "科研成果奖励登记",
+          "path": "/student/bygl/xshjcgdj",
+          "native": null
+        }
+      ]
+    },
+    {
+      "id": "by",
+      "name": "毕业与学位",
+      "items": [
+        {
+          "id": "ktlwsq",
+          "name": "开题报告申请",
+          "path": "/student/pygl/lwktsq_edit",
+          "native": null
+        },
+        {
+          "id": "lwktsq",
+          "name": "提交开题报告",
+          "path": "/student/pygl/xsktsq_edit",
+          "native": null
+        },
+        {
+          "id": "zqkhsq",
+          "name": "中期报告申请",
+          "path": "/student/pygl/zqkhsq",
+          "native": null
+        },
+        {
+          "id": "zqkhdj",
+          "name": "提交中期报告",
+          "path": "/student/pygl/xszqkhdj",
+          "native": null
+        },
+        {
+          "id": "xsdbsq",
+          "name": "硕士查重盲审申请",
+          "path": "/student/bygl/xsdbsq_edit",
+          "native": null
+        },
+        {
+          "id": "lwpygl",
+          "name": "查重盲审论文提交",
+          "path": "/student/bygl/lwpygl",
+          "native": null
+        },
+        {
+          "id": "xsxwsq",
+          "name": "学生学位申请",
+          "path": "/student/bygl/xsxwsq_edit",
+          "native": null
+        }
+      ]
+    },
+    {
+      "id": "wsks",
+      "name": "网上考试",
+      "items": [
+        {
+          "id": "wskscp",
+          "name": "网上考试测评",
+          "path": "/student/wsks/wskscp",
+          "native": null
+        }
+      ]
+    }
+  ],
+  "campusNote": "教、科 暂按朝阳校区显示。地点没有校区字段，未识别的楼名只显示教室。"
+}

@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- GMIS 直连登录、课表和成绩接口需要联网；不申请其他敏感权限。 -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="化研助手"
         android:name="${applicationName}"

@@ -1,5 +1,8 @@
 allprojects {
     repositories {
+        // 国内网络优先走阿里云镜像，镜像缺失时回落到官方仓库。
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
         google()
         mavenCentral()
     }

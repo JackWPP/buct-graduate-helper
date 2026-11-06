@@ -24,7 +24,11 @@ INK = (0x14, 0x17, 0x1F, 255)
 MUTED = (0x5B, 0x62, 0x73, 255)
 LINE = (0xE6, 0xE9, 0xF0, 255)
 PAPER = (0xF5, 0xF7, 0xFA, 255)
-FONT = "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc"
+FONT_CANDIDATES = (
+    "/usr/share/fonts/truetype/wqy/wqy-microhei.ttc",
+    "/System/Library/Fonts/Hiragino Sans GB.ttc",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+)
 
 
 def hex_points(cx: float, cy: float, radius: float) -> list[tuple[float, float]]:
@@ -148,7 +152,10 @@ def write_svg(path: Path) -> None:
 
 
 def font(size: int) -> ImageFont.FreeTypeFont:
-    return ImageFont.truetype(FONT, size)
+    for path in FONT_CANDIDATES:
+        if Path(path).exists():
+            return ImageFont.truetype(path, size)
+    return ImageFont.load_default(size)
 
 
 def render_layers() -> None:
@@ -159,9 +166,9 @@ def render_layers() -> None:
     body = font(22)
     small = font(18)
     cards = [
-        (BLUE, "网页预览", "web/", "引导、登录、周课表。\n服务和培养进度。\n浏览器打开 8899。"),
-        (VIOLET, "Flutter 壳", "app/", "同一套周次和节次。\n可以打 Web，\n也能打 Android 包。"),
-        (GREEN, "学校接口", "gmis_cli.py", "验证码用手填。\n密码只从环境变量\n或交互输入读取。"),
+        (BLUE, "Android 版", "app/", "项目主线。引导、登录、\n首页、周课表、服务、我的。\nFlutter 双端共用。"),
+        (VIOLET, "网页预览", "web/", "设计参照和回归页。\n同一套页面与课表规则。\n浏览器打开 8899。"),
+        (GREEN, "学校接口", "gmis_cli.py", "GMIS 登录与只读导出。\n密码只从环境变量\n或交互输入读取。"),
     ]
     gap = 28
     card_w = (width - 80 - gap * 2) // 3
@@ -191,11 +198,11 @@ def render_layers() -> None:
 
     bar_top = top + card_h + 36
     draw.rounded_rectangle((40, bar_top, width - 40, bar_top + 132), radius=22, fill=WHITE, outline=LINE, width=2)
-    draw.text((68, bar_top + 28), "课表快照", font=title, fill=INK)
-    draw.text((68, bar_top + 74), "web/data/snapshot.json", font=body, fill=BLUE)
+    draw.text((68, bar_top + 28), "演示快照", font=title, fill=INK)
+    draw.text((68, bar_top + 74), "app/assets/snapshot.json", font=body, fill=BLUE)
     draw.text(
-        (420, bar_top + 48),
-        "网页和 Flutter 都读这一份。live.json 可以覆盖，且不提交。",
+        (440, bar_top + 48),
+        "Android 读自带快照；网页的 live.json 只作预览覆盖，不提交。",
         font=body,
         fill=MUTED,
     )

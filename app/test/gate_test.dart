@@ -10,7 +10,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   final snap = Snapshot.fromJson(
-    jsonDecode(File('../web/data/snapshot.json').readAsStringSync())
+    jsonDecode(File('assets/snapshot.json').readAsStringSync())
         as Map<String, dynamic>,
   );
   final now = DateTime(2026, 11, 3, 11, 37);

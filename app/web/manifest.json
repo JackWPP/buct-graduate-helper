@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#F5F7FA",
     "theme_color": "#2F6BFF",
-    "description": "北京化工大学研究生管理系统的移动壳",
+    "description": "北京化工大学研究生管理系统移动增强层的 Web 预览",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

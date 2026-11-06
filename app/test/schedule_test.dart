@@ -6,7 +6,7 @@ import 'package:huayan/schedule.dart';
 import 'package:huayan/snapshot.dart';
 
 void main() {
-  final raw = File('../web/data/snapshot.json').readAsStringSync();
+  final raw = File('assets/snapshot.json').readAsStringSync();
   final snap = jsonDecode(raw) as Map<String, dynamic>;
   final termStart = snap['term']['start'] as String;
   final courses = (snap['courses'] as List)

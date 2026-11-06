@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-/// 网页预览 `icon()` 的同一套 24 线框。
+/// 与网页设计稿同一套 24 线框。
 const iconPaths = <String, String>{
   'bell': '<path d="M6 9a6 6 0 1 1 12 0c0 7 3 7 3 7H3s3 0 3-7"/><path d="M10 19a2 2 0 0 0 4 0"/>',
   'back': '<path d="M15 5 8 12l7 7"/>',

@@ -655,7 +655,7 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
         const Text(
-          '证件号、手机号、家庭住址、邮箱和密码没有放进这个预览。',
+          '证件号、手机号、家庭住址、邮箱和密码没有放进这个演示版。',
           style: TextStyle(
             fontSize: 12,
             height: 1.45,
@@ -1249,7 +1249,7 @@ class SchoolPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  '这份预览不会代持学校登录。打开后如果学校要求登录，需要你自己再登一次。',
+                  '这个演示版不会代持学校登录。打开后如果学校要求登录，需要你自己再登一次。',
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.55,

@@ -151,7 +151,7 @@ def main() -> None:
     snapshot = {
         "updatedAt": "2026-10-30T14:32:00+08:00",
         "updatedLabel": "10月30日 14:32",
-        "source": "GMIS 导出快照，网页预览不连接学校服务器",
+        "source": "GMIS 导出快照，演示版不连接学校服务器",
         "student": {
             "xh": card["xh"],
             "xm": card["xm"],

@@ -200,7 +200,7 @@ class GuidePage extends StatelessWidget {
                       const SizedBox(height: 18),
                     ],
                     Text(
-                      '数据来自 $when导出的学校快照。预览不保存密码，也不连接学校服务器。',
+                      '数据来自 $when导出的学校快照。演示版不保存密码，也不连接学校服务器。',
                       style: const TextStyle(
                         fontSize: 12,
                         height: 1.5,
@@ -349,7 +349,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '用学号和教务密码进入。这份预览读的是已导出的快照，密码不会保存。',
+              '用学号和教务密码进入。当前演示版读的是已导出的快照，密码不会保存。',
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
@@ -502,7 +502,7 @@ class LegalPage extends StatelessWidget {
     final privacy = kind == 'privacy';
     final title = privacy ? '隐私政策' : '服务条款';
     final body = privacy
-        ? '这个预览只在你的浏览器里使用一份已经导出的学业快照，用来显示课表、学分和流程状态。它不把密码发到任何服务器，也不保存密码。证件号、电话和住址被排除在快照之外。你可以在设置里清掉本机偏好，或退出登录。'
+        ? '这个演示版使用一份已经导出的学业快照，用来显示课表、学分和流程状态。它不把密码发到任何服务器，也不保存密码。证件号、电话和住址被排除在快照之外。你可以在设置里清掉本机偏好，或退出登录。'
         : '化研助手不是学校官方客户端。课表、成绩和流程以研究生管理系统为准。不要用它自动抢课、代选或批量尝试。选课、退选在正式版本里也必须由你本人确认。';
     return Scaffold(
       backgroundColor: HuayanColors.bg,
