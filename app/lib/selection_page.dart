@@ -40,6 +40,10 @@ class _SelectionPageState extends State<SelectionPage> {
   Set<String> _myBjids = {};
   bool _loading = true;
   bool _windowClosed = false;
+  String _lb = '3';
+  String _xwk = '';
+  String _zh = '';
+  String? _yxsh;
   String? _error;
   String? _pendingBjid;
 
@@ -65,11 +69,11 @@ class _SelectionPageState extends State<SelectionPage> {
       _error = null;
     });
     try {
-      var rows = await widget.api.courseListRows(onlyInWindow: true);
+      var rows = await _fetch(onlyInWindow: true);
       var closed = false;
       if (rows.isEmpty) {
         // `type=2` 在非选课时间返回空列表，不代表接口失败；退回到全部课程。
-        rows = await widget.api.courseListRows(onlyInWindow: false);
+        rows = await _fetch(onlyInWindow: false);
         closed = rows.isNotEmpty;
       }
       if (!mounted) return;
@@ -89,6 +93,16 @@ class _SelectionPageState extends State<SelectionPage> {
         _error = error.message;
       });
     }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetch({required bool onlyInWindow}) {
+    return widget.api.courseListRows(
+      lb: _lb,
+      xwk: _xwk,
+      zh: _zh,
+      yxsh: _yxsh ?? '',
+      onlyInWindow: onlyInWindow,
+    );
   }
 
   List<Map<String, dynamic>> get _visible {
@@ -196,6 +210,24 @@ class _SelectionPageState extends State<SelectionPage> {
           windowClosed: _windowClosed,
         ),
         const SizedBox(height: 12),
+        _FilterBar(
+          lb: _lb,
+          xwk: _xwk,
+          zh: _zh,
+          onLb: (value) {
+            setState(() => _lb = value);
+            _load();
+          },
+          onXwk: (value) {
+            setState(() => _xwk = value);
+            _load();
+          },
+          onZh: (value) {
+            setState(() => _zh = value);
+            _load();
+          },
+        ),
+        const SizedBox(height: 10),
         TextField(
           key: const Key('selection-search'),
           controller: _query,
@@ -304,6 +336,126 @@ class _HeaderCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _FilterBar extends StatelessWidget {
+  const _FilterBar({
+    required this.lb,
+    required this.xwk,
+    required this.zh,
+    required this.onLb,
+    required this.onXwk,
+    required this.onZh,
+  });
+
+  final String lb;
+  final String xwk;
+  final String zh;
+  final ValueChanged<String> onLb;
+  final ValueChanged<String> onXwk;
+  final ValueChanged<String> onZh;
+
+  @override
+  Widget build(BuildContext context) {
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _ChipRow(
+          prefix: '类型',
+          options: const [('3', '全部'), ('1', '公共课'), ('2', '专业课')],
+          value: lb,
+          onTap: onLb,
+        ),
+        const SizedBox(height: 6),
+        _ChipRow(
+          prefix: '学位',
+          options: const [('', '全部'), ('1', '学位课'), ('0', '非学位课')],
+          value: xwk,
+          onTap: onXwk,
+        ),
+        const SizedBox(height: 6),
+        _ChipRow(
+          prefix: '星期',
+          options: [
+            ('', '全部'),
+            for (var i = 1; i <= 7; i++) ('$i', weekdays[i - 1]),
+          ],
+          value: zh,
+          onTap: onZh,
+        ),
+      ],
+    );
+  }
+}
+
+class _ChipRow extends StatelessWidget {
+  const _ChipRow({
+    required this.prefix,
+    required this.options,
+    required this.value,
+    required this.onTap,
+  });
+
+  final String prefix;
+  final List<(String, String)> options;
+  final String value;
+  final ValueChanged<String> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 34,
+          child: Text(
+            prefix,
+            style: const TextStyle(fontSize: 11, color: HuayanColors.sub),
+          ),
+        ),
+        Expanded(
+          child: Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              for (final option in options)
+                GestureDetector(
+                  key: Key('selection-filter-$prefix-${option.$1}'),
+                  onTap: () => onTap(option.$1),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: value == option.$1
+                          ? HuayanColors.blue
+                          : HuayanColors.card,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: value == option.$1
+                            ? HuayanColors.blue
+                            : HuayanColors.lineSoft,
+                      ),
+                    ),
+                    child: Text(
+                      option.$2,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: value == option.$1
+                            ? Colors.white
+                            : HuayanColors.sub,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

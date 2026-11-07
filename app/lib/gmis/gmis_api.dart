@@ -182,12 +182,26 @@ class GmisApi {
   }
 
   Future<List<Map<String, dynamic>>> courseListRows({
+    String lb = '3',
+    String xwk = '',
+    String zh = '',
+    String jc1 = '',
+    String jc2 = '',
+    String yxsh = '',
+    String kcbh = '',
     int pageSize = 100,
     bool onlyInWindow = false,
   }) async {
     final result = <Map<String, dynamic>>[];
     for (var page = 1; page <= 20; page++) {
       final data = await courseList(
+        lb: lb,
+        xwk: xwk,
+        zh: zh,
+        jc1: jc1,
+        jc2: jc2,
+        yxsh: yxsh,
+        kcbh: kcbh,
         page: page,
         rows: pageSize,
         onlyInWindow: onlyInWindow,
