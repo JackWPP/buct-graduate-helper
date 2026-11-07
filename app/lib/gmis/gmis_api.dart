@@ -12,10 +12,10 @@ class GmisApi {
   }
 
   Future<Map<String, dynamic>> studentCard() async {
-    final rows = _asList(
-      await _client.getJson('/student/default/getxscardinfo'),
-    );
-    return rows.isEmpty ? const {} : rows.first;
+    final value = await _client.getJson('/student/default/getxscardinfo');
+    final rows = _asList(value);
+    if (rows.isNotEmpty) return rows.first;
+    return _asMap(value);
   }
 
   Future<List<Map<String, dynamic>>> selectedCourses(String termCode) async {
