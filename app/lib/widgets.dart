@@ -282,6 +282,7 @@ class HuayanTabBar extends StatelessWidget {
   static const _items = [
     (key: 'tab-home', icon: 'home', label: '首页'),
     (key: 'tab-timetable', icon: 'cal', label: '课表'),
+    (key: 'tab-academics', icon: 'book', label: '学业'),
     (key: 'tab-services', icon: 'grid', label: '服务'),
     (key: 'tab-me', icon: 'user', label: '我的'),
   ];

@@ -137,23 +137,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('培养管理'), findsOneWidget);
     expect(find.text('网上考试'), findsOneWidget);
-    await tester.ensureVisible(find.byKey(const Key('service-wskscp')));
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('service-wskscp')),
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.pumpAndSettle();
     final item = tester.getRect(find.text('网上考试测评'));
     final bar = tester.getRect(find.byKey(const Key('tabbar')));
     expect(item.bottom, lessThanOrEqualTo(bar.top + 1));
     await tester.tap(find.byKey(const Key('service-wskscp')));
     await tester.pumpAndSettle();
-    expect(find.text('会在学校网站打开'), findsOneWidget);
-    expect(
-      find.textContaining('https://gmis.buct.edu.cn/student/wsks/wskscp'),
-      findsOneWidget,
-    );
-    expect(find.textContaining('网上考试测评'), findsWidgets);
+    expect(find.text('应用内原生页面'), findsOneWidget);
+    expect(find.text('网上考试测评'), findsWidgets);
 
     await tester.tap(find.byKey(const Key('nav-back')));
     await tester.pumpAndSettle();
-    expect(find.text('会在学校网站打开'), findsNothing);
+    expect(find.text('应用内原生页面'), findsNothing);
     await tester.fling(
       find.byKey(const Key('services-scroll')),
       const Offset(0, 1600),

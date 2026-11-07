@@ -6,17 +6,17 @@
 
 <p align="center">北京化工大学研究生管理系统的移动层。<br>课表、培养进度和办事入口先在手机上读清。密码不离开自己的设备。</p>
 
-**Android 版在 `app/`，是项目主线。** `web/` 保留为 390px 可点击设计预览和回归参照，不再承担功能主线。Android 版已经接入真实 GMIS 登录和只读数据：验证码、课表、已选课、成绩、评教、通知、考场和服务菜单都从学校接口读取，登录会话存系统安全存储，课表快照缓存在本机。校外无法解析 `gmis.buct.edu.cn` 时，登录页提供「使用网页版 VPN 登录」，在应用内打开 `w.buct.edu.cn` 完成统一身份认证后继续。选课提交/退选、后台提醒和深色模式仍未做。
+**Android 版在 `app/`，是项目主线。** `web/` 保留为 390px 可点击设计预览和回归参照，不再承担功能主线。Android 版已经接入真实 GMIS 登录和只读数据：验证码、课表、已选课、成绩、评教、通知、考场和服务菜单都从学校接口读取，登录会话存系统安全存储，课表快照缓存在本机。界面按 5 Tab（首页/课表/学业/服务/我的）重排，48 项服务在应用内扁平直达，不经过系统浏览器。校外无法解析 `gmis.buct.edu.cn` 时，登录页提供「使用网页版 VPN 登录」，在应用内打开 `w.buct.edu.cn` 完成统一身份认证后继续。选课提交/退选、后台提醒和深色模式仍未做。
 
 ## 界面
 
-下面是网页预览截图，Android 版使用同一套布局、周次和节次规则。长课名在格子里折成两行，服务页最后一组停在底部导航上方。
+下面是 Android 版实机截图。首页、课表、学业、服务、我的使用 5 Tab；服务是 48 项扁平目录，全部应用内打开；长课名在课表格子里折行。
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/home.jpg" width="220" alt="首页：当天下午正在上的课、评教提醒和培养进度"></td>
-    <td align="center"><img src="docs/images/timetable.jpg" width="220" alt="第 10 周课表，分子探针与诊疗新技术折成两行"></td>
-    <td align="center"><img src="docs/images/services.jpg" width="220" alt="服务宫格，毕业与学位和网上考试完整露出"></td>
+    <td align="center"><img src="docs/images/home.jpg" width="220" alt="Android 首页：下午好、今日课程、6 个快捷入口、评教提醒和培养进度"></td>
+    <td align="center"><img src="docs/images/timetable.jpg" width="220" alt="Android 课表：第 10 周，分子探针与诊疗新技术折成两行"></td>
+    <td align="center"><img src="docs/images/services.jpg" width="220" alt="Android 服务：48 项服务扁平目录、搜索与分组筛选"></td>
   </tr>
   <tr>
     <td align="center">首页</td>

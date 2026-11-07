@@ -117,6 +117,36 @@ class GmisApi {
     );
   }
 
+  Future<dynamic> rawGet(String path, {Map<String, String>? query}) {
+    return _client.getJson(path, query: query);
+  }
+
+  Future<dynamic> rawPost(String path, {Map<String, String>? form}) {
+    return _client.postJson(path, form: form);
+  }
+
+  Future<List<Map<String, dynamic>>> rawListGet(
+    String path, {
+    Map<String, String>? query,
+  }) async {
+    return _asList(await rawGet(path, query: query));
+  }
+
+  Future<List<Map<String, dynamic>>> rawListPost(
+    String path, {
+    Map<String, String>? form,
+  }) async {
+    return _asList(await rawPost(path, form: form));
+  }
+
+  Future<Map<String, dynamic>> registrationStatus() async {
+    return _asMap(await rawPost('/student/grgl/getzcxx'));
+  }
+
+  Future<List<Map<String, dynamic>>> onlineExams() async {
+    return _asList(await rawGet('/student/wsks/wskscp_list'));
+  }
+
   Future<Map<String, dynamic>> menu() async {
     return _asMap(
       await _client.getJson(

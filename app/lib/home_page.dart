@@ -16,6 +16,9 @@ class HomePage extends StatelessWidget {
     required this.onProgress,
     required this.onNotices,
     required this.onEval,
+    required this.onGrades,
+    required this.onExams,
+    required this.onSelected,
   });
 
   final Snapshot snap;
@@ -24,6 +27,9 @@ class HomePage extends StatelessWidget {
   final VoidCallback onProgress;
   final VoidCallback onNotices;
   final VoidCallback onEval;
+  final VoidCallback onGrades;
+  final VoidCallback onExams;
+  final VoidCallback onSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -73,10 +79,219 @@ class HomePage extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         _HeroCard(now: now, hero: hero, items: day.items, onCourse: onCourse),
+        const SizedBox(height: 4),
+        _QuickActions(
+          onGrades: onGrades,
+          onExams: onExams,
+          onNotices: onNotices,
+          onSelected: onSelected,
+          onEval: onEval,
+          onProgress: onProgress,
+          pendingEval: pendingEvalCount(snap.evaluations),
+        ),
+        if (snap.examItems.isNotEmpty)
+          _ExamCard(exam: snap.examItems.first, onTap: onExams),
         if (pendingEvalCount(snap.evaluations) > 0)
           _EvalCard(count: pendingEvalCount(snap.evaluations), onTap: onEval),
         if (snap.credits != null) _CreditCard(snap: snap, onTap: onProgress),
       ],
+    );
+  }
+}
+
+class _ExamCard extends StatelessWidget {
+  const _ExamCard({required this.exam, required this.onTap});
+
+  final ExamItem exam;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final days = _daysUntil(exam.date);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4),
+      child: Material(
+        color: HuayanColors.card,
+        borderRadius: BorderRadius.circular(18),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: HuayanColors.lineSoft),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: HuayanColors.blueSoft,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: const Center(
+                    child: HuayanIcon(
+                      'clipboard',
+                      size: 21,
+                      color: HuayanColors.blue,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        '最近考试',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: HuayanColors.sub,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        exam.courseName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: HuayanColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        [
+                          exam.date,
+                          exam.startTime,
+                          exam.room,
+                        ].where((value) => value.isNotEmpty).join(' · '),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: HuayanColors.sub,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (days != null)
+                  Text(
+                    days < 0 ? '已结束' : (days == 0 ? '今天' : '还有 $days 天'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: HuayanColors.amberInk,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+int? _daysUntil(String date) {
+  final parsed = DateTime.tryParse(date);
+  if (parsed == null) return null;
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(parsed.year, parsed.month, parsed.day);
+  return day.difference(today).inDays;
+}
+
+class _QuickActions extends StatelessWidget {
+  const _QuickActions({
+    required this.onGrades,
+    required this.onExams,
+    required this.onNotices,
+    required this.onSelected,
+    required this.onEval,
+    required this.onProgress,
+    required this.pendingEval,
+  });
+
+  final VoidCallback onGrades;
+  final VoidCallback onExams;
+  final VoidCallback onNotices;
+  final VoidCallback onSelected;
+  final VoidCallback onEval;
+  final VoidCallback onProgress;
+  final int pendingEval;
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 1.55,
+      children: [
+        _QuickAction(icon: 'chart', label: '成绩', onTap: onGrades),
+        _QuickAction(icon: 'clipboard', label: '考试', onTap: onExams),
+        _QuickAction(icon: 'bell', label: '通知', onTap: onNotices),
+        _QuickAction(icon: 'grid', label: '选课', onTap: onSelected),
+        _QuickAction(
+          icon: 'star',
+          label: pendingEval > 0 ? '评教 · $pendingEval' : '评教',
+          onTap: onEval,
+        ),
+        _QuickAction(icon: 'book', label: '培养', onTap: onProgress),
+      ],
+    );
+  }
+}
+
+class _QuickAction extends StatelessWidget {
+  const _QuickAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final String icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: HuayanColors.card,
+      borderRadius: BorderRadius.circular(15),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(15),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15),
+            border: Border.all(color: HuayanColors.lineSoft),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              HuayanIcon(icon, size: 22, color: HuayanColors.blue),
+              const SizedBox(height: 5),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: HuayanColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

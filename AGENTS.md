@@ -8,7 +8,7 @@
 
 Android 版（Flutter）已经接入真实 GMIS 数据通路：
 
-- 默认启动走 `app/lib/live_shell.dart`：引导 → 真实登录 → 首页/周课表/服务/我的。
+- 默认启动走 `app/lib/live_shell.dart`：引导 → 真实登录 → 首页/课表/学业/服务/我的（5 Tab）。服务页是扁平目录，48 项服务全部在应用内直达，不经过分组页，也不打开系统浏览器。
 - 登录页 `app/lib/live_login_page.dart` 从学校接口取验证码图，密码只在本次登录内存里使用；登录成功后 Cookie 写系统安全存储（`flutter_secure_storage`），密码不落盘。
 - 校外访问走 `app/lib/webvpn/`：登录页的「使用网页版 VPN 登录」打开 `w.buct.edu.cn` 统一身份认证 WebView，读取 `wengine_vpn_ticket` Cookie 后，把 GMIS 请求改走 `https://w.buct.edu.cn/https/<token>/`；WebVPN 会话单独存储在 `huayan_gmis_webvpn_session`。
 - `app/lib/gmis/` 是 Dart 版适配层：`GmisClient` 负责登录、Cookie、302 会话过期、JSON 解析；`GmisApi` 封装学期、学生卡、已选课、培养计划、选课列表、成绩、评教、申请、通知、考场、调课和服务菜单。
@@ -16,6 +16,7 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 - 缓存：`SnapshotCache` 写 `app` 支持目录；`SecureSessionStore` 存会话。没有登录会话时不展示缓存，避免泄露课表。
 - 学期第 1 周：`TermCalendar` 内置 55 学期 = 2026-08-31；未知学期会提示周次可能不准，用户本机补充过的值优先。
 - 选课提交/退选没有实现，页面明确是只读；等设计稿和真机联调后再做。通知没有后台调度，只有前台 SnackBar；深色模式仍是浅色。
+- 全原生改造进行中：`app/lib/academics_page.dart`、`app/lib/services_page.dart`、`app/lib/native_service_page.dart`、`app/lib/remote_pages.dart` 已加入；已接入 5 Tab、48 项服务扁平目录和一批只读远程页。
 - `app/assets/snapshot.json` 只用于组件测试、截图和旧演示路径（`HuayanApp(snapshot: ...)` / `skipGate`），不是默认启动数据。
 
 网页预览仍是设计参照：`web/data/snapshot.json` 来自 2026-10-30 课表导出；`gmis_cli.py login` 用学校验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`gmis_cli.py timetable` 把只读课表写到被忽略的 `web/data/live.json`，预览优先读它。Python 只读导出不再服务 Android 默认数据通路。

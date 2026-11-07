@@ -3,11 +3,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'academics_page.dart';
 import 'course_sheet.dart';
 import 'gate.dart';
 import 'home_page.dart';
 import 'live_shell.dart';
 import 'me_page.dart';
+import 'native_service_page.dart';
 import 'prefs.dart';
 import 'remind.dart';
 import 'schedule.dart';
@@ -18,6 +20,8 @@ import 'subpages.dart';
 import 'theme.dart';
 import 'timetable_page.dart';
 import 'widgets.dart';
+
+const bool _previewMode = bool.fromEnvironment('UI_PREVIEW');
 
 void main() {
   final params = Uri.base.queryParameters;
@@ -58,13 +62,13 @@ class HuayanApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: huayanTheme(fontFamily: fontFamily),
       themeMode: ThemeMode.light,
-      home: snapshot != null || skipGate
+      home: _previewMode || snapshot != null || skipGate
           ? Shell(
               now: now,
               snapshot: snapshot,
               initialTab: initialTab,
               openCourseName: openCourseName,
-              skipGate: skipGate,
+              skipGate: _previewMode || skipGate,
             )
           : LiveShell(
               now: now,
@@ -114,7 +118,7 @@ class _ShellState extends State<Shell> {
   void initState() {
     super.initState();
     final initial = widget.initialTab ?? 0;
-    _tab = initial < 0 || initial > 3 ? 0 : initial;
+    _tab = initial < 0 || initial > 4 ? 0 : initial;
     final given = widget.snapshot;
     if (widget.skipGate && given != null) {
       _snap = given;
@@ -254,6 +258,8 @@ class _ShellState extends State<Shell> {
                 _openCourse(course, weekIndex(_now, snap.termStart)),
           ),
         );
+      case 'catalog':
+        _push(CourseCatalogPage(snap: snap));
       case 'exams':
         _push(ExamsPage(count: snap.exams));
       case 'grades':
@@ -262,8 +268,49 @@ class _ShellState extends State<Shell> {
         _push(EvalPage(snap: snap));
       case 'profile':
         _push(ProfilePage(student: snap.student));
+      case 'online':
+        _push(
+          OnlinePage(
+            snap: snap,
+            onCourse: (course) =>
+                _openCourse(course, weekIndex(_now, snap.termStart)),
+          ),
+        );
       default:
-        _push(SchoolPage(title: item.name, path: item.path));
+        switch (item.id) {
+          case 'grjbxx':
+          case 'grxxxg':
+            _push(ProfilePage(student: snap.student));
+          case 'xyjc':
+          case 'pyfacx':
+          case 'pyjhcx':
+          case 'pyjhtj':
+            _push(ProgressPage(snap: snap));
+          case 'xsxqzc':
+          case 'xjydsq':
+          case 'knzzsq':
+          case 'pypgsq':
+          case 'szgwsq':
+          case 'xshdbm':
+          case 'xwsxsq':
+          case 'zyzfwbm':
+          case 'tyydbm':
+          case 'tyydmxsq':
+          case 'gjxsjlhd':
+          case 'py_zysjwc':
+          case 'ktlwsq':
+          case 'lwktsq':
+          case 'zqkhsq':
+          case 'zqkhdj':
+          case 'xsdbsq':
+          case 'lwpygl':
+          case 'xsxwsq':
+          case 'lwkt':
+          case 'lwdb':
+            _push(ApplicationsPage(snap: snap));
+          default:
+            _push(NativeServicePage(item: item, snap: snap));
+        }
     }
   }
 
@@ -357,6 +404,20 @@ class _ShellState extends State<Shell> {
                     onProgress: () => _push(ProgressPage(snap: snap)),
                     onNotices: () => _push(NoticesPage(count: snap.notices)),
                     onEval: () => _push(EvalPage(snap: snap)),
+                    onGrades: () => _push(GradesPage(snap: snap)),
+                    onExams: () => _push(
+                      ExamsPage(count: snap.exams, items: snap.examItems),
+                    ),
+                    onSelected: () => _push(
+                      SelectedPage(
+                        snap: snap,
+                        now: _now,
+                        onCourse: (course) => _openCourse(
+                          course,
+                          weekIndex(_now, snap.termStart),
+                        ),
+                      ),
+                    ),
                   ),
                   TimetablePage(
                     snap: snap,
@@ -373,11 +434,26 @@ class _ShellState extends State<Shell> {
                       ),
                     ),
                   ),
+                  AcademicsPage(
+                    snap: snap,
+                    onGrades: () => _push(GradesPage(snap: snap)),
+                    onExams: () => _push(ExamsPage(count: snap.exams)),
+                    onProgress: () => _push(ProgressPage(snap: snap)),
+                    onEval: () => _push(EvalPage(snap: snap)),
+                    onSelected: () => _push(
+                      SelectedPage(
+                        snap: snap,
+                        now: _now,
+                        onCourse: (course) => _openCourse(
+                          course,
+                          weekIndex(_now, snap.termStart),
+                        ),
+                      ),
+                    ),
+                  ),
                   ServicesPage(
                     snap: snap,
                     onOpen: _openService,
-                    onGroup: (group) =>
-                        _push(GroupPage(group: group, onOpen: _openService)),
                     onCourse: (course) =>
                         _openCourse(course, weekIndex(_now, snap.termStart)),
                   ),

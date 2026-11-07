@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import 'export_ics.dart';
 import 'format.dart';
@@ -363,12 +362,40 @@ class ExamsPage extends StatelessWidget {
                       color: HuayanColors.faint,
                     ),
                   ),
+                if (_daysUntil(exam.date) != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      _countdownLabel(_daysUntil(exam.date)!),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: HuayanColors.amberInk,
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),
       ],
     );
   }
+}
+
+int? _daysUntil(String date) {
+  final parsed = DateTime.tryParse(date);
+  if (parsed == null) return null;
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final day = DateTime(parsed.year, parsed.month, parsed.day);
+  return day.difference(today).inDays;
+}
+
+String _countdownLabel(int days) {
+  if (days < 0) return '已结束';
+  if (days == 0) return '今天';
+  if (days == 1) return '明天';
+  return '还有 $days 天';
 }
 
 class NoticesPage extends StatelessWidget {
@@ -396,26 +423,61 @@ class NoticesPage extends StatelessWidget {
     }
     return Subpage(
       title: '通知',
-      children: [
-        for (final notice in items)
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
+      children: [for (final notice in items) _NoticeTile(notice: notice)],
+    );
+  }
+}
+
+class _NoticeTile extends StatelessWidget {
+  const _NoticeTile({required this.notice});
+
+  final NoticeItem notice;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: HuayanColors.card,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => NoticeDetailPage(notice: notice)),
+          ),
+          child: Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: HuayanColors.card,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: HuayanColors.lineSoft),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  notice.title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: HuayanColors.ink,
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (!notice.read)
+                      Container(
+                        width: 7,
+                        height: 7,
+                        margin: const EdgeInsets.only(top: 6, right: 7),
+                        decoration: const BoxDecoration(
+                          color: HuayanColors.blue,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    Expanded(
+                      child: Text(
+                        notice.title,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: HuayanColors.ink,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -429,6 +491,61 @@ class NoticesPage extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class NoticeDetailPage extends StatelessWidget {
+  const NoticeDetailPage({super.key, required this.notice});
+
+  final NoticeItem notice;
+
+  @override
+  Widget build(BuildContext context) {
+    final meta = [
+      notice.department,
+      notice.publisher,
+      notice.publishedAt,
+    ].where((value) => value.isNotEmpty).join(' · ');
+    return Subpage(
+      title: '通知详情',
+      children: [
+        HuayanCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                notice.title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  height: 1.4,
+                  color: HuayanColors.ink,
+                ),
+              ),
+              if (meta.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  meta,
+                  style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
+                ),
+              ],
+              const SizedBox(height: 16),
+              Text(
+                notice.content.isEmpty
+                    ? '学校通知正文暂未返回。这里展示通知列表中的标题和发布信息，不编造正文。'
+                    : notice.content,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.75,
+                  color: HuayanColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }
@@ -444,7 +561,10 @@ class UnavailablePage extends StatelessWidget {
     return Subpage(
       title: title,
       children: [
-        EmptyHint(title: '这个入口还没有单独页面', text: '「$title」在学校系统里。这版不编表单，也不代你提交。'),
+        EmptyHint(
+          title: '这个入口还在接入学校字段',
+          text: '「$title」的页面不再外跳。学校返回字段后直接在应用内展示，不编造表单，也不代你提交。',
+        ),
       ],
     );
   }
@@ -470,7 +590,7 @@ class EvalPage extends StatelessWidget {
           )
         else ...[
           Text(
-            '$pending 门未评，${items.length - pending} 门已评。提交评教要进学校页面，这里不能代填。',
+            '$pending 门未评，${items.length - pending} 门已评。评教提交接口尚未开放，当前只展示名单，不代填。',
             style: const TextStyle(
               fontSize: 13,
               height: 1.5,
@@ -577,6 +697,70 @@ class SelectedPage extends StatelessWidget {
         else
           for (final course in snap.courses)
             _CourseLine(course: course, onTap: () => onCourse(course)),
+      ],
+    );
+  }
+}
+
+class CourseCatalogPage extends StatefulWidget {
+  const CourseCatalogPage({super.key, required this.snap});
+
+  final Snapshot snap;
+
+  @override
+  State<CourseCatalogPage> createState() => _CourseCatalogPageState();
+}
+
+class _CourseCatalogPageState extends State<CourseCatalogPage> {
+  final _query = TextEditingController();
+
+  @override
+  void dispose() {
+    _query.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final query = _query.text.trim().toLowerCase();
+    final courses = widget.snap.selectionCourses.where((course) {
+      if (query.isEmpty) return true;
+      return [
+        course.name,
+        course.code,
+        course.teacher,
+        course.className,
+      ].join(' ').toLowerCase().contains(query);
+    }).toList();
+    return Subpage(
+      title: '课程目录',
+      children: [
+        TextField(
+          key: const Key('catalog-search'),
+          controller: _query,
+          onChanged: (_) => setState(() {}),
+          decoration: InputDecoration(
+            hintText: '搜索课程名、课程号或教师',
+            prefixIcon: const Icon(Icons.search_rounded, size: 20),
+            filled: true,
+            fillColor: HuayanColors.card,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(vertical: 12),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '共 ${courses.length} 门课程。选课提交和退选还需要设计稿与学校接口确认，这里只读展示。',
+          style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
+        ),
+        const SizedBox(height: 10),
+        if (courses.isEmpty)
+          const EmptyHint(title: '没有匹配的课程', text: '换个关键词试试。')
+        else
+          for (final course in courses) _SelectionLine(course: course),
       ],
     );
   }
@@ -1072,7 +1256,7 @@ class _SettingsPageState extends State<SettingsPage> {
           children: [
             _SwitchRow(
               title: '上课提醒',
-              subtitle: '提前 ${settings.reminderMin} 分钟。这版不会在后台响铃。',
+              subtitle: '提前 ${settings.reminderMin} 分钟。应用打开时提醒；后台提醒还在接入。',
               value: settings.reminder,
               switchKey: const Key('switch-reminder'),
               onChanged: (value) => _toggle(() => settings.reminder = value),
@@ -1155,7 +1339,7 @@ class _SettingsPageState extends State<SettingsPage> {
             const ListTile(
               contentPadding: EdgeInsets.zero,
               title: Text('深色模式'),
-              subtitle: Text('这版界面仍是浅色'),
+              subtitle: Text('跟随系统的深色模式还在设计中，当前为浅色'),
               trailing: Text(
                 '跟随系统',
                 style: TextStyle(color: HuayanColors.faint),
@@ -1490,96 +1674,5 @@ class WidgetPreviewPage extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-bool schoolPathAllowed(String path) {
-  return path.startsWith('/student/') &&
-      !path.contains('..') &&
-      !path.contains('\\') &&
-      !path.contains('://');
-}
-
-class SchoolPage extends StatelessWidget {
-  const SchoolPage({super.key, required this.title, required this.path});
-
-  final String title;
-  final String path;
-
-  @override
-  Widget build(BuildContext context) {
-    final allowed = schoolPathAllowed(path);
-    final url = allowed ? 'https://gmis.buct.edu.cn$path' : '';
-    return Subpage(
-      title: title,
-      children: [
-        if (!allowed)
-          const EmptyHint(
-            glyph: 'shield',
-            title: '链接已拦住',
-            text: '只允许打开 gmis.buct.edu.cn 上的学生页面。',
-          )
-        else ...[
-          HuayanCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '会在学校网站打开',
-                  style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: HuayanColors.ink,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  '学校页面会在系统浏览器里打开。应用不内嵌网页，也不把登录凭据交给浏览器；如果学校要求登录，需要你在浏览器里再登一次。',
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.55,
-                    color: HuayanColors.sub,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  url,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    height: 1.4,
-                    color: HuayanColors.faint,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: FilledButton(
-              key: const Key('school-open'),
-              onPressed: () => _open(context, url),
-              child: const Text('在浏览器中打开'),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  Future<void> _open(BuildContext context, String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null || uri.host != 'gmis.buct.edu.cn') return;
-    try {
-      final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!ok && context.mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('没有打开浏览器')));
-      }
-    } catch (_) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('没有打开浏览器')));
-    }
   }
 }

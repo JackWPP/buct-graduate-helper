@@ -413,6 +413,7 @@ class NoticeItem {
     this.publisher = '',
     this.department = '',
     this.read = false,
+    this.content = '',
   });
 
   final String id;
@@ -421,6 +422,7 @@ class NoticeItem {
   final String publisher;
   final String department;
   final bool read;
+  final String content;
 
   factory NoticeItem.fromJson(Map<String, dynamic> json) {
     return NoticeItem(
@@ -430,6 +432,7 @@ class NoticeItem {
       publisher: '${json['publisher'] ?? json['fbr'] ?? ''}',
       department: '${json['department'] ?? json['fbdw'] ?? ''}',
       read: json['read'] == true || '${json['isReaded'] ?? ''}' == '1',
+      content: '${json['content'] ?? json['nr'] ?? json['zw'] ?? ''}',
     );
   }
 
@@ -440,6 +443,7 @@ class NoticeItem {
     'publisher': publisher,
     'department': department,
     'read': read,
+    'content': content,
   };
 }
 

@@ -273,6 +273,7 @@ class LiveSnapshotBuilder {
             publisher: '${row['fbr'] ?? row['publisher'] ?? ''}',
             department: '${row['fbdw'] ?? row['department'] ?? ''}',
             read: row['read'] == true || '${row['isReaded'] ?? ''}' == '1',
+            content: '${row['nr'] ?? row['content'] ?? row['zw'] ?? ''}',
           ),
         )
         .toList();
@@ -328,7 +329,9 @@ class LiveSnapshotBuilder {
           examGroup = ServiceGroup(
             id: 'wsks',
             name: '网上考试',
-            items: [ServiceItem(id: id, name: name, path: path)],
+            items: [
+              ServiceItem(id: id, name: name, path: path, native: 'online'),
+            ],
           );
           continue;
         }
@@ -337,7 +340,7 @@ class LiveSnapshotBuilder {
             id: id,
             name: name,
             path: path,
-            native: _nativeForPath(path),
+            native: _nativeForPath(path) ?? id,
           ),
         );
       }
@@ -356,11 +359,12 @@ class LiveSnapshotBuilder {
   }
 
   String? _nativeForPath(String path) {
+    final clean = path.split('?').first.replaceAll(RegExp(r'/+$'), '');
     const native = {
       '/student/pygl/xskbcx': 'timetable',
       '/student/pygl/xscjcx': 'grades',
       '/student/pygl/xswsxk_kb': 'selected',
-      '/student/pygl/xswsxk': 'selected',
+      '/student/pygl/xswsxk': 'catalog',
       '/student/pygl/xkjgcx': 'selected',
       '/student/pygl/wsjxpj': 'eval',
       '/student/pygl/pyjhcx': 'progress',
@@ -370,7 +374,7 @@ class LiveSnapshotBuilder {
       '/student/grgl/xsxx': 'profile',
       '/student/grgl/xyjc': 'progress',
     };
-    return native[path];
+    return native[clean];
   }
 
   ApplicationItem _applicationFrom(Map<String, dynamic> row) {

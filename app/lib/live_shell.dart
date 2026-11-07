@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'academics_page.dart';
 import 'app_controller.dart';
 import 'config/app_config.dart';
 import 'course_sheet.dart';
@@ -10,6 +11,7 @@ import 'gmis/gmis_transport.dart';
 import 'home_page.dart';
 import 'live_login_page.dart';
 import 'me_page.dart';
+import 'native_service_page.dart';
 import 'prefs.dart';
 import 'remind.dart';
 import 'schedule.dart';
@@ -26,7 +28,7 @@ import 'webvpn/webvpn_login_page.dart';
 import 'webvpn/webvpn_session.dart';
 import 'widgets.dart';
 
-/// 真实模式的外壳：登录、会话恢复、刷新和 4 个主 Tab。
+/// 真实模式的外壳：登录、会话恢复、刷新和 5 个主 Tab。
 class LiveShell extends StatefulWidget {
   const LiveShell({super.key, this.now, this.initialTab, this.openCourseName});
 
@@ -54,7 +56,7 @@ class _LiveShellState extends State<LiveShell> {
   void initState() {
     super.initState();
     final initial = widget.initialTab ?? 0;
-    _tab = initial < 0 || initial > 3 ? 0 : initial;
+    _tab = initial < 0 || initial > 4 ? 0 : initial;
     _boot();
   }
 
@@ -269,6 +271,8 @@ class _LiveShellState extends State<LiveShell> {
                 _openCourse(course, weekIndex(_now, snap.termStart)),
           ),
         );
+      case 'catalog':
+        _push(CourseCatalogPage(snap: snap));
       case 'exams':
         _push(ExamsPage(count: snap.exams, items: snap.examItems));
       case 'grades':
@@ -277,8 +281,51 @@ class _LiveShellState extends State<LiveShell> {
         _push(EvalPage(snap: snap));
       case 'profile':
         _push(ProfilePage(student: snap.student));
+      case 'online':
+        _push(
+          OnlinePage(
+            snap: snap,
+            onCourse: (course) =>
+                _openCourse(course, weekIndex(_now, snap.termStart)),
+          ),
+        );
       default:
-        _push(SchoolPage(title: item.name, path: item.path));
+        switch (item.id) {
+          case 'grjbxx':
+          case 'grxxxg':
+            _push(ProfilePage(student: snap.student));
+          case 'xyjc':
+          case 'pyfacx':
+          case 'pyjhcx':
+          case 'pyjhtj':
+            _push(ProgressPage(snap: snap));
+          case 'xsxqzc':
+          case 'xjydsq':
+          case 'knzzsq':
+          case 'pypgsq':
+          case 'szgwsq':
+          case 'xshdbm':
+          case 'xwsxsq':
+          case 'zyzfwbm':
+          case 'tyydbm':
+          case 'tyydmxsq':
+          case 'gjxsjlhd':
+          case 'py_zysjwc':
+          case 'ktlwsq':
+          case 'lwktsq':
+          case 'zqkhsq':
+          case 'zqkhdj':
+          case 'xsdbsq':
+          case 'lwpygl':
+          case 'xsxwsq':
+          case 'lwkt':
+          case 'lwdb':
+            _push(ApplicationsPage(snap: snap));
+          default:
+            _push(
+              NativeServicePage(item: item, snap: snap, api: _controller?.api),
+            );
+        }
     }
   }
 
@@ -375,6 +422,20 @@ class _LiveShellState extends State<LiveShell> {
                       NoticesPage(count: snap.notices, items: snap.noticeItems),
                     ),
                     onEval: () => _push(EvalPage(snap: snap)),
+                    onGrades: () => _push(GradesPage(snap: snap)),
+                    onExams: () => _push(
+                      ExamsPage(count: snap.exams, items: snap.examItems),
+                    ),
+                    onSelected: () => _push(
+                      SelectedPage(
+                        snap: snap,
+                        now: _now,
+                        onCourse: (course) => _openCourse(
+                          course,
+                          weekIndex(_now, snap.termStart),
+                        ),
+                      ),
+                    ),
                   ),
                   TimetablePage(
                     snap: snap,
@@ -391,11 +452,28 @@ class _LiveShellState extends State<LiveShell> {
                       ),
                     ),
                   ),
+                  AcademicsPage(
+                    snap: snap,
+                    onGrades: () => _push(GradesPage(snap: snap)),
+                    onExams: () => _push(
+                      ExamsPage(count: snap.exams, items: snap.examItems),
+                    ),
+                    onProgress: () => _push(ProgressPage(snap: snap)),
+                    onEval: () => _push(EvalPage(snap: snap)),
+                    onSelected: () => _push(
+                      SelectedPage(
+                        snap: snap,
+                        now: _now,
+                        onCourse: (course) => _openCourse(
+                          course,
+                          weekIndex(_now, snap.termStart),
+                        ),
+                      ),
+                    ),
+                  ),
                   ServicesPage(
                     snap: snap,
                     onOpen: _openService,
-                    onGroup: (group) =>
-                        _push(GroupPage(group: group, onOpen: _openService)),
                     onCourse: (course) =>
                         _openCourse(course, weekIndex(_now, snap.termStart)),
                   ),
