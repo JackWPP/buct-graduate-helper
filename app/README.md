@@ -4,12 +4,12 @@
 
 ## 数据与登录
 
-- 真实模式通过 `lib/gmis/` 访问学校接口：验证码图、RSA 登录、Cookie、课表、已选课、成绩、评教、通知、考场、选课只读列表和服务菜单。
+- 真实模式通过 `lib/gmis/` 访问学校接口：验证码图、RSA 登录、Cookie、课表、已选课、成绩、评教、通知、考场、选课列表和服务菜单。
 - 登录成功后 Cookie 写系统安全存储（`flutter_secure_storage`），密码只在本次登录内存里使用，不写偏好、快照或日志。
 - 校外访问：登录页的「使用网页版 VPN 登录」打开 `w.buct.edu.cn` 统一身份认证；认证后的 `wengine_vpn_ticket` Cookie 会让 GMIS 请求走 `https://w.buct.edu.cn/https/<token>/`，WebVPN 会话单独保存在本机安全存储。
 - 离线/启动时读本机 `SnapshotCache`；没有登录会话时不展示缓存。
 - `assets/snapshot.json` 只用于组件测试、截图和旧演示路径（`HuayanApp(snapshot: ...)` / `skipGate`），不是默认启动数据。
-- 选课提交/退选、后台提醒和深色模式还没做；选课页明确只读。
+- 选课可以提交/退课：二次确认 → 选课验证码（`xkyzm`）→ 提交，成功刷新课表与学分；后台提醒和深色模式还没做。
 
 真实登录需要手机能访问 `gmis.buct.edu.cn`（校园网，或登录页的网页版 VPN `w.buct.edu.cn`）和自己的研究生账号。仓库里没有可用账号，也不保存任何账号。
 

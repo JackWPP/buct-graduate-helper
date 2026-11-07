@@ -189,4 +189,71 @@ void main() {
     final rows = await api.onlineExamRows();
     expect(rows.map((row) => row['_kind']), ['current', 'past']);
   });
+
+  test('selection submit sends lb and captcha and reports success', () async {
+    final transport = _FakeTransport((request) {
+      if (request.path == '/student/pygl/xswsxk_kb_xk') {
+        return _response('{}');
+      }
+      return _response('{}');
+    });
+    final api = GmisApi(GmisClient(transport: transport));
+
+    final pick = await api.selectCourse(bjid: 'bj-1', captcha: '1234');
+    expect(pick.ok, isTrue);
+    expect(transport.requests.last.form, {
+      'lb': '1',
+      'bjid': 'bj-1',
+      'xkyzm': '1234',
+    });
+
+    final drop = await api.dropCourse(bjid: 'bj-1', captcha: '5678');
+    expect(drop.ok, isTrue);
+    expect(transport.requests.last.form, {
+      'lb': '0',
+      'bjid': 'bj-1',
+      'xkyzm': '5678',
+    });
+  });
+
+  test('selection failure is normalised into actionable reasons', () async {
+    Future<SelectionResult> submit(String msg) {
+      final transport = _FakeTransport(
+        (request) => _response(jsonEncode({'msg': msg})),
+      );
+      return GmisApi(GmisClient(transport: transport))
+          .selectCourse(bjid: 'bj-1', captcha: '1234');
+    }
+
+    final full = await submit('该课程人数已满');
+    expect(full.ok, isFalse);
+    expect(full.reason, SelectionFailure.full);
+    expect(full.display, contains('满员'));
+
+    expect((await submit('与已选课程时间冲突')).reason, SelectionFailure.conflict);
+    expect((await submit('未到选课时间')).reason, SelectionFailure.closed);
+    expect((await submit('超过可选门数上限')).reason, SelectionFailure.limit);
+    expect((await submit('该课程已选')).reason, SelectionFailure.duplicated);
+  });
+
+  test('selection captcha does not reload the login page', () async {
+    final transport = _FakeTransport((request) {
+      if (request.path == '/home/verificationcode') {
+        return GmisResponse(
+          statusCode: 200,
+          headers: const {
+            'content-type': ['image/gif'],
+          },
+          body: '',
+          bytes: Uint8List.fromList(const [9, 9, 9]),
+        );
+      }
+      return _response('{}');
+    });
+    final api = GmisApi(GmisClient(transport: transport));
+    final bytes = await api.selectionCaptcha();
+    expect(bytes, const [9, 9, 9]);
+    expect(transport.requests.single.path, '/home/verificationcode');
+    expect(transport.requests.single.query?['codetype'], 'xkyzm');
+  });
 }

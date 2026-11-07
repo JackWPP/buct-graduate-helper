@@ -18,8 +18,8 @@ OUT = Path(__file__).resolve().parent / "data" / "snapshot.json"
 NATIVE = {
     "/student/pygl/xskbcx": "timetable",
     "/student/pygl/xscjcx": "grades",
-    "/student/pygl/xswsxk_kb": "catalog",
-    "/student/pygl/xswsxk": "catalog",
+    "/student/pygl/xswsxk_kb": "selection",
+    "/student/pygl/xswsxk": "selection",
     "/student/pygl/xkjgcx": "selected",
     "/student/pygl/qxkczml": "catalog",
     "/student/pygl/pyjhtj": "progress",

@@ -841,13 +841,13 @@
           "id": "xswsxk",
           "name": "课程开课一览",
           "path": "/student/pygl/xswsxk",
-          "native": "catalog"
+          "native": "selection"
         },
         {
           "id": "xswsxk_kb",
           "name": "学生网上选课",
           "path": "/student/pygl/xswsxk_kb",
-          "native": "catalog"
+          "native": "selection"
         },
         {
           "id": "xkjgcx",

@@ -373,8 +373,8 @@ class LiveSnapshotBuilder {
     const native = {
       '/student/pygl/xskbcx': 'timetable',
       '/student/pygl/xscjcx': 'grades',
-      '/student/pygl/xswsxk_kb': 'catalog',
-      '/student/pygl/xswsxk': 'catalog',
+      '/student/pygl/xswsxk_kb': 'selection',
+      '/student/pygl/xswsxk': 'selection',
       '/student/pygl/qxkczml': 'catalog',
       '/student/pygl/xkjgcx': 'selected',
       '/student/pygl/pyjhtj': 'progress',

@@ -1,5 +1,82 @@
+import 'dart:typed_data';
+
 import 'gmis_client.dart';
 import 'gmis_exception.dart';
+
+/// 选课失败原因归一化。
+///
+/// 设计稿要求把学校的原始 `msg` 归成五类可操作提示，避免直接把
+/// “该课程人数已满”这类后端措辞丢给用户。
+enum SelectionFailure {
+  none,
+  full,
+  conflict,
+  closed,
+  limit,
+  duplicated,
+  other;
+
+  static SelectionFailure fromMessage(String message) {
+    if (message.isEmpty) return SelectionFailure.none;
+    if (message.contains('人数') ||
+        message.contains('容量') ||
+        message.contains('满')) {
+      return SelectionFailure.full;
+    }
+    if (message.contains('门数') ||
+        message.contains('上限') ||
+        message.contains('最多')) {
+      return SelectionFailure.limit;
+    }
+    // “冲突”要在“已选”之前判，学校常写成“与已选课程时间冲突”。
+    if (message.contains('冲突')) {
+      return SelectionFailure.conflict;
+    }
+    if (message.contains('选课时间') ||
+        message.contains('未开放') ||
+        message.contains('未到') ||
+        message.contains('窗口') ||
+        message.contains('不在')) {
+      return SelectionFailure.closed;
+    }
+    if (message.contains('已选') || message.contains('重复')) {
+      return SelectionFailure.duplicated;
+    }
+    return SelectionFailure.other;
+  }
+
+  String get hint => switch (this) {
+    SelectionFailure.none => '',
+    SelectionFailure.full => '这门课已经满员，换一个班级或等有人退课。',
+    SelectionFailure.conflict => '和已选课程时间冲突，先调整课表再试。',
+    SelectionFailure.closed => '当前不在选课时间窗口内。',
+    SelectionFailure.limit => '已达到本学期选课门数上限。',
+    SelectionFailure.duplicated => '这门课已经选过了。',
+    SelectionFailure.other => '',
+  };
+}
+
+/// 选课/退选提交结果。
+class SelectionResult {
+  const SelectionResult({
+    required this.ok,
+    required this.message,
+    required this.reason,
+  });
+
+  final bool ok;
+
+  /// 学校返回的原始 `msg`，成功时为空。
+  final String message;
+  final SelectionFailure reason;
+
+  /// 给用户看的一句话。
+  String get display {
+    if (ok) return '操作成功';
+    if (reason.hint.isNotEmpty) return reason.hint;
+    return message.isEmpty ? '学校没有返回结果，请刷新后确认。' : message;
+  }
+}
 
 /// GMIS 业务接口封装。只做请求和 JSON 形状校验，不负责页面模型。
 class GmisApi {
@@ -33,6 +110,44 @@ class GmisApi {
 
   Future<Map<String, dynamic>> selectionMeta() async {
     return _asMap(await _client.postJson('/student/pygl/xswsxk_kb_load'));
+  }
+
+  /// 选课验证码（`xkyzm`），与登录验证码完全独立。
+  Future<Uint8List> selectionCaptcha() =>
+      _client.fetchCaptchaBytes(CaptchaKind.selection);
+
+  /// 提交选课（`lb=1`）或退选（`lb=0`）。`bjid` 是提交主键，不是课程号。
+  Future<SelectionResult> selectCourse({
+    required String bjid,
+    required String captcha,
+  }) => _submitSelection(lb: '1', bjid: bjid, captcha: captcha);
+
+  Future<SelectionResult> dropCourse({
+    required String bjid,
+    required String captcha,
+  }) => _submitSelection(lb: '0', bjid: bjid, captcha: captcha);
+
+  Future<SelectionResult> _submitSelection({
+    required String lb,
+    required String bjid,
+    required String captcha,
+  }) async {
+    final value = _asMap(
+      await _client.postJson(
+        '/student/pygl/xswsxk_kb_xk',
+        form: {'lb': lb, 'bjid': bjid, 'xkyzm': captcha.trim()},
+      ),
+    );
+    final message = '${value['msg'] ?? ''}'.trim();
+    final sign = '${value['sign'] ?? ''}'.trim();
+    final ok = message.isEmpty && (sign.isEmpty || sign == '1');
+    return SelectionResult(
+      ok: ok,
+      message: message,
+      reason: ok
+          ? SelectionFailure.none
+          : SelectionFailure.fromMessage(message),
+    );
   }
 
   Future<Map<String, dynamic>> courseList({

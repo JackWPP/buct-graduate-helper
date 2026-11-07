@@ -259,6 +259,7 @@ class _ShellState extends State<Shell> {
           ),
         );
       case 'catalog':
+      case 'selection':
         _push(CourseCatalogPage(snap: snap));
       case 'exams':
         _push(ExamsPage(count: snap.exams, items: snap.examItems));

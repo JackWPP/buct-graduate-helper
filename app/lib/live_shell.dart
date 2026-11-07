@@ -254,6 +254,13 @@ class _LiveShellState extends State<LiveShell> {
     Navigator.of(context).push(huayanRoute<void>(page));
   }
 
+  /// 选课/退选成功后刷新快照，让课表、学分和已选列表跟着更新。
+  Future<void> _refreshAfterChange() async {
+    await _controller?.refresh();
+    if (!mounted) return;
+    setState(() {});
+  }
+
   void _openService(ServiceItem item) {
     final snap = _controller?.snapshot;
     if (snap == null) return;
@@ -272,17 +279,19 @@ class _LiveShellState extends State<LiveShell> {
           ),
         );
       case 'catalog':
-        if (item.id == 'qxkczml') {
+      case 'selection':
+        if (_controller?.api == null) {
+          _push(CourseCatalogPage(snap: snap));
+        } else {
           _push(
             NativeServicePage(
               item: item,
               snap: snap,
               api: _controller?.api,
+              onChanged: _refreshAfterChange,
               onSessionExpired: () => _controller?.logout(),
             ),
           );
-        } else {
-          _push(CourseCatalogPage(snap: snap));
         }
       case 'exams':
         _push(ExamsPage(count: snap.exams, items: snap.examItems));
@@ -358,6 +367,7 @@ class _LiveShellState extends State<LiveShell> {
                 item: item,
                 snap: snap,
                 api: _controller?.api,
+                onChanged: _refreshAfterChange,
                 onSessionExpired: () => _controller?.logout(),
               ),
             );

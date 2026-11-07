@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'gmis/gmis_api.dart';
 import 'icons.dart';
 import 'remote_pages.dart';
+import 'selection_page.dart';
 import 'snapshot.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -18,12 +19,16 @@ class NativeServicePage extends StatelessWidget {
     required this.snap,
     this.api,
     this.onSessionExpired,
+    this.onChanged,
   });
 
   final ServiceItem item;
   final Snapshot snap;
   final GmisApi? api;
   final VoidCallback? onSessionExpired;
+
+  /// 提交类操作成功后的刷新回调（例如选课后刷新课表和学分）。
+  final Future<void> Function()? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -274,6 +279,15 @@ class NativeServicePage extends StatelessWidget {
           intro: '全校课程总目录，分页读取学校返回的全部课程。',
           emptyText: '学校没有返回课程目录。',
           load: api.courseCatalogRows,
+          onSessionExpired: onSessionExpired,
+        );
+      case 'xswsxk':
+      case 'xswsxk_kb':
+      case 'xkjgcx':
+        return SelectionPage(
+          api: api,
+          snap: snap,
+          onChanged: onChanged,
           onSessionExpired: onSessionExpired,
         );
       case 'cxhkbksq':
