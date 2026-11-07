@@ -666,7 +666,6 @@ class SelectedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final credits = snap.credits;
-    final options = snap.selectionCourses;
     return Subpage(
       title: '选课',
       children: [
@@ -678,20 +677,7 @@ class SelectedPage extends StatelessWidget {
             color: HuayanColors.sub,
           ),
         ),
-        if (options.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          const Text(
-            '可选课程',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: HuayanColors.ink,
-            ),
-          ),
-          const SizedBox(height: 8),
-          for (final course in options) _SelectionLine(course: course),
-        ],
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
         if (snap.courses.isEmpty)
           const EmptyHint(title: '没有已选课程', text: '快照里没有课程。')
         else

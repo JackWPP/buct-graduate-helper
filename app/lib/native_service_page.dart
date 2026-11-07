@@ -149,6 +149,15 @@ class NativeServicePage extends StatelessWidget {
             ('说明', 'zcsm'),
           ],
         );
+      case 'ccqjwh':
+        return RemoteInfoPage(
+          title: item.name,
+          intro: '乘车区间来自学校登记信息。',
+          load: () async =>
+              (await api.rawPost('/student/grgl/ccqjwh_load'))
+                  as Map<String, dynamic>,
+          fields: const [('乘车区间', 'ccqj')],
+        );
       case 'djksbm':
         return RemoteListPage(
           title: item.name,

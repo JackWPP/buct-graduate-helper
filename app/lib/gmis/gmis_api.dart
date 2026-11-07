@@ -129,14 +129,27 @@ class GmisApi {
     String path, {
     Map<String, String>? query,
   }) async {
-    return _asList(await rawGet(path, query: query));
+    try {
+      return _asList(await rawGet(path, query: query));
+    } on GmisAuthException {
+      rethrow;
+    } on GmisException {
+      // 文档与页面脚本对部分列表接口的 GET/POST 标注不一致。
+      return _asList(await rawPost(path, form: query));
+    }
   }
 
   Future<List<Map<String, dynamic>>> rawListPost(
     String path, {
     Map<String, String>? form,
   }) async {
-    return _asList(await rawPost(path, form: form));
+    try {
+      return _asList(await rawPost(path, form: form));
+    } on GmisAuthException {
+      rethrow;
+    } on GmisException {
+      return _asList(await rawGet(path, query: form));
+    }
   }
 
   Future<Map<String, dynamic>> registrationStatus() async {

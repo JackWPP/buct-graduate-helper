@@ -76,7 +76,7 @@ class AcademicsPage extends StatelessWidget {
                 Text(
                   credits.requiredCredits == 0
                       ? '还没有培养方案学分要求'
-                      : '还差 ${formatNum(credits.requiredCredits - credits.selected)} 学分',
+                      : '还差 ${formatNum((credits.requiredCredits - credits.selected).clamp(0, double.infinity))} 学分',
                   style: const TextStyle(
                     fontSize: 12,
                     color: HuayanColors.faint,
@@ -129,7 +129,7 @@ class AcademicsPage extends StatelessWidget {
         _ActionRow(
           icon: 'check',
           title: '选课结果',
-          subtitle: '本学期已选课程与可选课程',
+          subtitle: '本学期已选课程和学分',
           onTap: onSelected,
         ),
         const SizedBox(height: 18),

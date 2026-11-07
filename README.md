@@ -61,7 +61,7 @@ flutter analyze
 flutter build apk --debug
 ```
 
-debug 产物在 `app/build/app/outputs/flutter-apk/app-debug.apk`；打 release 包用 `flutter build apk --release`，产物在 `app/build/app/outputs/flutter-apk/app-release.apk`。正式包还需要在 `app/android/app/build.gradle.kts` 里换成自己的 release 签名密钥；当前 release 仍用模板的 debug 签名。当前源码版本是 `1.2.0+3`，release APK 的 versionCode 为 3；已发布的 [v1.0.0](https://github.com/JackWPP/buct-graduate-helper/releases/tag/v1.0.0) Android 包只用于侧载试装，`v1.1.0` 标签尚无独立 APK。
+debug 产物在 `app/build/app/outputs/flutter-apk/app-debug.apk`；打 release 包用 `flutter build apk --release`，产物在 `app/build/app/outputs/flutter-apk/app-release.apk`。正式包还需要在 `app/android/app/build.gradle.kts` 里换成自己的 release 签名密钥；当前 release 仍用模板的 debug 签名。当前源码版本是 `1.3.0+4`，release APK 的 versionCode 为 4；已发布的 [v1.0.0](https://github.com/JackWPP/buct-graduate-helper/releases/tag/v1.0.0) Android 包只用于侧载试装，`v1.1.0` 标签尚无独立 APK。
 
 真实登录需要手机能访问 `gmis.buct.edu.cn`（校园网，或登录页的网页版 VPN `w.buct.edu.cn`），并且需要自己的研究生账号；仓库里没有可用账号。
 

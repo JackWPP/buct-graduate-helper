@@ -251,8 +251,10 @@ class LiveSnapshotBuilder {
             courseCode: '${row['kcbh'] ?? row['courseCode'] ?? ''}',
             courseName: '${row['kcmc'] ?? row['courseName'] ?? ''}',
             credits: _double(row['kcxf'] ?? row['credits']),
-            score: '${row['cj'] ?? row['score'] ?? ''}',
-            gradePoint: _nullableDouble(row['cjdj'] ?? row['gradePoint']),
+            score: '${row['cj'] ?? row['score'] ?? row['cjdjmc'] ?? ''}',
+            gradePoint: _nullableDouble(
+              row['cjdj'] ?? row['cjdjmc'] ?? row['gradePoint'],
+            ),
             category: '${row['kclbmc'] ?? row['category'] ?? ''}',
             recordedAt: '${row['lrsj'] ?? row['recordedAt'] ?? ''}',
           ),

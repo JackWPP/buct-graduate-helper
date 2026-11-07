@@ -299,16 +299,8 @@ class _LiveShellState extends State<LiveShell> {
           case 'pyjhcx':
           case 'pyjhtj':
             _push(ProgressPage(snap: snap));
-          case 'xsxqzc':
           case 'xjydsq':
           case 'knzzsq':
-          case 'pypgsq':
-          case 'szgwsq':
-          case 'xshdbm':
-          case 'xwsxsq':
-          case 'zyzfwbm':
-          case 'tyydbm':
-          case 'tyydmxsq':
           case 'gjxsjlhd':
           case 'py_zysjwc':
           case 'ktlwsq':
