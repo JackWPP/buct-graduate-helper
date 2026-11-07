@@ -12,6 +12,7 @@ class GmisRequest {
     required this.path,
     this.query,
     this.form,
+    this.json,
     this.headers = const {},
     this.asBytes = false,
     this.followRedirects = false,
@@ -21,6 +22,7 @@ class GmisRequest {
   final String path;
   final Map<String, String>? query;
   final Map<String, String>? form;
+  final Map<String, dynamic>? json;
   final Map<String, String> headers;
   final bool asBytes;
   final bool followRedirects;
@@ -83,7 +85,7 @@ class DioGmisTransport implements GmisTransport {
           : request.path;
       final response = await _dio.request<dynamic>(
         path,
-        data: request.form,
+        data: request.json ?? request.form,
         queryParameters: request.query,
         options: Options(
           method: request.method,
@@ -91,7 +93,9 @@ class DioGmisTransport implements GmisTransport {
           responseType: request.asBytes
               ? ResponseType.bytes
               : ResponseType.plain,
-          contentType: request.form == null
+          contentType: request.json != null
+              ? 'application/json'
+              : request.form == null
               ? null
               : 'application/x-www-form-urlencoded',
           followRedirects: request.followRedirects,

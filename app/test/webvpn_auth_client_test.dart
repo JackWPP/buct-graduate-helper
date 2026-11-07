@@ -68,10 +68,9 @@ void main() {
     ]);
 
     final client = WebVpnAuthClient(ssoTransport: sso, webVpnTransport: webVpn);
-    final session = await client.login(
-      userId: '2026201060',
-      password: 'secret',
-    );
+    final result = await client.login(userId: '2026201060', password: 'secret');
+    expect(result.needsSms, isFalse);
+    final session = result.session!;
 
     expect(session.baseUrl, contains('w.buct.edu.cn/https/'));
     expect(session.hasTicket, isTrue);
@@ -125,5 +124,69 @@ void main() {
     final bytes = base64Decode(encrypted);
     expect(bytes.length, 16);
     expect(bytes.length % 16, 0);
+  });
+
+  test('短信二次认证流程发送验证码并换取 WebVPN 会话', () async {
+    final sso = _FakeTransport([
+      _response(
+        200,
+        body:
+            '<p id="login-croypto">AAAAAAAAAAAAAAAAAAAAAA==</p>'
+            '<p id="login-page-flowkey">flow-1</p>',
+      ),
+      _response(
+        200,
+        body:
+            '<p id="current-login-type">smsLogin</p>'
+            '<p id="sso-second">true</p>'
+            '<p id="second-auth-user-id">2026201060</p>'
+            '<p id="phone-number">13800138000</p>'
+            '<p id="login-page-flowkey">flow-2</p>',
+      ),
+      _response(
+        200,
+        body: '{"code":200,"message":"OK","data":{"result":true}}',
+      ),
+      _response(200, body: '{"code":200,"message":"OK","data":true}'),
+      _response(
+        302,
+        headers: {
+          'location': [
+            'https://w.buct.edu.cn/login?cas_login=true&ticket=ST-456',
+          ],
+        },
+      ),
+    ]);
+    final webVpn = _FakeTransport([
+      _response(
+        302,
+        headers: {
+          'location': ['https://w.buct.edu.cn/'],
+          'set-cookie': [
+            'wengine_vpn_ticketw_buct_edu_cn=ticket-2; Path=/; Secure; HttpOnly',
+          ],
+        },
+      ),
+      _response(200, body: '<html>ok</html>'),
+    ]);
+    final client = WebVpnAuthClient(ssoTransport: sso, webVpnTransport: webVpn);
+
+    final first = await client.login(userId: '2026201060', password: 'secret');
+    expect(first.needsSms, isTrue);
+    expect(first.challenge!.maskedPhone, '138****8000');
+
+    await client.sendSmsCode();
+    final sendRequest = sso.requests[2];
+    expect(sendRequest.json!['phone'], '13800138000');
+    expect(sendRequest.json!['businessNo'], '0008');
+    expect(sendRequest.headers['Csrf-Key']!.length, 32);
+    expect(sendRequest.headers['Csrf-Value']!.length, 32);
+
+    final session = await client.verifySmsCode('123456');
+    expect(session.hasTicket, isTrue);
+    expect(session.cookies['wengine_vpn_ticketw_buct_edu_cn'], 'ticket-2');
+    expect(sso.requests[4].form!['type'], 'smsLogin');
+    expect(sso.requests[4].form!['password'], '123456');
+    expect(sso.requests[4].form!['execution'], 'flow-2');
   });
 }

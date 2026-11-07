@@ -4,7 +4,7 @@
 
 ## 数据与登录
 
-- 默认访问模式是网页版 VPN：启动后先进入 `lib/webvpn/sso_login_page.dart` 的原生统一身份认证（`lib/webvpn/webvpn_auth_client.dart` 直接提交 SSO 表单），拿到 `wengine_vpn_ticket` 后再进入 `lib/live_login_page.dart` 的 GMIS 验证码登录。
+- 默认访问模式是网页版 VPN：启动后先进入 `lib/webvpn/sso_login_page.dart` 的原生统一身份认证（`lib/webvpn/webvpn_auth_client.dart` 直接提交 SSO 表单；学校要求短信二次认证时在同一页输入验证码），拿到 `wengine_vpn_ticket` 后再进入 `lib/live_login_page.dart` 的 GMIS 验证码登录。
 - 真实模式通过 `lib/gmis/` 访问学校接口：验证码图、RSA 登录、Cookie、课表、已选课、成绩、评教、通知、考场、选课列表和服务菜单。
 - 登录成功后 Cookie 写系统安全存储（`flutter_secure_storage`），密码只在本次登录内存里使用，不写偏好、快照或日志。
 - `lib/webvpn/webvpn_login_page.dart` 保留为 WebView 兜底；`--dart-define=DIRECT_GMIS=true` 可切回校内直连。
