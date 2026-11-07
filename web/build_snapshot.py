@@ -161,6 +161,13 @@ def main() -> None:
                 "path": entry["url"],
                 "native": NATIVE.get(entry["url"]),
             })
+        if group["menuname"] == "个人管理":
+            items.append({
+                "id": "tzgg",
+                "name": "通知公告",
+                "path": "/student/grgl/tzgg_list",
+                "native": "notices",
+            })
         if items:
             groups.append({"id": group["menuid"], "name": group["menuname"], "items": items})
     if exam_group:

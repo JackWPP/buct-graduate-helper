@@ -269,6 +269,8 @@ class _ShellState extends State<Shell> {
         _push(EvalPage(snap: snap));
       case 'profile':
         _push(ProfilePage(student: snap.student));
+      case 'notices':
+        _push(NoticesPage(count: snap.notices, items: snap.noticeItems));
       case 'online':
         _push(
           OnlinePage(

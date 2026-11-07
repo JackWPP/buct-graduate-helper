@@ -806,6 +806,12 @@
           "name": "照片信息核对",
           "path": "/student/grgl/zpxxhd",
           "native": null
+        },
+        {
+          "id": "tzgg",
+          "name": "通知公告",
+          "path": "/student/grgl/tzgg_list",
+          "native": "notices"
         }
       ]
     },

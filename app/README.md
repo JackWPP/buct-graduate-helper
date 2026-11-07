@@ -1,6 +1,6 @@
 # 化研助手 Android/iOS 客户端（项目主线）
 
-`app/` 是项目主线，Android 优先，iOS 共用同一套 Flutter 代码。默认入口是 `lib/live_shell.dart`：引导 → 真实 GMIS 登录 → 首页、课表、学业、服务、我的（5 Tab）。服务页是扁平目录，48 项入口全部应用内直达，不再经过分组页或系统浏览器。课表计算在 `lib/schedule.dart`，规则与 `web/js/schedule.mjs` 对齐。
+`app/` 是项目主线，Android 优先，iOS 共用同一套 Flutter 代码。默认入口是 `lib/live_shell.dart`：引导 → 真实 GMIS 登录 → 首页、课表、学业、服务、我的（5 Tab）。服务页是扁平目录，49 项入口全部应用内直达，不再经过分组页或系统浏览器。课表计算在 `lib/schedule.dart`，规则与 `web/js/schedule.mjs` 对齐。
 
 ## 数据与登录
 
