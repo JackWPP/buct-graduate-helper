@@ -9,7 +9,19 @@
 </p>
 
 <p align="center">
-  <b>Android 主线</b> · <b>Flutter</b> · <b>真实 GMIS 数据</b> · <b>5 Tab</b> · <b>49 项服务</b>
+  <img alt="Android" src="https://img.shields.io/badge/Android-Mainline-2F6BFF?style=flat-square">
+  <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square">
+  <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Real%20Data-12A05C?style=flat-square">
+  <img alt="Services" src="https://img.shields.io/badge/Services-49-7C5CFF?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/Version-1.6.0-555?style=flat-square">
+</p>
+
+<p align="center">
+  <sub>5 Tab：首页 · 课表 · 学业 · 服务 · 我的</sub>
+</p>
+
+<p align="center">
+  <a href="https://github.com/JackWPP/buct-graduate-helper/releases/latest"><b>下载最新 Android 测试版 →</b></a>
 </p>
 
 ---
@@ -101,6 +113,7 @@ cd web && python3 -m http.server 8899
 | [开发与构建](docs/development.md) | 环境要求、Android/网页/Python 命令、测试、CI、目录结构、排障 |
 | [学校接口笔记](docs/gmis-notes.md) | GMIS 登录、WebVPN/SSO、课表、选课、成绩等接口注意事项 |
 | [路线图与限制](docs/roadmap.md) | 当前版本、已上线、下一步、已知限制、验证基线 |
+| [1.6.0 发布说明](docs/releases/v1.6.0.md) | 本版亮点、安装方式、验证情况、已知限制 |
 | [PRD](PRD.md) | 完整产品需求 |
 | [设计交接](design/02-handoff.md) | 页面结构、交互规则、设计前提 |
 | [文档导航](docs/README.md) | 全部文档入口 |
