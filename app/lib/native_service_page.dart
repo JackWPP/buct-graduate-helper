@@ -158,6 +158,13 @@ class NativeServicePage extends StatelessWidget {
                   as Map<String, dynamic>,
           fields: const [('乘车区间', 'ccqj')],
         );
+      case 'ttkcx':
+        return RemoteListPage(
+          title: item.name,
+          intro: '调课信息来自学校系统，按学校返回展示。',
+          emptyText: '暂无调课信息。',
+          load: api.courseAdjustments,
+        );
       case 'djksbm':
         return RemoteListPage(
           title: item.name,
@@ -257,8 +264,9 @@ class NativeServicePage extends StatelessWidget {
       case 'wskscp':
         return RemoteListPage(
           title: item.name,
-          intro: '网上考试和测评记录。',
-          load: api.onlineExams,
+          intro: '待考和已考记录都来自学校系统。',
+          emptyText: '暂无网上考试。',
+          load: api.onlineExamRows,
         );
       default:
         return null;

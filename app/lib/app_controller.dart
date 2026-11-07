@@ -161,7 +161,9 @@ class AppController extends ChangeNotifier {
   }
 
   Future<void> _refreshFromLive() async {
-    final result = await _builder.build();
+    final result = await _builder.build(
+      fallbackServices: _snapshot?.services ?? const [],
+    );
     _snapshot = result.snapshot;
     _notice = result.termStartKnown
         ? null

@@ -156,6 +156,10 @@ class GmisApi {
     return _asMap(await rawPost('/student/grgl/getzcxx'));
   }
 
+  Future<Map<String, dynamic>> onlineExamCurrent() async {
+    return _asMap(await rawGet('/student/wsks/wskscp_load'));
+  }
+
   Future<List<Map<String, dynamic>>> onlineExams() async {
     try {
       return _asList(await rawGet('/student/wsks/wskscp_list'));
@@ -164,6 +168,21 @@ class GmisApi {
     } on GmisException {
       return _asList(await rawPost('/student/wsks/wskscp_list'));
     }
+  }
+
+  Future<List<Map<String, dynamic>>> onlineExamRows() async {
+    final current = await onlineExamCurrent();
+    final rows = <Map<String, dynamic>>[];
+    for (var index = 1; index <= 4; index++) {
+      final item = current['sj$index'];
+      if (item is Map) {
+        rows.add({...Map<String, dynamic>.from(item), '_kind': 'current'});
+      }
+    }
+    for (final item in await onlineExams()) {
+      rows.add({...item, '_kind': 'past'});
+    }
+    return rows;
   }
 
   Future<Map<String, dynamic>> menu() async {

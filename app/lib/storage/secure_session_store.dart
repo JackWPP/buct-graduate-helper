@@ -17,12 +17,13 @@ class SecureSessionStore {
   final String _key;
 
   Future<AuthSession?> read() async {
-    final raw = await _storage.read(key: _key);
-    if (raw == null || raw.isEmpty) return null;
     try {
+      final raw = await _storage.read(key: _key);
+      if (raw == null || raw.isEmpty) return null;
       return AuthSession.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
-      await clear();
+      // 安全存储在少数设备上可能抛平台异常；按“没有会话”处理，
+      // 让用户重新登录，而不是让启动页永远卡住。
       return null;
     }
   }

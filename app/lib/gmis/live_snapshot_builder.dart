@@ -50,7 +50,6 @@ class LiveSnapshotBuilder {
       _optional(api.menu()),
       _optional(api.notices()),
       _optional(api.examRooms()),
-      _optional(api.courseAdjustments()),
       _optional(api.courseList(rows: 200)),
     ]);
 
@@ -64,7 +63,7 @@ class LiveSnapshotBuilder {
     final menu = _asMap(results[7]);
     final notices = _asMap(results[8]);
     final examRooms = _asList(results[9]);
-    final courseList = _asMap(results[11]);
+    final courseList = _asMap(results[10]);
 
     final periodList = periodsFromJson(meta['jc']);
     final planRows = _asList(plan['pyjh']);
@@ -275,10 +274,21 @@ class LiveSnapshotBuilder {
             publisher: '${row['fbr'] ?? row['publisher'] ?? ''}',
             department: '${row['fbdw'] ?? row['department'] ?? ''}',
             read: row['read'] == true || '${row['isReaded'] ?? ''}' == '1',
-            content: '${row['nr'] ?? row['content'] ?? row['zw'] ?? ''}',
+            content: _plainText(
+              '${row['nr'] ?? row['content'] ?? row['zw'] ?? ''}',
+            ),
           ),
         )
         .toList();
+  }
+
+  String _plainText(String value) {
+    return value
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        .replaceAll('&nbsp;', ' ')
+        .replaceAll('&amp;', '&')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
   }
 
   List<ExamItem> _examsFrom(List<Map<String, dynamic>> rows) {
@@ -331,9 +341,7 @@ class LiveSnapshotBuilder {
           examGroup = ServiceGroup(
             id: 'wsks',
             name: '网上考试',
-            items: [
-              ServiceItem(id: id, name: name, path: path, native: 'online'),
-            ],
+            items: [ServiceItem(id: id, name: name, path: path)],
           );
           continue;
         }
@@ -374,7 +382,6 @@ class LiveSnapshotBuilder {
       '/student/pygl/pyjhcx': 'progress',
       '/student/pygl/pyfacx': 'progress',
       '/student/pygl/kckccx': 'exams',
-      '/student/pygl/ttkcx': 'exams',
       '/student/grgl/xsxx': 'profile',
       '/student/grgl/xyjc': 'progress',
     };

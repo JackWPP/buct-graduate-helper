@@ -865,7 +865,7 @@
           "id": "ttkcx",
           "name": "调课信息查询",
           "path": "/student/pygl/ttkcx",
-          "native": "exams"
+          "native": null
         },
         {
           "id": "kckccx",

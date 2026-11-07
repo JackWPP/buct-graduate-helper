@@ -147,7 +147,7 @@ class MePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  '还差 ${formatNum(credits.requiredCredits - credits.selected)} 学分',
+                  '还差 ${formatNum((credits.requiredCredits - credits.selected).clamp(0, double.infinity))} 学分',
                   style: const TextStyle(
                     fontSize: 12,
                     color: HuayanColors.faint,

@@ -27,7 +27,6 @@ NATIVE = {
     "/student/pygl/pyjhcx": "progress",
     "/student/pygl/pyfacx": "progress",
     "/student/pygl/kckccx": "exams",
-    "/student/pygl/ttkcx": "exams",
     "/student/grgl/xsxx": "profile",
     "/student/grgl/xyjc": "progress",
 }

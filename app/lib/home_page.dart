@@ -647,7 +647,7 @@ class _CreditCard extends StatelessWidget {
           CreditBar(fraction: ratio),
           const SizedBox(height: 10),
           Text(
-            '还差 ${formatNum(credits.requiredCredits - credits.selected)} 学分 · 本学期 ${snap.courses.length} 门课',
+            '还差 ${formatNum((credits.requiredCredits - credits.selected).clamp(0, double.infinity))} 学分 · 本学期 ${snap.courses.length} 门课',
             style: const TextStyle(fontSize: 12, color: HuayanColors.faint),
           ),
         ],
