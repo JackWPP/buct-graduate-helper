@@ -19,8 +19,10 @@ NATIVE = {
     "/student/pygl/xskbcx": "timetable",
     "/student/pygl/xscjcx": "grades",
     "/student/pygl/xswsxk_kb": "selected",
-    "/student/pygl/xswsxk": "selected",
+    "/student/pygl/xswsxk": "catalog",
     "/student/pygl/xkjgcx": "selected",
+    "/student/pygl/qxkczml": "catalog",
+    "/student/pygl/pyjhtj": "progress",
     "/student/pygl/wsjxpj": "eval",
     "/student/pygl/pyjhcx": "progress",
     "/student/pygl/pyfacx": "progress",
@@ -80,6 +82,24 @@ def main() -> None:
                 "code": course["code"],
             })
         courses.append(course)
+
+    selection_courses = []
+    for raw in selected:
+        selection_courses.append({
+            "id": raw.get("bjid") or "",
+            "code": raw.get("kcbh") or "",
+            "name": raw.get("kcmc") or "",
+            "className": raw.get("bjmc") or "",
+            "teacher": raw.get("rkjsxm") or "",
+            "room": raw.get("dz") or "",
+            "credits": float(raw.get("kcxf") or 0),
+            "hours": int(raw.get("kczxs") or 0),
+            "weeks": f"{raw.get('ksz') or ''}-{raw.get('jsz') or ''}",
+            "sjms": raw.get("sjms") or "",
+            "capacity": int(raw.get("rnrs") or raw.get("xkrs") or 0),
+            "selected": True,
+            "selectable": 1,
+        })
 
     categories = []
     for key in CATEGORY_ORDER:
@@ -169,6 +189,7 @@ def main() -> None:
         },
         "demoStudentId": card["xh"],
         "courses": courses,
+        "selectionCourses": selection_courses,
         "credits": {
             "selected": selected_credits,
             "required": plan_credits,

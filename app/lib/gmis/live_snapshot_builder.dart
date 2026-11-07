@@ -311,7 +311,7 @@ class LiveSnapshotBuilder {
         hours: _int(row['kczxs'] ?? row['hours']),
         weeks: '${row['ksz'] ?? ''}-${row['jsz'] ?? ''}',
         sjms: '${row['sjms'] ?? ''}',
-        capacity: _int(row['xkrs'] ?? row['capacity']),
+        capacity: _int(row['rnrs'] ?? row['capacity']),
         selected: row['selected'] == true || '${row['selected'] ?? ''}' == '1',
         selectable: _int(row['yxkc']),
       );
@@ -367,7 +367,9 @@ class LiveSnapshotBuilder {
       '/student/pygl/xscjcx': 'grades',
       '/student/pygl/xswsxk_kb': 'selected',
       '/student/pygl/xswsxk': 'catalog',
+      '/student/pygl/qxkczml': 'catalog',
       '/student/pygl/xkjgcx': 'selected',
+      '/student/pygl/pyjhtj': 'progress',
       '/student/pygl/wsjxpj': 'eval',
       '/student/pygl/pyjhcx': 'progress',
       '/student/pygl/pyfacx': 'progress',

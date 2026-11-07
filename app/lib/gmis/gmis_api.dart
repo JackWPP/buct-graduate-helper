@@ -157,7 +157,13 @@ class GmisApi {
   }
 
   Future<List<Map<String, dynamic>>> onlineExams() async {
-    return _asList(await rawGet('/student/wsks/wskscp_list'));
+    try {
+      return _asList(await rawGet('/student/wsks/wskscp_list'));
+    } on GmisAuthException {
+      rethrow;
+    } on GmisException {
+      return _asList(await rawPost('/student/wsks/wskscp_list'));
+    }
   }
 
   Future<Map<String, dynamic>> menu() async {

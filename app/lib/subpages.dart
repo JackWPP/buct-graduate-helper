@@ -792,6 +792,7 @@ class _SelectionLine extends StatelessWidget {
                     course.teacher,
                     course.room,
                     course.weeks,
+                    if ((course.capacity ?? 0) > 0) '容量 ${course.capacity}',
                   ].where((value) => value.isNotEmpty).join(' · '),
                   style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
                 ),
