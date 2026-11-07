@@ -25,9 +25,9 @@ from timetable_pull import (  # noqa: E402
 class TimetablePullTest(unittest.TestCase):
     def test_live_snapshot_matches_exported_courses_and_drops_secrets(self):
         base = load_json(ROOT / "web/data/snapshot.json")
-        selected = load_json(ROOT / "demo_output/selected_courses_55.json")
-        plan = load_json(ROOT / "demo_output/training_plan.json")["pyjh"]
-        meta = load_json(ROOT / "demo_output/selection_meta.json")
+        selected = load_json(ROOT / "data/demo_output/selected_courses_55.json")
+        plan = load_json(ROOT / "data/demo_output/training_plan.json")["pyjh"]
+        meta = load_json(ROOT / "data/demo_output/selection_meta.json")
         # 样本里故意塞一个联系方式字段，确认不会进快照。
         selected = [dict(row) for row in selected]
         selected[0]["sjhm"] = "13800000000"
@@ -63,7 +63,7 @@ class TimetablePullTest(unittest.TestCase):
         env.pop("GMIS_PASSWORD", None)
         env.pop("GMIS_USER", None)
         denied = subprocess.run(
-            [sys.executable, str(ROOT / "gmis_cli.py"), "login", "--password", "secret"],
+            [sys.executable, str(ROOT / "tools/gmis_cli.py"), "login", "--password", "secret"],
             cwd=ROOT,
             env=env,
             capture_output=True,
@@ -72,7 +72,7 @@ class TimetablePullTest(unittest.TestCase):
         self.assertNotEqual(denied.returncode, 0)
         self.assertIn("password", denied.stderr.lower())
         missing = subprocess.run(
-            [sys.executable, str(ROOT / "gmis_cli.py"), "login", "--user", "1"],
+            [sys.executable, str(ROOT / "tools/gmis_cli.py"), "login", "--user", "1"],
             cwd=ROOT,
             env=env,
             capture_output=True,
@@ -87,7 +87,7 @@ class TimetablePullTest(unittest.TestCase):
         env = os.environ.copy()
         env.pop("GMIS_PASSWORD", None)
         result = subprocess.run(
-            [sys.executable, str(ROOT / "gmis_cli.py"), "--cookies", str(ROOT / "no-such-cookies.json"), "timetable"],
+            [sys.executable, str(ROOT / "tools/gmis_cli.py"), "--cookies", str(ROOT / "no-such-cookies.json"), "timetable"],
             cwd=ROOT,
             env=env,
             capture_output=True,

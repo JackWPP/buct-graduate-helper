@@ -3,7 +3,7 @@
 > 版本：v0.4（讨论稿）  
 > 日期：2026-10-30  
 > 状态：产品方向讨论中；已拍板产品身份/首发形态/MVP 范围/课表导入，待确认服务端与团队时间（见第 12 节）  
-> 关联文档：[GMIS_API.md](GMIS_API.md)（185 个接口）、[API_INDEX.md](API_INDEX.md)（49 个页面）、`research/feature_api_matrix.md`（功能-API 映射）、`research/competitor_analysis.md`（竞品调研）
+> 关联文档：[GMIS_API.md](docs/api/GMIS_API.md)（185 个接口）、[API_INDEX.md](docs/api/API_INDEX.md)（49 个页面）、`research/feature_api_matrix.md`（功能-API 映射）、`research/competitor_analysis.md`（竞品调研）
 
 > **实现现状（2026-11-07）**：Android 1.6.0 已采用 5 Tab（首页 / 课表 / 学业 / 服务 / 我的），服务页 49 项全部为应用内原生页面，业务页不使用 WebView、不跳系统浏览器；默认通过网页版 VPN + 原生统一身份认证（含短信二次认证）访问 GMIS。本文后续章节提到的“4 Tab”“WebView 兜底”属于 v0.4 早期方案，保留作历史设计对照。
 
@@ -274,7 +274,7 @@ App 的首页"待办"应按学期阶段自动聚合上述节点。
 
 **目标**：让用户用 GMIS 账号安全登录，并在会话过期时平滑重登。
 
-**流程**（基于 [GMIS_API.md](GMIS_API.md) 第 2 节）：
+**流程**（基于 [GMIS_API.md](docs/api/GMIS_API.md) 第 2 节）：
 1. 打开 App → 有有效会话则进首页；否则进登录页。
 2. 输入学号、密码；点击验证码图片刷新 `GET /home/verificationcode?codetype=stucode`（GIF）。
 3. 每次登录先 `GET /home/stulogin` 解析当前 `#pubkey`，用 RSA PKCS#1 v1.5 加密密码。
@@ -609,7 +609,7 @@ App 的首页"待办"应按学期阶段自动聚合上述节点。
 | HTML 解析 | html package / 正则 | 课表单元格解析 |
 | 日历 | ics + add_2_calendar / calendar 插件 | 导出与写入系统日历 |
 | 通知 | flutter_local_notifications | 上课/考试提醒 |
-| 后端（可选） | Python FastAPI + APScheduler | 复用 `gmis_client.py`；推送/监控 |
+| 后端（可选） | Python FastAPI + APScheduler | 复用 `tools/gmis_client.py`；推送/监控 |
 
 ### 8.3 GMIS 适配层设计
 
@@ -630,7 +630,7 @@ GmisClient
     └── NoticeApi
 ```
 
-关键实现点（来自 [GMIS_API.md](GMIS_API.md)）：
+关键实现点（来自 [GMIS_API.md](docs/api/GMIS_API.md)）：
 - 登录公钥每次从 `/home/stulogin` HTML 的 `#pubkey` 解析，不能缓存。
 - 业务接口 `Content-Type: text/html`，但 body 是 JSON 文本，按文本解析。
 - 选课验证码 `codetype=xkyzm` 与登录验证码 `codetype=stucode` 分开。
@@ -813,12 +813,12 @@ GmisClient
 
 | 文件 | 内容 |
 | --- | --- |
-| [GMIS_API.md](GMIS_API.md) | 185 个接口、登录/课表/选课/成绩/ICS 算法/客户端策略 |
-| [API_INDEX.md](API_INDEX.md) | 49 个页面分组的接口索引 |
-| [api_catalog.json](api_catalog.json) | 165 条页面 JS 接口结构化清单 |
-| [gmis_client.py](gmis_client.py) | Python 客户端（RSA 登录、Cookie、主要接口、ICS） |
-| [gmis_cli.py](gmis_cli.py) | 命令行工具（登录、导出、ICS、选课） |
-| `demo_output/` | 实测数据样本（学生信息、课表、成绩、已选课、ICS） |
+| [GMIS_API.md](docs/api/GMIS_API.md) | 185 个接口、登录/课表/选课/成绩/ICS 算法/客户端策略 |
+| [API_INDEX.md](docs/api/API_INDEX.md) | 49 个页面分组的接口索引 |
+| [api_catalog.json](docs/api/api_catalog.json) | 165 条页面 JS 接口结构化清单 |
+| [gmis_client.py](tools/gmis_client.py) | Python 客户端（RSA 登录、Cookie、主要接口、ICS） |
+| [gmis_cli.py](tools/gmis_cli.py) | 命令行工具（登录、导出、ICS、选课） |
+| `data/demo_output/` | 实测数据样本（学生信息、课表、成绩、已选课、ICS） |
 
 ### 13.2 术语
 
@@ -837,7 +837,7 @@ GmisClient
 
 ### 13.4 服务页功能清单（48 个菜单页）
 
-> 来自 `demo_output/menu.json` 实际抓取；加通知公告独立页共 49 个 GMIS 页面。页面名称与路径以学校当期配置为准。
+> 来自 `data/demo_output/menu.json` 实际抓取；加通知公告独立页共 49 个 GMIS 页面。页面名称与路径以学校当期配置为准。
 
 **个人管理（12）**
 

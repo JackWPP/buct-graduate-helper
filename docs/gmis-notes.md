@@ -1,6 +1,6 @@
 # 学校接口笔记
 
-这份文档记录化研助手对接 GMIS / 网页版 VPN 时的关键事实。字段级细节见 [GMIS_API.md](../GMIS_API.md) 和 [API_INDEX.md](../API_INDEX.md)。
+这份文档记录化研助手对接 GMIS / 网页版 VPN 时的关键事实。字段级细节见 [GMIS_API.md](api/GMIS_API.md) 和 [API_INDEX.md](api/API_INDEX.md)。
 
 ## 登录
 

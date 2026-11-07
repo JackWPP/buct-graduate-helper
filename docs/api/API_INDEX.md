@@ -1,6 +1,6 @@
 # GMIS 学生端接口索引
 
-> 由 pages_all/*.html 页面 JS 与 crawl_log.json 自动整理。参数从页面 JS 的 `data` / `queryParams` 提取，空表示页面未传参。
+> 由 ../../research/scraped/pages_all/*.html 页面 JS 与 crawl_log.json 自动整理。参数从页面 JS 的 `data` / `queryParams` 提取，空表示页面未传参。
 
 ## 个人管理 / 个人基本信息
 

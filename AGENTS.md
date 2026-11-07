@@ -1,6 +1,6 @@
 # 云端继续：化研助手
 
-这是北京化工大学研究生管理系统的移动增强层。产品定义在 `PRD.md`，设计在 `design/`。**Android 版在 `app/`，是项目主线**；`web/` 是 390px 可点击的设计预览和回归参照，不再是功能主线。学校接口客户端是 `gmis_client.py` 和 `gmis_cli.py`。
+这是北京化工大学研究生管理系统的移动增强层。产品定义在 `PRD.md`，设计在 `design/`。**Android 版在 `app/`，是项目主线**；`web/` 是 390px 可点击的设计预览和回归参照，不再是功能主线。学校接口客户端是 `tools/gmis_client.py` 和 `tools/gmis_cli.py`。
 
 云端代理从这里接着做，不要重开一套产品。
 
@@ -19,7 +19,7 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 - 全原生改造进行中：`app/lib/academics_page.dart`、`app/lib/services_page.dart`、`app/lib/native_service_page.dart`、`app/lib/remote_pages.dart` 已加入；已接入 5 Tab、49 项服务扁平目录和一批只读远程页。
 - `app/assets/snapshot.json` 只用于组件测试、截图和旧演示路径（`HuayanApp(snapshot: ...)` / `skipGate`），不是默认启动数据。
 
-网页预览仍是设计参照：`web/data/snapshot.json` 来自 2026-10-30 课表导出；`gmis_cli.py login` 用学校验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`gmis_cli.py timetable` 把只读课表写到被忽略的 `web/data/live.json`，预览优先读它。Python 只读导出不再服务 Android 默认数据通路。
+网页预览仍是设计参照：`web/data/snapshot.json` 来自 2026-10-30 课表导出；`tools/gmis_cli.py login` 用学校验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`tools/gmis_cli.py timetable` 把只读课表写到被忽略的 `web/data/live.json`，预览优先读它。Python 只读导出不再服务 Android 默认数据通路。
 
 验证记录（2026-11-07）：`M531DA`（Android 17）已安装过 1.2.0 release 包；1.6.0（versionCode 7）在 `emulator-5554`（Android 16）用真实账号完成网页版 VPN → 原生统一身份认证（含短信二次认证）→ GMIS 验证码登录，首页/课表/学业/服务/我的均已加载真实数据（第 10 周、28/40 学分、14 门待评、49 项服务）。`gmis.buct.edu.cn` 在校外无法解析，默认走 `w.buct.edu.cn`；真机仍需复核刷新、退出和会话过期重登。
 

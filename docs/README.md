@@ -12,5 +12,9 @@
 | [1.6.0 发布说明](releases/v1.6.0.md) | 所有人 | 本版亮点、安装方式、验证情况、已知限制 |
 | [PRD](../PRD.md) | 产品、设计 | 完整产品需求与验收口径 |
 | [设计交接](../design/02-handoff.md) | 设计、前端 | 页面结构、交互规则、设计前提 |
-| [GMIS_API.md](../GMIS_API.md) | 接口开发 | 学校接口字段级说明 |
-| [API_INDEX.md](../API_INDEX.md) | 接口开发 | 按页面分组的接口索引 |
+| [GMIS_API.md](api/GMIS_API.md) | 接口开发 | 学校接口字段级说明 |
+| [API_INDEX.md](api/API_INDEX.md) | 接口开发 | 按页面分组的接口索引 |
+| [接口文档目录](api/README.md) | 接口开发 | 接口 JSON 与字段说明 |
+| [数据样本](../data/README.md) | 开发、测试 | 课表/成绩等学业样本说明 |
+| [开发工具](../tools/README.md) | 开发 | Python 客户端与命令行用法 |
+| [调研资料](../research/README.md) | 产品、接口 | 竞品分析、功能-API 矩阵、抓取快照说明 |

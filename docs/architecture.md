@@ -75,10 +75,10 @@
 
 ## Python 只读导出
 
-`gmis_client.py` / `gmis_cli.py` 仍保留为开发工具：
+`tools/gmis_client.py` / `tools/gmis_cli.py` 仍保留为开发工具：
 
 - 登录、验证码、Cookie、课表、ICS
-- `gmis_cli.py timetable` 可把只读课表写到 `web/data/live.json`
+- `tools/gmis_cli.py timetable` 可把只读课表写到 `web/data/live.json`
 - 不参与 Android 默认数据通路
 
 ## 安全边界

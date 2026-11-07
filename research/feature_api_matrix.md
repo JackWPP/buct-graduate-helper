@@ -1,10 +1,10 @@
 # GMIS 功能-API 矩阵与移动端可行性评估
 
 > 版本：v1.0（2026-10-30） · 作者：api-mapper（共享 task-2）
-> 数据来源：`GMIS_API.md`、`API_INDEX.md`、`api_catalog.json`、`endpoint_catalog.json`、`crawl_log.json`、`pages_all/*.html`（49 页）、`demo_output/*.json`
+> 数据来源：`../docs/api/GMIS_API.md`、`../docs/api/API_INDEX.md`、`../docs/api/api_catalog.json`、`../docs/api/endpoint_catalog.json`、`crawl_log.json`（本机忽略）、`scraped/pages_all/*.html`（49 页）、`../data/demo_output/*.json`
 > 统计口径：
 > - **49 个页面** = 菜单中的 48 个业务页 + 通知公告页 `/student/grgl/tzgglist`（该页不在左侧菜单但存在独立页面）；登录页、首页 `/student/default/index|home`、咨询页、我的申请页属于**运行期入口页**，单列在 §1.1，不占用 49 页名额。
-> - “核心 API”为页面 JS 实际调用 + 实测 XHR 去重后的主接口；完整 165 条见 `API_INDEX.md` / `api_catalog.json`。
+> - “核心 API”为页面 JS 实际调用 + 实测 XHR 去重后的主接口；完整 165 条见 `../docs/api/API_INDEX.md` / `../docs/api/api_catalog.json`。
 > - **复杂度**：S（低，纯展示/1–2 个接口，0.5–1 天）/ M（中，多接口、筛选、分页或轻表单，1–3 天）/ L（高，验证码、上传、多步动态表单、富文本、Word/打印，3–8 天）。
 > - **MVP 优先级**描述“是否值得投入独立原生体验”：P0 = MVP 必须深度适配；P1 = 上线后 4–6 周增强；P2 = 不单独做原生，WebView 兜底即可。按 PRD 4.2，所有 49 页在 MVP 都应有 WebView 入口，P2 不等于不可达。
 > - **实现方式**：原生 / WebView 兜底（内嵌 GMIS 页面，桌面 UA + Cookie 注入 + 文件下载桥）/ 混合（原生列表/壳 + WebView 表单）/ 暂不做（仅保留链接或占位）。
@@ -36,7 +36,7 @@
 1. **“高频 20% 原生 + 低频 WebView 兜底”成立**：登录、首页、课表、选课、成绩、考试、通知、培养进度 8 个 P0 页面覆盖研究生 80% 日常使用频次；其余 33 页建议只做 WebView 入口，不投入原生表单。
 2. **最复杂的不是页面数量，而是 4 类“协议型坑”**：RSA 动态公钥 + 两套验证码、会话 302、`text/html` 包裹 JSON、文件上传/Word 下载。建议把 GMIS 适配层做成独立 SDK（见 §17），否则每个页面都会重复踩坑。
 3. **选课和课表是技术风险最高的 P0 功能**：选课有独立验证码、课程容量并发、选课时间窗口；课表依赖 HTML 片段解析和“学期首周”人工映射，接口不直接返回教学周。
-4. **49 页中有 40+ 条接口未写入 `GMIS_API.md`**，且 7 个业务页面是独立弹窗/编辑页（未抓取）：`wsjxpj_pj`、`wskscp_ks`、`wskscp_wj`、`pypgsq_edit`、`szgwsq_edit`、`tyyd_mxsq_edit`、`xwsxsq_edit`。这些是后续 WebView/原生化的隐藏工作量。
+4. **49 页中有 40+ 条接口未写入 `../docs/api/GMIS_API.md`**，且 7 个业务页面是独立弹窗/编辑页（未抓取）：`wsjxpj_pj`、`wskscp_ks`、`wskscp_wj`、`pypgsq_edit`、`szgwsq_edit`、`tyyd_mxsq_edit`、`xwsxsq_edit`。这些是后续 WebView/原生化的隐藏工作量。
 5. **P2 页面中已有接口异常**：`xnjddj_load` 实测返回 HTML 错误页 `<title>列名 'zlsqh' 无效。</title>`；`kcmxsq_list` 抓取时出现 Protocol error。上线前需要与学校确认接口可用性，不能按“存在即稳定”排期。
 
 ---
@@ -106,7 +106,7 @@
 
 | # | 页面/功能 | 页面路径 | 核心 API（方法） | 关键参数 | 返回数据形态 | 复杂度 | 验证码/上传/复杂表单/导出打印 | MVP | 实现方式 | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 23 | 课程成绩查询 | `/student/pygl/xscjcx` | `GET xscjcx_list`<br>`POST xscjcx_cjzylist`<br>`GET xscjcx_cjzydo[id,type]`<br>`POST dcword_cj` | `id` 成绩 id、`type` 1 转入/0 撤回；`xscjcx_cjzylist` 无参 | `xscjcx_list={xwklist,fxwklist,hjcjlist,xftj:[{xh,xwxf,fxwxf,zxf,yxxwxf,yxfxwxf,yxzxf,faxwxf,fazxf}],hjzxf}`；`xscjcx_cjzylist` 字段 `xh,kcbh,kcmc,kcxf,xwk,cj,cjdjmc,lrsj,sfzy,cjid`；`dcword_cj` Word 二进制 | M | Word/打印：是<br>学分转移：是 | P0 | 原生 | 见 §16.3 关键字段与坑；成绩可能为空（demo_output 即空），空态要友好；`sfzy` 表示是否已转学分。 |
+| 23 | 课程成绩查询 | `/student/pygl/xscjcx` | `GET xscjcx_list`<br>`POST xscjcx_cjzylist`<br>`GET xscjcx_cjzydo[id,type]`<br>`POST dcword_cj` | `id` 成绩 id、`type` 1 转入/0 撤回；`xscjcx_cjzylist` 无参 | `xscjcx_list={xwklist,fxwklist,hjcjlist,xftj:[{xh,xwxf,fxwxf,zxf,yxxwxf,yxfxwxf,yxzxf,faxwxf,fazxf}],hjzxf}`；`xscjcx_cjzylist` 字段 `xh,kcbh,kcmc,kcxf,xwk,cj,cjdjmc,lrsj,sfzy,cjid`；`dcword_cj` Word 二进制 | M | Word/打印：是<br>学分转移：是 | P0 | 原生 | 见 §16.3 关键字段与坑；成绩可能为空（data/demo_output 即空），空态要友好；`sfzy` 表示是否已转学分。 |
 
 ---
 
@@ -313,7 +313,7 @@
 | --- | --- | --- |
 | **返回 `text/html` 但内容是 JSON** | 所有业务接口 `Content-Type: text/html; charset=utf-8`，body 是 JSON；按 MIME 解析会失败 | 统一 `response.text` + `json.loads`；失败再尝试 HTML 清洗；不要用 `response.json()` |
 | **响应形态不统一** | 裸数组、`{rows,total}`、`{kc,total}`、`{data:[...]}`、`{zt:"1"}`、`{sign:"1"}`、文本 `true`、空字符串 | 每个接口写 adapter（`to_list`/`to_rows`/`to_bool`）；不要假设字段名 |
-| **GET/POST 标注冲突** | `xshdbm_cklist`、`xshdbm_sqlist`、`tyydbm_cklist`、`zyzfwbm_cklist`、`getldsjzsc` 在 `GMIS_API.md` 与 `api_catalog.json` 中方法不一致 | 以页面 JS 实际调用为准；适配层允许 GET/POST 回退（同一路径先 GET，失败再 POST） |
+| **GET/POST 标注冲突** | `xshdbm_cklist`、`xshdbm_sqlist`、`tyydbm_cklist`、`zyzfwbm_cklist`、`getldsjzsc` 在 `../docs/api/GMIS_API.md` 与 `../docs/api/api_catalog.json` 中方法不一致 | 以页面 JS 实际调用为准；适配层允许 GET/POST 回退（同一路径先 GET，失败再 POST） |
 | **HTML 错误页伪装成功** | `xnjddj_load` 返回 `<title>列名 'zlsqh' 无效。</title>`；部分接口异常时返回 HTML 错误页 | 响应体以 `<` 开头时按 HTML 错误处理，提取 `<title>` 文案，上报监控 |
 | **空数据** | `kckccx_list`、`wsjxpjlist`（部分）、`notices`、`pypgsq_sqlist` 等实测空数组 | 空态与错误态分离；不要用 `if not data` 统一报错 |
 | **分页不统一** | `xswsxk_all`/`xswsxk_kb_list` 服务端 `page/rows`；`py_kclist` 返回 total 1822；`tzgg_list` 有 page/rows；很多列表返回全量数组无分页 | 适配层定义 `PagedResult`；全量接口前端分页/虚拟列表；服务端接口透传 page/rows |
@@ -355,7 +355,7 @@
 
 | 类型 | 清单 | 影响 |
 | --- | --- | --- |
-| 页面 JS 中发现但 `GMIS_API.md` 未收录的接口（40+） | `lwpygl`: `getlwxxinfo`、`sclwxz`、`lwpygl_bs_lwzsrlr`、`lwpygl_sfshowsslw`、`lwpys_xsyl`、`isExitsCcbg`、`CreatePdf`、`downlwccbg`、`sslwjgck`；`xsfblwdj`: `checkwordmb`、`delxsfblwdjByid`、`biaoji`；`xshjcgdj`: `deletehjcgbyid`、`gethjcgmodel`；`xskyxmdj`: `deletekyxmbyid`、`xskyxmdj_model`；`xszlcgdj`: `deletezlcgbyid`、`getzlcgmodel`；`xjydsq`: `addxjyd`、`editxjyd`、`xjydprint`；`tzgglist`: `/default/updateTzstate`；`pyjhcx`: `pyjhdy`、`pyjhdy_lzlg`、`pyjhdy_tjcj`；`pyfacx`: `pyfady_show?id=`；`pyjhtj`: `jxdggl_down?kcbh=`；`py_zysjwc`: `getpy_zysjwcinfo`；`gjxsjlhd`: `getpy_gjxsjlhdinfo`、`getpy_gjxsjlhdcltjinfo`；`xsktsq_edit`: `xsktsq_ecsq`；`wsjxpj`: `wsjxpj_pj?bjid=&jsbh=`；`wskscp`: `wskscp_ks?sjid=`、`wskscp_wj?sjid=`；`knzzsq`: `kbzz_sq_objadd`、`knzzsq_addjtcy`、`knzzsq_addplxzrdcy`、`knzzsq_deletejtcy`、`knzzsq_xsjbxx`；`szgwsq`: `szgwsq_delete`、`szgwsq_repeal`、`szgwsq_edit?id=`；`pypgsq`: `pypgsq_edit?id=`；`tyyd_mxsq`: `tyyd_mxsq_edit?id=`；`xwsxsq`: `xwsxsq_edit?id=`；`tyydbm`: `show_ewm_yl_tyyd`、`tyydbmck?id=`、`tyydfyjytj?id=`；`xshdbm`: `xshdbmck?id=`、`xshdxdtj?id=`；`zyzfwbm`: `show_ewm_yl`、`zyzfwbmck?id=`、`zyzfyjytj?id=` | 原生/WebView 都可能遇到 404 或参数不符；需要按页面 JS 重放验证；P2 页面不要承诺“完全覆盖” |
+| 页面 JS 中发现但 `../docs/api/GMIS_API.md` 未收录的接口（40+） | `lwpygl`: `getlwxxinfo`、`sclwxz`、`lwpygl_bs_lwzsrlr`、`lwpygl_sfshowsslw`、`lwpys_xsyl`、`isExitsCcbg`、`CreatePdf`、`downlwccbg`、`sslwjgck`；`xsfblwdj`: `checkwordmb`、`delxsfblwdjByid`、`biaoji`；`xshjcgdj`: `deletehjcgbyid`、`gethjcgmodel`；`xskyxmdj`: `deletekyxmbyid`、`xskyxmdj_model`；`xszlcgdj`: `deletezlcgbyid`、`getzlcgmodel`；`xjydsq`: `addxjyd`、`editxjyd`、`xjydprint`；`tzgglist`: `/default/updateTzstate`；`pyjhcx`: `pyjhdy`、`pyjhdy_lzlg`、`pyjhdy_tjcj`；`pyfacx`: `pyfady_show?id=`；`pyjhtj`: `jxdggl_down?kcbh=`；`py_zysjwc`: `getpy_zysjwcinfo`；`gjxsjlhd`: `getpy_gjxsjlhdinfo`、`getpy_gjxsjlhdcltjinfo`；`xsktsq_edit`: `xsktsq_ecsq`；`wsjxpj`: `wsjxpj_pj?bjid=&jsbh=`；`wskscp`: `wskscp_ks?sjid=`、`wskscp_wj?sjid=`；`knzzsq`: `kbzz_sq_objadd`、`knzzsq_addjtcy`、`knzzsq_addplxzrdcy`、`knzzsq_deletejtcy`、`knzzsq_xsjbxx`；`szgwsq`: `szgwsq_delete`、`szgwsq_repeal`、`szgwsq_edit?id=`；`pypgsq`: `pypgsq_edit?id=`；`tyyd_mxsq`: `tyyd_mxsq_edit?id=`；`xwsxsq`: `xwsxsq_edit?id=`；`tyydbm`: `show_ewm_yl_tyyd`、`tyydbmck?id=`、`tyydfyjytj?id=`；`xshdbm`: `xshdbmck?id=`、`xshdxdtj?id=`；`zyzfwbm`: `show_ewm_yl`、`zyzfwbmck?id=`、`zyzfyjytj?id=` | 原生/WebView 都可能遇到 404 或参数不符；需要按页面 JS 重放验证；P2 页面不要承诺“完全覆盖” |
 | 未抓取的独立页面（7 个） | `wsjxpj_pj?bjid=&jsbh=`、`wskscp_ks?sjid=`、`wskscp_wj?sjid=`、`pypgsq_edit?id=`、`szgwsq_edit?id=`、`tyyd_mxsq_edit?id=`、`xwsxsq_edit?id=`；另有 `addxjyd`/`editxjyd` 页面 | 这是“49 页”之外的真实工作量；WebView 可用但无法做原生；上线前需补抓 |
 | 前端占位页 | `zqkhsq`、`xsdbsq_edit` 只有 `alert()`，无实际接口 | 列入“暂不做”，不要当功能缺口 |
 | 接口异常 | `xnjddj_load` 报 `列名 'zlsqh' 无效`；`kcmxsq_list` 抓取 Protocol error | 需向学校反馈/等待修复；上线前做健康检查 |
@@ -467,4 +467,4 @@
 | 通知 | — | `tzgg_list`、`getUnReadTzxx`、`getUnRemindTzxx` |
 | 网上考试 | `wskscp_load`、`wskscp_list` | — |
 
-> 注：`xswsxk_kb_load`/`loadkb`/`list` 在页面 JS 中为 POST；`GMIS_API.md` 个别处标注不一致，以实测为准。`doprint_kb` 实际为 GET 打开打印页。
+> 注：`xswsxk_kb_load`/`loadkb`/`list` 在页面 JS 中为 POST；`../docs/api/GMIS_API.md` 个别处标注不一致，以实测为准。`doprint_kb` 实际为 GET 打开打印页。

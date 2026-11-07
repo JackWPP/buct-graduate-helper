@@ -3,11 +3,11 @@
 """GMIS 学生端命令行工具。
 
 示例：
-    python3 gmis_cli.py login --user 2026201060 --cookies cookies.json
-    python3 gmis_cli.py dump --cookies cookies.json --out demo_output
-    python3 gmis_cli.py ics --cookies cookies.json --term 55 --start 2026-08-31 --out 课表.ics
-    python3 gmis_cli.py courses --cookies cookies.json --lb 3 --rows 20
-    python3 gmis_cli.py select --cookies cookies.json --bjid BID
+    python3 tools/gmis_cli.py login --user 2026201060 --cookies cookies.json
+    python3 tools/gmis_cli.py dump --cookies cookies.json --out data/demo_output
+    python3 tools/gmis_cli.py ics --cookies cookies.json --term 55 --start 2026-08-31 --out 课表.ics
+    python3 tools/gmis_cli.py courses --cookies cookies.json --lb 3 --rows 20
+    python3 tools/gmis_cli.py select --cookies cookies.json --bjid BID
 """
 from __future__ import annotations
 
@@ -200,7 +200,7 @@ def main() -> int:
 
     q = sub.add_parser("dump")
     q.add_argument("--term", default="")
-    q.add_argument("--out", default="demo_output")
+    q.add_argument("--out", default="data/demo_output")
     q.set_defaults(func=cmd_dump)
 
     q = sub.add_parser("ics")

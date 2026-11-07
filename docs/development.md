@@ -57,9 +57,9 @@ cd web && python3 -m http.server 8899
 ## Python 客户端
 
 ```bash
-python3 -m pip install -r requirements.txt
-python3 gmis_cli.py login --user 2026201060 --cookies cookies.json
-python3 gmis_cli.py timetable --cookies cookies.json
+python3 -m pip install -r tools/requirements.txt
+python3 tools/gmis_cli.py login --user 2026201060 --cookies cookies.json
+python3 tools/gmis_cli.py timetable --cookies cookies.json
 ```
 
 密码只从 `GMIS_PASSWORD` 或交互提示读取，不进入命令行。`cookies.json` 和 `web/data/live.json` 已被 `.gitignore` 忽略。
@@ -82,7 +82,7 @@ python3 -m pytest -q
 [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) 在 push / PR 时运行：
 
 - Flutter：Java 21、Flutter 3.47.9、`flutter pub get`、`flutter analyze`、`flutter test`、`flutter build apk --debug`，并上传 APK
-- Python：3.12、`pip install -r requirements.txt pytest`、`pytest -q`
+- Python：3.12、`pip install -r tools/requirements.txt pytest`、`pytest -q`
 - Web：Node 20、`node --test web/js/schedule.test.mjs`
 
 ## 目录结构
@@ -99,13 +99,19 @@ app/                 Flutter 客户端（项目主线）
   test/              单元与组件测试
   assets/            测试/截图用快照与品牌图形
 web/                 390px 网页预览（设计参照）
-gmis_client.py       Python 客户端
-gmis_cli.py          Python 命令行
-GMIS_API.md          接口字段说明
-API_INDEX.md         按页面的接口索引
+data/                测试/构建用的学业数据样本
+  demo_output/       课表、培养计划、已选课、成绩等
+  samples/           各接口响应样例
+tools/               Python 客户端和命令行
+  gmis_client.py
+  gmis_cli.py
+  requirements.txt
+docs/                产品、架构、开发、发布文档
+  api/GMIS_API.md    接口字段说明
+  api/API_INDEX.md   按页面的接口索引
 PRD.md               产品需求
 design/              设计说明、导出稿和标志
-research/            竞品调研与功能-接口矩阵
+research/            竞品调研、功能-接口矩阵、抓取快照
 ```
 
 ## 常见问题

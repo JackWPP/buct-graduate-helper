@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-"""把 demo_output 里的学业字段收成网页可用的快照。不写入证件号、电话、地址、邮箱和密码。"""
+"""把 data/demo_output 里的学业字段收成网页可用的快照。不写入证件号、电话、地址、邮箱和密码。"""
 
 from __future__ import annotations
 
@@ -11,8 +11,8 @@ from pathlib import Path
 from timetable_pull import course_from_row
 
 ROOT = Path(__file__).resolve().parents[1]
-DEMO = ROOT / "demo_output"
-SAMPLES = ROOT / "samples"
+DEMO = ROOT / "data" / "demo_output"
+SAMPLES = ROOT / "data" / "samples"
 OUT = Path(__file__).resolve().parent / "data" / "snapshot.json"
 
 NATIVE = {

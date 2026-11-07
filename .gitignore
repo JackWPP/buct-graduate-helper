@@ -35,10 +35,10 @@ pw_capture_login.js
 
 # 含证件号、电话、住址或密码摘要的原始导出
 crawl_log.json
-demo_output/profile.json
-samples/xsxx_jbxx.json
-pages_all/student__grgl__xsrxdj.html
-pages_all/student__grgl__grxxxg.html
-pages_all/student__grgl__xslqfc.html
-pages_all/student__grgl__djksbm.html
-pages_all/student__grgl__zpxxhd.html
+data/demo_output/profile.json
+data/samples/xsxx_jbxx.json
+research/scraped/pages_all/student__grgl__xsrxdj.html
+research/scraped/pages_all/student__grgl__grxxxg.html
+research/scraped/pages_all/student__grgl__xslqfc.html
+research/scraped/pages_all/student__grgl__djksbm.html
+research/scraped/pages_all/student__grgl__zpxxhd.html
