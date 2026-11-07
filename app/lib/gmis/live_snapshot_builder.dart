@@ -354,6 +354,17 @@ class LiveSnapshotBuilder {
           ),
         );
       }
+      if ('${group['menuname'] ?? ''}' == '个人管理' &&
+          !items.any((item) => item.id == 'tzgg')) {
+        items.add(
+          const ServiceItem(
+            id: 'tzgg',
+            name: '通知公告',
+            path: '/student/grgl/tzgg_list',
+            native: 'notices',
+          ),
+        );
+      }
       if (items.isNotEmpty) {
         groups.add(
           ServiceGroup(
