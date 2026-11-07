@@ -17,11 +17,13 @@ class NativeServicePage extends StatelessWidget {
     required this.item,
     required this.snap,
     this.api,
+    this.onSessionExpired,
   });
 
   final ServiceItem item;
   final Snapshot snap;
   final GmisApi? api;
+  final VoidCallback? onSessionExpired;
 
   @override
   Widget build(BuildContext context) {
@@ -148,6 +150,7 @@ class NativeServicePage extends StatelessWidget {
             ('当前状态', 'dqzt'),
             ('说明', 'zcsm'),
           ],
+          onSessionExpired: onSessionExpired,
         );
       case 'ccqjwh':
         return RemoteInfoPage(
@@ -157,6 +160,7 @@ class NativeServicePage extends StatelessWidget {
               (await api.rawPost('/student/grgl/ccqjwh_load'))
                   as Map<String, dynamic>,
           fields: const [('乘车区间', 'ccqj')],
+          onSessionExpired: onSessionExpired,
         );
       case 'ttkcx':
         return RemoteListPage(
@@ -164,102 +168,120 @@ class NativeServicePage extends StatelessWidget {
           intro: '调课信息来自学校系统，按学校返回展示。',
           emptyText: '暂无调课信息。',
           load: api.courseAdjustments,
+          onSessionExpired: onSessionExpired,
         );
       case 'djksbm':
         return RemoteListPage(
           title: item.name,
           intro: '可以报名的等级考试项目。',
           load: () => api.rawListGet('/student/grgl/djksbm_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'djkscj':
         return RemoteListPage(
           title: item.name,
           intro: '等级考试成绩。',
           load: () => api.rawListGet('/student/grgl/djkscjcx'),
+          onSessionExpired: onSessionExpired,
         );
       case 'pypgsq':
         return RemoteListPage(
           title: item.name,
           intro: '评优评干申请项目。',
           load: () => api.rawListGet('/student/yggl/pypgsq_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'szgwsq':
         return RemoteListPage(
           title: item.name,
           intro: '三助岗位列表。',
           load: () => api.rawListGet('/student/yggl/szgwsq_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'xshdbm':
         return RemoteListPage(
           title: item.name,
           intro: '可以报名的学术报告。',
           load: () => api.rawListGet('/student/yggl/xshdbm_cklist'),
+          onSessionExpired: onSessionExpired,
         );
       case 'xwsxsq':
         return RemoteListPage(
           title: item.name,
           intro: '校外实习申请记录。',
           load: () => api.rawListGet('/student/yggl/xwsxsq_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'zyzfwbm':
         return RemoteListPage(
           title: item.name,
           intro: '劳动实践项目。',
           load: () => api.rawListGet('/student/yggl/zyzfwbm_cklist'),
+          onSessionExpired: onSessionExpired,
         );
       case 'tyydbm':
         return RemoteListPage(
           title: item.name,
           intro: '体育活动项目。',
           load: () => api.rawListGet('/student/yggl/tyydbm_cklist'),
+          onSessionExpired: onSessionExpired,
         );
       case 'tyydmxsq':
         return RemoteListPage(
           title: item.name,
           intro: '体育运动免修申请。',
           load: () => api.rawListGet('/student/yggl/tyyd_mxsq_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'xsfblwdj':
         return RemoteListPage(
           title: item.name,
           intro: '已经登记的科研论文。',
           load: () => api.rawListGet('/student/bygl/xwlwdjlist'),
+          onSessionExpired: onSessionExpired,
         );
       case 'xskycgdj':
         return RemoteListPage(
           title: item.name,
           intro: '其他创新性成果。',
           load: () => api.rawListGet('/student/bygl/xskyxmdj_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'xszlcgdj':
         return RemoteListPage(
           title: item.name,
           intro: '专利与成果登记。',
           load: () => api.rawListGet('/student/bygl/zlcglist'),
+          onSessionExpired: onSessionExpired,
         );
       case 'xshjcgdj':
         return RemoteListPage(
           title: item.name,
           intro: '科研成果奖励登记。',
           load: () => api.rawListGet('/student/bygl/hjqklist'),
+          onSessionExpired: onSessionExpired,
         );
       case 'kcmxsq':
         return RemoteListPage(
           title: item.name,
           intro: '课程免修申请记录。',
           load: () => api.rawListGet('/student/pygl/kcmxsq_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'qxkczml':
         return RemoteListPage(
           title: item.name,
-          intro: '全校课程目录。',
-          load: () => api.rawListPost('/student/pygl/xswsxk_all'),
+          intro: '全校课程总目录，分页读取学校返回的全部课程。',
+          emptyText: '学校没有返回课程目录。',
+          load: api.courseCatalogRows,
+          onSessionExpired: onSessionExpired,
         );
       case 'cxhkbksq':
         return RemoteListPage(
           title: item.name,
           intro: '重缓补考申请信息。',
           load: () => api.rawListGet('/student/pygl/cxhkbksq_list'),
+          onSessionExpired: onSessionExpired,
         );
       case 'wskscp':
         return RemoteListPage(
@@ -267,6 +289,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '待考和已考记录都来自学校系统。',
           emptyText: '暂无网上考试。',
           load: api.onlineExamRows,
+          onSessionExpired: onSessionExpired,
         );
       default:
         return null;

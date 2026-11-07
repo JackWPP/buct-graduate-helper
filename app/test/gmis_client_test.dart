@@ -160,4 +160,33 @@ void main() {
       'ASP.NET_SessionId=abc',
     );
   });
+
+  test('course catalog pages until the reported total', () async {
+    final transport = _FakeTransport((request) {
+      if (request.path != '/student/pygl/xswsxk_all') return _response('{}');
+      final page = request.form?['page'];
+      if (page == '1') {
+        return _response('{"total":3,"kc":[{"kcmc":"A"},{"kcmc":"B"}]}');
+      }
+      return _response('{"total":3,"kc":[{"kcmc":"C"}]}');
+    });
+    final api = GmisApi(GmisClient(transport: transport));
+    final rows = await api.courseCatalogRows(pageSize: 2);
+    expect(rows.map((row) => row['kcmc']), ['A', 'B', 'C']);
+  });
+
+  test('online exam rows merge current and historical records', () async {
+    final transport = _FakeTransport((request) {
+      if (request.path == '/student/wsks/wskscp_load') {
+        return _response('{"sj1":{"kcmc":"待考"},"sj2":null}');
+      }
+      if (request.path == '/student/wsks/wskscp_list') {
+        return _response('{"rows":[{"kcmc":"已考"}]}');
+      }
+      return _response('{}');
+    });
+    final api = GmisApi(GmisClient(transport: transport));
+    final rows = await api.onlineExamRows();
+    expect(rows.map((row) => row['_kind']), ['current', 'past']);
+  });
 }

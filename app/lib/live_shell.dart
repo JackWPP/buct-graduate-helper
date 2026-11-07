@@ -272,7 +272,18 @@ class _LiveShellState extends State<LiveShell> {
           ),
         );
       case 'catalog':
-        _push(CourseCatalogPage(snap: snap));
+        if (item.id == 'qxkczml') {
+          _push(
+            NativeServicePage(
+              item: item,
+              snap: snap,
+              api: _controller?.api,
+              onSessionExpired: () => _controller?.logout(),
+            ),
+          );
+        } else {
+          _push(CourseCatalogPage(snap: snap));
+        }
       case 'exams':
         _push(ExamsPage(count: snap.exams, items: snap.examItems));
       case 'grades':
@@ -300,22 +311,55 @@ class _LiveShellState extends State<LiveShell> {
           case 'pyjhtj':
             _push(ProgressPage(snap: snap));
           case 'xjydsq':
+            _push(
+              ApplicationsPage(
+                snap: snap,
+                title: item.name,
+                applicationIds: const ['zc'],
+              ),
+            );
           case 'knzzsq':
-          case 'gjxsjlhd':
-          case 'py_zysjwc':
+            _push(
+              ApplicationsPage(
+                snap: snap,
+                title: item.name,
+                applicationIds: const ['knzz'],
+              ),
+            );
           case 'ktlwsq':
           case 'lwktsq':
           case 'zqkhsq':
           case 'zqkhdj':
+            _push(
+              ApplicationsPage(
+                snap: snap,
+                title: item.name,
+                applicationIds: const ['lwkt'],
+              ),
+            );
           case 'xsdbsq':
           case 'lwpygl':
           case 'xsxwsq':
-          case 'lwkt':
           case 'lwdb':
-            _push(ApplicationsPage(snap: snap));
+            _push(
+              ApplicationsPage(
+                snap: snap,
+                title: item.name,
+                applicationIds: const ['lwdb'],
+              ),
+            );
+          case 'gjxsjlhd':
+          case 'py_zysjwc':
+          case 'lwkt':
+            _push(ApplicationsPage(snap: snap, title: item.name));
           default:
             _push(
-              NativeServicePage(item: item, snap: snap, api: _controller?.api),
+              NativeServicePage(
+                item: item,
+                snap: snap,
+                api: _controller?.api,
+                onSessionExpired: () => _controller?.logout(),
+              ),
             );
         }
     }

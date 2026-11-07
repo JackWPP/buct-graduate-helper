@@ -193,7 +193,11 @@ class MePage extends StatelessWidget {
           ),
         _MenuGroup(
           children: [
-            _MenuRow(title: '成绩单', value: '本学期未出分', onTap: onGrades),
+            _MenuRow(
+              title: '成绩单',
+              value: snap.grades.isEmpty ? '本学期未出分' : '${snap.grades.length} 条',
+              onTap: onGrades,
+            ),
             _MenuRow(
               title: '已修课程',
               value: credits == null

@@ -261,7 +261,7 @@ class _ShellState extends State<Shell> {
       case 'catalog':
         _push(CourseCatalogPage(snap: snap));
       case 'exams':
-        _push(ExamsPage(count: snap.exams));
+        _push(ExamsPage(count: snap.exams, items: snap.examItems));
       case 'grades':
         _push(GradesPage(snap: snap));
       case 'eval':
@@ -394,7 +394,9 @@ class _ShellState extends State<Shell> {
                     onCourse: (course) =>
                         _openCourse(course, weekIndex(_now, snap.termStart)),
                     onProgress: () => _push(ProgressPage(snap: snap)),
-                    onNotices: () => _push(NoticesPage(count: snap.notices)),
+                    onNotices: () => _push(
+                      NoticesPage(count: snap.notices, items: snap.noticeItems),
+                    ),
                     onEval: () => _push(EvalPage(snap: snap)),
                     onGrades: () => _push(GradesPage(snap: snap)),
                     onExams: () => _push(
@@ -429,7 +431,9 @@ class _ShellState extends State<Shell> {
                   AcademicsPage(
                     snap: snap,
                     onGrades: () => _push(GradesPage(snap: snap)),
-                    onExams: () => _push(ExamsPage(count: snap.exams)),
+                    onExams: () => _push(
+                      ExamsPage(count: snap.exams, items: snap.examItems),
+                    ),
                     onProgress: () => _push(ProgressPage(snap: snap)),
                     onEval: () => _push(EvalPage(snap: snap)),
                     onSelected: () => _push(
@@ -466,8 +470,12 @@ class _ShellState extends State<Shell> {
                       ),
                     ),
                     onEval: () => _push(EvalPage(snap: snap)),
-                    onExams: () => _push(ExamsPage(count: snap.exams)),
-                    onNotices: () => _push(NoticesPage(count: snap.notices)),
+                    onExams: () => _push(
+                      ExamsPage(count: snap.exams, items: snap.examItems),
+                    ),
+                    onNotices: () => _push(
+                      NoticesPage(count: snap.notices, items: snap.noticeItems),
+                    ),
                     onSettings: () => _push(
                       SettingsPage(
                         snap: snap,

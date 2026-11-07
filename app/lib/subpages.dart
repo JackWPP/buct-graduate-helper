@@ -966,60 +966,79 @@ class GroupPage extends StatelessWidget {
 }
 
 class ApplicationsPage extends StatelessWidget {
-  const ApplicationsPage({super.key, required this.snap});
+  const ApplicationsPage({
+    super.key,
+    required this.snap,
+    this.title = '我的申请',
+    this.applicationIds,
+  });
 
   final Snapshot snap;
+  final String title;
+  final List<String>? applicationIds;
 
   @override
   Widget build(BuildContext context) {
+    final items = applicationIds == null
+        ? snap.applications
+        : snap.applications
+              .where((item) => applicationIds!.contains(item.id))
+              .toList();
     return Subpage(
-      title: '我的申请',
+      title: title,
       children: [
         const Text(
           '状态来自学校流程。未提交的事项学校没有给截止日期，这里不编一个。',
           style: TextStyle(fontSize: 13, height: 1.5, color: HuayanColors.sub),
         ),
         const SizedBox(height: 12),
-        HuayanCard(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          child: Column(
-            children: [
-              for (final item in snap.applications)
-                Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  decoration: const BoxDecoration(
-                    border: Border(
-                      bottom: BorderSide(color: HuayanColors.lineSoft),
+        if (items.isEmpty)
+          const EmptyHint(
+            title: '暂时没有记录',
+            text: '学校还没有返回这一项。',
+            glyph: 'clipboard',
+          )
+        else
+          HuayanCard(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: Column(
+              children: [
+                for (final item in items)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: HuayanColors.lineSoft),
+                      ),
                     ),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          item.name,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: HuayanColors.ink,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.name,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: HuayanColors.ink,
+                            ),
                           ),
                         ),
-                      ),
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: item.tone == 'ok'
-                              ? HuayanColors.ok
-                              : HuayanColors.amberInk,
+                        Text(
+                          item.label,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: item.tone == 'ok'
+                                ? HuayanColors.ok
+                                : HuayanColors.amberInk,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

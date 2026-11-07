@@ -66,6 +66,51 @@ class GmisApi {
     );
   }
 
+  Future<List<Map<String, dynamic>>> courseListRows({
+    int pageSize = 100,
+    bool onlyInWindow = false,
+  }) async {
+    final result = <Map<String, dynamic>>[];
+    for (var page = 1; page <= 20; page++) {
+      final data = await courseList(
+        page: page,
+        rows: pageSize,
+        onlyInWindow: onlyInWindow,
+      );
+      final batch = _asList(data);
+      result.addAll(batch);
+      final total = int.tryParse('${data['total'] ?? ''}') ?? result.length;
+      if (batch.isEmpty || result.length >= total) break;
+    }
+    return result;
+  }
+
+  Future<Map<String, dynamic>> courseCatalog({
+    int page = 1,
+    int rows = 200,
+  }) async {
+    return _asMap(
+      await _client.postJson(
+        '/student/pygl/xswsxk_all',
+        form: {'page': '$page', 'rows': '$rows'},
+      ),
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> courseCatalogRows({
+    int pageSize = 200,
+  }) async {
+    final result = <Map<String, dynamic>>[];
+    for (var page = 1; page <= 20; page++) {
+      final data = await courseCatalog(page: page, rows: pageSize);
+      final batch = _asList(data);
+      result.addAll(batch);
+      final total = int.tryParse('${data['total'] ?? ''}') ?? result.length;
+      if (batch.isEmpty || result.length >= total) break;
+    }
+    return result;
+  }
+
   Future<Map<String, dynamic>> grades() async {
     return _asMap(await _client.postJson('/student/pygl/xscjcx_list'));
   }

@@ -31,12 +31,14 @@ class RemoteListPage extends StatefulWidget {
     required this.load,
     this.intro = '',
     this.emptyText = '学校暂未返回记录。',
+    this.onSessionExpired,
   });
 
   final String title;
   final String intro;
   final String emptyText;
   final RemoteRows load;
+  final VoidCallback? onSessionExpired;
 
   @override
   State<RemoteListPage> createState() => _RemoteListPageState();
@@ -44,6 +46,7 @@ class RemoteListPage extends StatefulWidget {
 
 class _RemoteListPageState extends State<RemoteListPage> {
   late Future<List<Map<String, dynamic>>> _future;
+  bool _sessionNotified = false;
 
   @override
   void initState() {
@@ -79,6 +82,7 @@ class _RemoteListPageState extends State<RemoteListPage> {
         if (snapshot.connectionState != ConnectionState.done) {
           children.add(const _LoadingCard());
         } else if (snapshot.hasError) {
+          _notifySession(snapshot.error);
           children.add(_ErrorCard(_message(snapshot.error)));
         } else {
           final rows = snapshot.data ?? const <Map<String, dynamic>>[];
@@ -102,6 +106,14 @@ class _RemoteListPageState extends State<RemoteListPage> {
     );
   }
 
+  void _notifySession(Object? error) {
+    if (_sessionNotified || error is! GmisSessionExpired) return;
+    final callback = widget.onSessionExpired;
+    if (callback == null) return;
+    _sessionNotified = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => callback());
+  }
+
   String _message(Object? error) {
     if (error is GmisException) return error.message;
     return '加载失败，请稍后重试。';
@@ -116,12 +128,14 @@ class RemoteInfoPage extends StatefulWidget {
     required this.load,
     required this.fields,
     this.intro = '',
+    this.onSessionExpired,
   });
 
   final String title;
   final String intro;
   final RemoteMap load;
   final List<(String, String)> fields;
+  final VoidCallback? onSessionExpired;
 
   @override
   State<RemoteInfoPage> createState() => _RemoteInfoPageState();
@@ -129,6 +143,7 @@ class RemoteInfoPage extends StatefulWidget {
 
 class _RemoteInfoPageState extends State<RemoteInfoPage> {
   late Future<Map<String, dynamic>> _future;
+  bool _sessionNotified = false;
 
   @override
   void initState() {
@@ -146,6 +161,7 @@ class _RemoteInfoPageState extends State<RemoteInfoPage> {
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
+          _notifySession(error);
           return Subpage(
             title: widget.title,
             children: [
@@ -188,6 +204,14 @@ class _RemoteInfoPageState extends State<RemoteInfoPage> {
         );
       },
     );
+  }
+
+  void _notifySession(Object? error) {
+    if (_sessionNotified || error is! GmisSessionExpired) return;
+    final callback = widget.onSessionExpired;
+    if (callback == null) return;
+    _sessionNotified = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => callback());
   }
 }
 
