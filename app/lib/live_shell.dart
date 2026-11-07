@@ -430,6 +430,7 @@ class _LiveShellState extends State<LiveShell> {
     if (_needsWebVpnLogin) {
       return SsoLoginPage(
         initialSid: _store?.sid ?? '',
+        onUserId: (sid) => _store?.setSid(sid),
         onSuccess: _acceptWebVpnSession,
         onDirect: _useDirectLogin,
       );

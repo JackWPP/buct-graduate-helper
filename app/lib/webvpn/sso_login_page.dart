@@ -15,6 +15,7 @@ class SsoLoginPage extends StatefulWidget {
     super.key,
     required this.onSuccess,
     this.onDirect,
+    this.onUserId,
     this.initialSid = '',
     this.notice,
     this.client,
@@ -22,6 +23,7 @@ class SsoLoginPage extends StatefulWidget {
 
   final ValueChanged<WebVpnSession> onSuccess;
   final VoidCallback? onDirect;
+  final ValueChanged<String>? onUserId;
   final String initialSid;
   final String? notice;
   final WebVpnAuthClient? client;
@@ -69,6 +71,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
       if (!mounted) return;
       _pwd.clear();
       setState(() => _loading = false);
+      widget.onUserId?.call(sid);
       widget.onSuccess(session);
     } on GmisException catch (error) {
       if (!mounted) return;
