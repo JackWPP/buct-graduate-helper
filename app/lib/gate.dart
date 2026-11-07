@@ -6,6 +6,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'icons.dart';
 import 'snapshot.dart';
 import 'theme.dart';
+import 'ui/feedback.dart';
 
 class StartPage extends StatelessWidget {
   const StartPage({super.key, required this.onNext, required this.onSkip});
@@ -438,11 +439,10 @@ class _LoginPageState extends State<LoginPage> {
                 TextButton(
                   key: const Key('login-forgot'),
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('请到学校研究生系统找回密码。这里不保存密码。'),
-                        duration: Duration(milliseconds: 900),
-                      ),
+                    AppFeedback.show(
+                      context: context,
+                      '请到学校研究生系统找回密码。这里不保存密码。',
+                      duration: const Duration(milliseconds: 900),
                     );
                   },
                   child: const Text('忘记密码'),

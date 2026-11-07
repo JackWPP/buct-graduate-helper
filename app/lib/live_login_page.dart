@@ -15,6 +15,8 @@ class LiveLoginPage extends StatefulWidget {
     this.onSuccess,
     this.onWebVpnLogin,
     this.allowWebVpn = true,
+    this.initialPassword,
+    this.fromSso = false,
     this.description,
     this.webVpnLabel = '校外访问：使用网页版 VPN 登录',
   });
@@ -25,6 +27,8 @@ class LiveLoginPage extends StatefulWidget {
   final void Function(String sid, bool remember)? onSuccess;
   final VoidCallback? onWebVpnLogin;
   final bool allowWebVpn;
+  final String? initialPassword;
+  final bool fromSso;
   final String? description;
   final String webVpnLabel;
 
@@ -36,8 +40,9 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
   late final TextEditingController _sid = TextEditingController(
     text: widget.initialSid,
   );
-  final _pwd = TextEditingController();
+  late final _pwd = TextEditingController(text: widget.initialPassword ?? '');
   final _code = TextEditingController();
+  final _codeFocus = FocusNode();
   var _showPwd = false;
   var _remember = true;
   var _loading = false;
@@ -53,17 +58,18 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
 
   @override
   void dispose() {
+    _codeFocus.dispose();
     _sid.dispose();
     _pwd.dispose();
     _code.dispose();
     super.dispose();
   }
 
-  Future<void> _refreshCaptcha() async {
+  Future<void> _refreshCaptcha({bool clearError = true}) async {
     if (_captchaLoading) return;
     setState(() {
       _captchaLoading = true;
-      _error = '';
+      if (clearError) _error = '';
     });
     final challenge = await widget.controller.fetchCaptcha();
     if (!mounted) return;
@@ -74,6 +80,9 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
       }
     });
     _code.clear();
+    if (widget.fromSso && _pwd.text.isNotEmpty) {
+      _codeFocus.requestFocus();
+    }
   }
 
   Future<void> _submit() async {
@@ -102,14 +111,15 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
       captcha: _code.text.trim(),
     );
     if (!mounted) return;
-    _pwd.clear();
-    _code.clear();
     setState(() => _loading = false);
     if (message != null) {
       setState(() => _error = message);
-      await _refreshCaptcha();
+      await _refreshCaptcha(clearError: false);
+      _codeFocus.requestFocus();
       return;
     }
+    _pwd.clear();
+    _code.clear();
     widget.onSuccess?.call(sid, _remember);
   }
 
@@ -164,48 +174,84 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
                 color: HuayanColors.sub,
               ),
             ),
-            const SizedBox(height: 18),
-            TextField(
-              key: const Key('live-login-sid'),
-              controller: _sid,
-              keyboardType: TextInputType.number,
-              decoration: _inputDecoration('学号'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              key: const Key('live-login-pwd'),
-              controller: _pwd,
-              obscureText: !_showPwd,
-              decoration: _inputDecoration('密码').copyWith(
-                suffixIcon: IconButton(
-                  onPressed: () => setState(() => _showPwd = !_showPwd),
-                  tooltip: _showPwd ? '隐藏密码' : '显示密码',
-                  icon: Icon(
-                    _showPwd ? Icons.visibility_off : Icons.visibility,
-                    size: 20,
-                    color: HuayanColors.faint,
+            if (widget.fromSso) ...[
+              const SizedBox(height: 10),
+              Container(
+                key: const Key('live-login-prefill-hint'),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: HuayanColors.blueSoft,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Text(
+                  '学号、密码已从统一身份认证带入，只需填写验证码。',
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 1.4,
+                    color: HuayanColors.blue,
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    key: const Key('live-login-code'),
-                    controller: _code,
+            ],
+            const SizedBox(height: 18),
+            AutofillGroup(
+              child: Column(
+                children: [
+                  TextField(
+                    key: const Key('live-login-sid'),
+                    controller: _sid,
                     keyboardType: TextInputType.number,
-                    decoration: _inputDecoration('验证码'),
+                    textInputAction: TextInputAction.next,
+                    autofillHints: const [AutofillHints.username],
+                    decoration: _inputDecoration('学号'),
                   ),
-                ),
-                const SizedBox(width: 10),
-                _CaptchaBox(
-                  challenge: challenge,
-                  loading: _captchaLoading,
-                  onTap: _refreshCaptcha,
-                ),
-              ],
+                  const SizedBox(height: 10),
+                  TextField(
+                    key: const Key('live-login-pwd'),
+                    controller: _pwd,
+                    obscureText: !_showPwd,
+                    autofillHints: const [AutofillHints.password],
+                    textInputAction: TextInputAction.next,
+                    decoration: _inputDecoration('密码').copyWith(
+                      suffixIcon: IconButton(
+                        onPressed: () => setState(() => _showPwd = !_showPwd),
+                        tooltip: _showPwd ? '隐藏密码' : '显示密码',
+                        icon: Icon(
+                          _showPwd ? Icons.visibility_off : Icons.visibility,
+                          size: 20,
+                          color: HuayanColors.faint,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          key: const Key('live-login-code'),
+                          controller: _code,
+                          focusNode: _codeFocus,
+                          keyboardType: TextInputType.number,
+                          textInputAction: TextInputAction.done,
+                          autofillHints: const [AutofillHints.oneTimeCode],
+                          onSubmitted: (_) => _loading ? null : _submit(),
+                          decoration: _inputDecoration('验证码'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      _CaptchaBox(
+                        challenge: challenge,
+                        loading: _captchaLoading,
+                        onTap: _refreshCaptcha,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 8),
             Row(

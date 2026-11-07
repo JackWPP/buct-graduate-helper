@@ -63,11 +63,15 @@ class Subpage extends StatelessWidget {
     required this.title,
     required this.children,
     this.footer,
+    this.onRefresh,
+    this.actions,
   });
 
   final String title;
   final List<Widget> children;
   final Widget? footer;
+  final Future<void> Function()? onRefresh;
+  final Widget? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -102,15 +106,26 @@ class Subpage extends StatelessWidget {
                       ),
                     ),
                   ),
+                  ?actions,
                   const SizedBox(width: 12),
                 ],
               ),
             ),
             Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
-                children: children,
-              ),
+              child: onRefresh == null
+                  ? ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                      children: children,
+                    )
+                  : RefreshIndicator(
+                      key: const Key('subpage-refresh'),
+                      onRefresh: onRefresh!,
+                      child: ListView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
+                        children: children,
+                      ),
+                    ),
             ),
             ?footer,
           ],
@@ -127,12 +142,14 @@ class EmptyHint extends StatelessWidget {
     required this.text,
     this.icon = Icons.description_outlined,
     this.glyph,
+    this.action,
   });
 
   final String title;
   final String text;
   final IconData icon;
   final String? glyph;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -163,7 +180,86 @@ class EmptyHint extends StatelessWidget {
               color: HuayanColors.sub,
             ),
           ),
+          if (action != null) ...[
+            const SizedBox(height: 14),
+            action!,
+          ],
         ],
+      ),
+    );
+  }
+}
+
+/// “更新于 HH:mm” 的轻量时间戳。
+class UpdateStamp extends StatelessWidget {
+  const UpdateStamp({super.key, this.time, this.prefix = '更新于'});
+
+  final DateTime? time;
+  final String prefix;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = time;
+    final label = value == null
+        ? '尚未更新'
+        : '$prefix ${value.hour.toString().padLeft(2, '0')}:'
+              '${value.minute.toString().padLeft(2, '0')}';
+    return Text(
+      label,
+      key: const Key('update-stamp'),
+      style: const TextStyle(fontSize: 12, color: HuayanColors.faint),
+    );
+  }
+}
+
+/// 离线/刷新失败横幅，点击重试。
+class OfflineBanner extends StatelessWidget {
+  const OfflineBanner({super.key, required this.message, this.onRetry});
+
+  final String message;
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: HuayanColors.amberSoft,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        key: const Key('offline-banner'),
+        onTap: onRetry,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          child: Row(
+            children: [
+              const Icon(
+                Icons.wifi_off_rounded,
+                size: 18,
+                color: HuayanColors.amberInk,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: HuayanColors.amberInk,
+                  ),
+                ),
+              ),
+              if (onRetry != null)
+                const Text(
+                  '重试',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: HuayanColors.amberInk,
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

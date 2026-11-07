@@ -70,6 +70,18 @@ ThemeData huayanTheme({String? fontFamily}) {
     ),
     dividerColor: HuayanColors.lineSoft,
     splashFactory: InkRipple.splashFactory,
+    snackBarTheme: SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: HuayanColors.ink,
+      contentTextStyle: TextStyle(
+        fontFamily: family,
+        fontSize: 14,
+        color: Colors.white,
+      ),
+      actionTextColor: const Color(0xFF9DB8FF),
+      insetPadding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size(64, 52),
@@ -103,6 +115,7 @@ class HuayanPageTransitionsBuilder extends PageTransitionsBuilder {
     Animation<double> secondaryAnimation,
     Widget child,
   ) {
+    if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return child;
     final curved = CurvedAnimation(
       parent: animation,
       curve: Curves.easeOutCubic,
@@ -126,6 +139,7 @@ Route<T> huayanRoute<T>(Widget page) {
     transitionDuration: const Duration(milliseconds: 220),
     reverseTransitionDuration: const Duration(milliseconds: 180),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      if (MediaQuery.maybeOf(context)?.disableAnimations ?? false) return child;
       final curved = CurvedAnimation(
         parent: animation,
         curve: Curves.easeOutCubic,

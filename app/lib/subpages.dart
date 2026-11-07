@@ -7,6 +7,7 @@ import 'schedule.dart';
 import 'settings.dart';
 import 'snapshot.dart';
 import 'theme.dart';
+import 'ui/feedback.dart';
 import 'widgets.dart';
 
 class ProgressPage extends StatelessWidget {
@@ -1133,8 +1134,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _toast(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    AppFeedback.show(message, context: context);
   }
 
   Future<void> _confirmLogout() async {

@@ -41,7 +41,7 @@
 
 ## 验证基线
 
-- `flutter test`：55 个测试通过
+- `flutter test`：58 个测试通过
 - `flutter analyze`：无问题
 - `flutter build apk --release`：成功，约 58.1 MB，versionName 1.6.0 / versionCode 7
 - 模拟器：Android 16 `emulator-5554`，真实账号登录、5 Tab、49 项服务、重启会话恢复已确认

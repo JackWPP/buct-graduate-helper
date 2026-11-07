@@ -1,10 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../auth/login_flow.dart';
 import '../gmis/gmis_exception.dart';
 import '../theme.dart';
 import 'webvpn_auth_client.dart';
-import 'webvpn_session.dart';
 
 /// 原生统一身份认证页。
 ///
@@ -21,7 +23,7 @@ class SsoLoginPage extends StatefulWidget {
     this.client,
   });
 
-  final ValueChanged<WebVpnSession> onSuccess;
+  final ValueChanged<SsoLoginSuccess> onSuccess;
   final VoidCallback? onDirect;
   final ValueChanged<String>? onUserId;
   final String initialSid;
@@ -45,6 +47,9 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
   var _error = '';
   var _info = '';
   WebVpnSmsChallenge? _challenge;
+  Timer? _resendTimer;
+  var _resendSeconds = 0;
+  final _codeFocus = FocusNode();
 
   @override
   void initState() {
@@ -54,6 +59,8 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
 
   @override
   void dispose() {
+    _resendTimer?.cancel();
+    _codeFocus.dispose();
     _sid.dispose();
     _pwd.dispose();
     _code.dispose();
@@ -79,7 +86,6 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
     try {
       final result = await _client.login(userId: sid, password: pwd);
       if (!mounted) return;
-      _pwd.clear();
       widget.onUserId?.call(sid);
       if (result.needsSms) {
         setState(() {
@@ -87,6 +93,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
           _challenge = result.challenge;
           _info = '密码验证通过，请输入短信验证码。';
         });
+        _codeFocus.requestFocus();
         return;
       }
       final session = result.session;
@@ -94,17 +101,20 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
         throw const GmisFormatException('统一身份认证没有返回会话');
       }
       setState(() => _loading = false);
-      widget.onSuccess(session);
+      widget.onSuccess(
+        SsoLoginSuccess(
+          session: session,
+          prefill: LoginPrefill(userId: sid, password: pwd),
+        ),
+      );
     } on GmisException catch (error) {
       if (!mounted) return;
-      _pwd.clear();
       setState(() {
         _loading = false;
         _error = error.message;
       });
     } catch (_) {
       if (!mounted) return;
-      _pwd.clear();
       setState(() {
         _loading = false;
         _error = '统一身份认证失败，请稍后重试';
@@ -120,12 +130,14 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
       _info = '';
     });
     try {
-      await _client.sendSmsCode();
+      final sent = await _client.sendSmsCode();
       if (!mounted) return;
       setState(() {
         _sendingCode = false;
         _info = '验证码已发送，请查看手机短信。';
       });
+      _startResendCountdown(sent.intervalSeconds);
+      _codeFocus.requestFocus();
     } on GmisException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -139,6 +151,23 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
         _error = '验证码发送失败，请稍后重试';
       });
     }
+  }
+
+  void _startResendCountdown(int seconds) {
+    _resendTimer?.cancel();
+    setState(() => _resendSeconds = seconds <= 0 ? 120 : seconds);
+    _resendTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      if (_resendSeconds <= 1) {
+        timer.cancel();
+        setState(() => _resendSeconds = 0);
+        return;
+      }
+      setState(() => _resendSeconds -= 1);
+    });
   }
 
   Future<void> _verifySms() async {
@@ -155,9 +184,23 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
     try {
       final session = await _client.verifySmsCode(code);
       if (!mounted) return;
+      final userId = _sid.text.trim();
+      final password = _pwd.text;
+      if (password.isEmpty) {
+        setState(() {
+          _loading = false;
+          _error = '密码已失效，请返回重新输入密码';
+        });
+        return;
+      }
       _code.clear();
       setState(() => _loading = false);
-      widget.onSuccess(session);
+      widget.onSuccess(
+        SsoLoginSuccess(
+          session: session,
+          prefill: LoginPrefill(userId: userId, password: password),
+        ),
+      );
     } on GmisException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -174,9 +217,11 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
   }
 
   void _backToPassword() {
+    _resendTimer?.cancel();
     setState(() {
       _challenge = null;
       _code.clear();
+      _resendSeconds = 0;
       _error = '';
       _info = '';
     });
@@ -206,7 +251,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '网页版 VPN',
+                        '统一身份认证',
                         style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.w700,
@@ -215,7 +260,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
                       ),
                       SizedBox(height: 2),
                       Text(
-                        '北京化工大学 · 统一身份认证',
+                        '北京化工大学 · 网页版 VPN',
                         style: TextStyle(fontSize: 12, color: HuayanColors.sub),
                       ),
                     ],
@@ -225,20 +270,30 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
             ),
             const SizedBox(height: 18),
             const Text(
-              '默认通过学校网页版 VPN 访问研究生管理系统。统一身份认证在这里直接完成，不打开网页。',
+              '默认通过学校网页版 VPN 访问研究生管理系统。统一身份认证在这里直接完成，不打开网页；下一步只需补研究生管理系统验证码。',
               style: TextStyle(
                 fontSize: 14,
                 height: 1.5,
                 color: HuayanColors.sub,
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 10),
+            Text(
+              _challenge == null ? '第 1 步 / 2 · 统一身份认证' : '第 2 步 / 2 · 短信验证',
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: HuayanColors.blue,
+              ),
+            ),
+            const SizedBox(height: 14),
             if (_challenge == null) ...[
               TextField(
                 key: const Key('sso-sid'),
                 controller: _sid,
                 keyboardType: TextInputType.number,
                 textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.username],
                 decoration: _inputDecoration('学号'),
               ),
               const SizedBox(height: 10),
@@ -246,6 +301,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
                 key: const Key('sso-pwd'),
                 controller: _pwd,
                 obscureText: !_showPwd,
+                autofillHints: const [AutofillHints.password],
                 onSubmitted: (_) => _loading ? null : _submit(),
                 decoration: _inputDecoration('密码').copyWith(
                   suffixIcon: IconButton(
@@ -299,16 +355,26 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
                     TextField(
                       key: const Key('sso-sms-code'),
                       controller: _code,
+                      focusNode: _codeFocus,
                       keyboardType: TextInputType.number,
                       maxLength: 6,
                       textInputAction: TextInputAction.done,
+                      autofillHints: const [AutofillHints.oneTimeCode],
                       onSubmitted: (_) => _loading ? null : _verifySms(),
                       decoration: _inputDecoration('请输入验证码').copyWith(
                         counterText: '',
                         suffixIcon: TextButton(
                           key: const Key('sso-sms-send'),
-                          onPressed: _sendingCode ? null : _sendCode,
-                          child: Text(_sendingCode ? '发送中…' : '获取验证码'),
+                          onPressed: _sendingCode || _resendSeconds > 0
+                              ? null
+                              : _sendCode,
+                          child: Text(
+                            _sendingCode
+                                ? '发送中…'
+                                : _resendSeconds > 0
+                                ? '重新获取 ${_resendSeconds}s'
+                                : '获取验证码',
+                          ),
                         ),
                       ),
                     ),

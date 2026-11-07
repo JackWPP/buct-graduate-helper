@@ -19,6 +19,9 @@ class HomePage extends StatelessWidget {
     required this.onGrades,
     required this.onExams,
     required this.onSelected,
+    this.onRefresh,
+    this.lastRefreshedAt,
+    this.offline = false,
   });
 
   final Snapshot snap;
@@ -30,14 +33,18 @@ class HomePage extends StatelessWidget {
   final VoidCallback onGrades;
   final VoidCallback onExams;
   final VoidCallback onSelected;
+  final Future<void> Function()? onRefresh;
+  final DateTime? lastRefreshedAt;
+  final bool offline;
 
   @override
   Widget build(BuildContext context) {
     final week = weekIndex(now, snap.termStart);
     final day = sessionsOn(snap.courses, now, snap.termStart);
     final hero = pickHero(day.items, now);
-    return ListView(
+    final content = ListView(
       key: const Key('home-scroll'),
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
         Row(
@@ -78,6 +85,19 @@ class HomePage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 4),
+        if (lastRefreshedAt != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: UpdateStamp(time: lastRefreshedAt),
+          ),
+        if (offline)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: OfflineBanner(
+              message: '当前显示上次缓存的数据，下拉可重试',
+              onRetry: onRefresh,
+            ),
+          ),
         _HeroCard(now: now, hero: hero, items: day.items, onCourse: onCourse),
         const SizedBox(height: 4),
         _QuickActions(
@@ -95,6 +115,13 @@ class HomePage extends StatelessWidget {
           _EvalCard(count: pendingEvalCount(snap.evaluations), onTap: onEval),
         if (snap.credits != null) _CreditCard(snap: snap, onTap: onProgress),
       ],
+    );
+    final refresh = onRefresh;
+    if (refresh == null) return content;
+    return RefreshIndicator(
+      key: const Key('home-refresh'),
+      onRefresh: refresh,
+      child: content,
     );
   }
 }

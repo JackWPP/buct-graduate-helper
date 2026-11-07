@@ -5,6 +5,7 @@ import 'format.dart';
 import 'schedule.dart';
 import 'settings.dart';
 import 'theme.dart';
+import 'ui/feedback.dart';
 import 'widgets.dart';
 
 void openCourseSheet(
@@ -418,13 +419,10 @@ class _CourseDetailPageState extends State<CourseDetailPage> {
     final next = !remind;
     setState(() => settings.courseRemind[course.id] = next);
     onChanged();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          next ? '上课前 ${settings.reminderMin} 分钟提醒，应用打开时才会响' : '这门课不再提醒',
-        ),
-        duration: const Duration(milliseconds: 900),
-      ),
+    AppFeedback.show(
+      context: context,
+      next ? '上课前 ${settings.reminderMin} 分钟提醒，应用打开时才会响' : '这门课不再提醒',
+      duration: const Duration(milliseconds: 900),
     );
   }
 }

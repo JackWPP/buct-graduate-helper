@@ -60,6 +60,12 @@ class _RemoteListPageState extends State<RemoteListPage> {
     if (oldWidget.load != widget.load) _future = widget.load();
   }
 
+  Future<void> _reload() async {
+    final future = widget.load();
+    setState(() => _future = future);
+    await future;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<List<Map<String, dynamic>>>(
@@ -83,7 +89,7 @@ class _RemoteListPageState extends State<RemoteListPage> {
           children.add(const _LoadingCard());
         } else if (snapshot.hasError) {
           _notifySession(snapshot.error);
-          children.add(_ErrorCard(_message(snapshot.error)));
+          children.add(_ErrorCard(_message(snapshot.error), onRetry: _reload));
         } else {
           final rows = snapshot.data ?? const <Map<String, dynamic>>[];
           if (rows.isEmpty) {
@@ -101,7 +107,11 @@ class _RemoteListPageState extends State<RemoteListPage> {
             }
           }
         }
-        return Subpage(title: widget.title, children: children);
+        return Subpage(
+          title: widget.title,
+          onRefresh: _reload,
+          children: children,
+        );
       },
     );
   }
@@ -151,13 +161,23 @@ class _RemoteInfoPageState extends State<RemoteInfoPage> {
     _future = widget.load();
   }
 
+  Future<void> _reload() async {
+    final future = widget.load();
+    setState(() => _future = future);
+    await future;
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Map<String, dynamic>>(
       future: _future,
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
-          return Subpage(title: widget.title, children: const [_LoadingCard()]);
+          return Subpage(
+            title: widget.title,
+            onRefresh: _reload,
+            children: const [_LoadingCard()],
+          );
         }
         if (snapshot.hasError) {
           final error = snapshot.error;
@@ -167,6 +187,7 @@ class _RemoteInfoPageState extends State<RemoteInfoPage> {
             children: [
               _ErrorCard(
                 error is GmisException ? error.message : '加载失败，请稍后重试。',
+                onRetry: _reload,
               ),
             ],
           );
@@ -180,6 +201,7 @@ class _RemoteInfoPageState extends State<RemoteInfoPage> {
         }
         return Subpage(
           title: widget.title,
+          onRefresh: _reload,
           children: [
             if (widget.intro.isNotEmpty) ...[
               Text(
@@ -237,9 +259,10 @@ class _LoadingCard extends StatelessWidget {
 }
 
 class _ErrorCard extends StatelessWidget {
-  const _ErrorCard(this.message);
+  const _ErrorCard(this.message, {this.onRetry});
 
   final String message;
+  final VoidCallback? onRetry;
 
   @override
   Widget build(BuildContext context) {
@@ -259,6 +282,12 @@ class _ErrorCard extends StatelessWidget {
               ),
             ),
           ),
+          if (onRetry != null)
+            TextButton(
+              key: const Key('remote-retry'),
+              onPressed: onRetry,
+              child: const Text('重试'),
+            ),
         ],
       ),
     );

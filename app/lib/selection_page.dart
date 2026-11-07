@@ -6,6 +6,7 @@ import 'gmis/gmis_api.dart';
 import 'gmis/gmis_exception.dart';
 import 'snapshot.dart';
 import 'theme.dart';
+import 'ui/feedback.dart';
 import 'widgets.dart';
 
 /// 选课页。
@@ -194,9 +195,7 @@ class _SelectionPageState extends State<SelectionPage> {
 
   void _toast(String text) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(text), duration: const Duration(seconds: 3)),
-    );
+    AppFeedback.show(text, context: context);
   }
 
   @override

@@ -19,6 +19,7 @@ import 'snapshot.dart';
 import 'subpages.dart';
 import 'theme.dart';
 import 'timetable_page.dart';
+import 'ui/feedback.dart';
 import 'widgets.dart';
 
 const bool _previewMode = bool.fromEnvironment('UI_PREVIEW');
@@ -60,6 +61,7 @@ class HuayanApp extends StatelessWidget {
     return MaterialApp(
       title: '化研助手',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: AppFeedback.messengerKey,
       theme: huayanTheme(fontFamily: fontFamily),
       themeMode: ThemeMode.light,
       home: _previewMode || snapshot != null || skipGate
@@ -200,11 +202,10 @@ class _ShellState extends State<Shell> {
     if (text == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(text),
-          duration: const Duration(milliseconds: 1200),
-        ),
+      AppFeedback.show(
+        text,
+        context: context,
+        duration: const Duration(milliseconds: 1200),
       );
     });
   }

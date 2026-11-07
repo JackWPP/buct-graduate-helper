@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'schedule.dart';
+import 'ui/feedback.dart';
 
 Future<void> shareIcs(
   BuildContext context, {
@@ -19,7 +20,7 @@ Future<void> shareIcs(
     (course) => !course.online && course.segments.isNotEmpty,
   );
   if (offline.isEmpty) {
-    _toast(context, '线上课的节次是占位，没有写进日历');
+    _toast('线上课的节次是占位，没有写进日历');
     return;
   }
   final body = buildIcs(courses, termStart, calendarName: calendarName);
@@ -35,19 +36,14 @@ Future<void> shareIcs(
       ),
     );
     if (!context.mounted) return;
-    _toast(context, successMessage);
+    _toast(successMessage);
   } catch (_) {
     await Clipboard.setData(ClipboardData(text: body));
     if (!context.mounted) return;
-    _toast(context, successMessage.replaceFirst('已导出', '已复制'));
+    _toast(successMessage.replaceFirst('已导出', '已复制'));
   }
 }
 
-void _toast(BuildContext context, String message) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(message),
-      duration: const Duration(milliseconds: 900),
-    ),
-  );
+void _toast(String message) {
+  AppFeedback.show(message, duration: const Duration(milliseconds: 900));
 }

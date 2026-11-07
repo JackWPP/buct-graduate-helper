@@ -9,7 +9,7 @@
 Android 版（Flutter）已经接入真实 GMIS 数据通路：
 
 - 默认启动走 `app/lib/live_shell.dart`：引导 → 真实登录 → 首页/课表/学业/服务/我的（5 Tab）。服务页是扁平目录，49 项服务全部在应用内直达，不经过分组页，也不打开系统浏览器。
-- 默认访问模式是网页版 VPN：启动后先走 `app/lib/webvpn/sso_login_page.dart` 的原生统一身份认证（学号 + 密码，`webvpn_auth_client.dart` 直接提交 SSO 表单）；拿到 `wengine_vpn_ticket` 后进入 `app/lib/live_login_page.dart` 的原生 GMIS 验证码登录。密码只在本次登录内存里使用，不落盘。
+- 默认访问模式是网页版 VPN：启动后先走 `app/lib/webvpn/sso_login_page.dart` 的原生统一身份认证（学号 + 密码，`webvpn_auth_client.dart` 直接提交 SSO 表单）；拿到 `wengine_vpn_ticket` 后进入 `app/lib/live_login_page.dart` 的原生 GMIS 验证码登录。SSO 成功后学号/密码只在内存中预填到 GMIS 登录页，用户只补图形验证码；密码不落盘。`SecureSessionStore` 另存 `huayan_webvpn_ticket`，用于重启后复用 WebVPN 会话。
 - `app/lib/webvpn/` 负责 WebVPN URL token、SSO 登录、Cookie 会话；`webvpn_login_page.dart` 保留为 WebView 兜底，默认不再使用。登录成功后 Cookie 写系统安全存储 `huayan_gmis_webvpn_session`；`--dart-define=DIRECT_GMIS=true` 可切回校内直连。
 - `app/lib/gmis/` 是 Dart 版适配层：`GmisClient` 负责登录、Cookie、302 会话过期、JSON 解析；`GmisApi` 封装学期、学生卡、已选课、培养计划、选课列表、成绩、评教、申请、通知、考场、调课和服务菜单。
 - `app/lib/gmis/live_snapshot_builder.dart` 把多个接口装配成 `Snapshot`（schemaVersion=2）；`AppController` 管理 `booting/signedOut/restoring/ready/offline/sessionExpired` 状态和缓存。课表来自 `py_kbcx_yw`，已选课列表也来自这里；成绩、通知、考试、选课列表分别进详情页。

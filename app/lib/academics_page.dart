@@ -16,6 +16,8 @@ class AcademicsPage extends StatelessWidget {
     required this.onProgress,
     required this.onEval,
     required this.onSelected,
+    this.onRefresh,
+    this.lastRefreshedAt,
   });
 
   final Snapshot snap;
@@ -24,16 +26,24 @@ class AcademicsPage extends StatelessWidget {
   final VoidCallback onProgress;
   final VoidCallback onEval;
   final VoidCallback onSelected;
+  final Future<void> Function()? onRefresh;
+  final DateTime? lastRefreshedAt;
 
   @override
   Widget build(BuildContext context) {
     final credits = snap.credits;
     final pending = pendingEvalCount(snap.evaluations);
-    return ListView(
+    final content = ListView(
       key: const Key('academics-scroll'),
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
         const PageTitle(title: '学业'),
+        if (lastRefreshedAt != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: UpdateStamp(time: lastRefreshedAt),
+          ),
         const Text(
           '成绩、考试、培养进度和评教，都在这里一站式查看。',
           style: TextStyle(fontSize: 13, height: 1.5, color: HuayanColors.sub),
@@ -195,6 +205,13 @@ class AcademicsPage extends StatelessWidget {
               ),
             ),
       ],
+    );
+    final refresh = onRefresh;
+    if (refresh == null) return content;
+    return RefreshIndicator(
+      key: const Key('academics-refresh'),
+      onRefresh: refresh,
+      child: content,
     );
   }
 }

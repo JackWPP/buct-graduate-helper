@@ -40,6 +40,13 @@ class WebVpnLoginResult {
   bool get needsSms => challenge != null;
 }
 
+/// 短信发送成功后的重发间隔，用于页面倒计时。
+class SmsCodeSent {
+  const SmsCodeSent({required this.intervalSeconds});
+
+  final int intervalSeconds;
+}
+
 /// 学校统一身份认证的网页登录协议。
 ///
 /// 密码只用于本次登录，不会写入存储或日志。流程：
@@ -169,8 +176,8 @@ class WebVpnAuthClient {
     );
   }
 
-  /// 向当前短信挑战的手机号发送验证码。
-  Future<void> sendSmsCode() async {
+  /// 向当前短信挑战的手机号发送验证码，返回允许重发的间隔秒数。
+  Future<SmsCodeSent> sendSmsCode() async {
     final challenge = _requireSmsChallenge();
     final response = await _ssoTransport.send(
       GmisRequest(
@@ -198,6 +205,11 @@ class WebVpnAuthClient {
         statusCode: response.statusCode,
       );
     }
+    final payload = data['data'];
+    final interval = payload is Map
+        ? _intOf(payload['sendInterval']) ?? 120
+        : 120;
+    return SmsCodeSent(intervalSeconds: interval <= 0 ? 120 : interval);
   }
 
   /// 提交短信验证码，成功后返回 WebVPN 会话。

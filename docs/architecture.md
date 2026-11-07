@@ -38,7 +38,7 @@
 - **GMIS 适配层**：`app/lib/gmis/gmis_client.dart` 负责登录、Cookie、302 会话过期和 JSON 解析；`gmis_api.dart` 封装业务接口。
 - **数据装配**：`app/lib/gmis/live_snapshot_builder.dart` 把学生卡、已选课、培养计划、成绩、评教、通知、考场、选课列表和服务菜单装配成 `Snapshot`（schemaVersion=2）。
 - **缓存**：`app/lib/storage/snapshot_cache.dart` 写应用支持目录；`secure_session_store.dart` 用 `flutter_secure_storage` 存会话。
-- **登录**：`app/lib/webvpn/` 负责网页版 VPN 和统一身份认证（含短信 2FA）；`live_login_page.dart` 负责 GMIS 验证码登录。
+- **登录**：`app/lib/webvpn/` 负责网页版 VPN 和统一身份认证（含短信 2FA）；`live_login_page.dart` 负责 GMIS 验证码登录。SSO 成功后学号/密码只保留在内存并预填，用户只补图形验证码。
 
 ## 登录链路
 
@@ -50,7 +50,7 @@
        ├─ 学号 + 密码（AES-128-ECB 加密）
        ├─ 若学校要求：短信验证码二次认证
        └─ CAS ticket → wengine_vpn_ticket
-  → GMIS 验证码登录（RSA 加密密码）
+  → GMIS 验证码登录（RSA 加密密码；SSO 学号/密码仅内存预填）
   → GmisClient 拉取接口
   → LiveSnapshotBuilder 生成 Snapshot v2
   → SnapshotCache 缓存 + 进入 5 Tab

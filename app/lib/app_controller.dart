@@ -38,6 +38,7 @@ class AppController extends ChangeNotifier {
   String? _notice;
   bool _refreshing = false;
   bool _disposed = false;
+  DateTime? _lastRefreshedAt;
 
   AppPhase get phase => _phase;
   Snapshot? get snapshot => _snapshot;
@@ -45,6 +46,7 @@ class AppController extends ChangeNotifier {
   CaptchaChallenge? get captcha => _captcha;
   String? get notice => _notice;
   bool get refreshing => _refreshing;
+  DateTime? get lastRefreshedAt => _lastRefreshedAt;
   bool get termStartKnown => _snapshot?.termStartKnown ?? true;
 
   Future<void> bootstrap() async {
@@ -63,15 +65,20 @@ class AppController extends ChangeNotifier {
       await gateway.restore(session);
       await _refreshFromLive();
     } on GmisSessionExpired {
-      await sessionStore.clear();
-      _phase = AppPhase.sessionExpired;
-      _error = '登录已过期，请重新登录';
-      _notify();
+      await expireSession();
     } catch (error) {
       _error = _messageOf(error);
       _phase = _snapshot == null ? AppPhase.signedOut : AppPhase.offline;
       _notify();
     }
+  }
+
+  /// 会话过期：只清 GMIS 会话，保留缓存和已加载的 snapshot，供登录页回跳使用。
+  Future<void> expireSession() async {
+    await sessionStore.clear();
+    _phase = AppPhase.sessionExpired;
+    _error = '登录已过期，请重新登录';
+    _notify();
   }
 
   Future<CaptchaChallenge?> fetchCaptcha() async {
@@ -156,6 +163,7 @@ class AppController extends ChangeNotifier {
     _captcha = null;
     _error = null;
     _notice = null;
+    _lastRefreshedAt = null;
     _phase = AppPhase.signedOut;
     _notify();
   }
@@ -173,6 +181,7 @@ class AppController extends ChangeNotifier {
     } catch (_) {
       // 缓存失败不影响本次登录后的页面；下次打开重新拉取即可。
     }
+    _lastRefreshedAt = DateTime.now();
     _phase = AppPhase.ready;
     _error = null;
     _notify();

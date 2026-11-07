@@ -75,7 +75,7 @@ node --test web/js/schedule.test.mjs
 python3 -m pytest -q
 ```
 
-当前基线：`flutter test` 55 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试、Python 3 个测试通过。
+当前基线：`flutter test` 58 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试、Python 3 个测试通过。
 
 ## CI
 

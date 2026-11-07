@@ -15,12 +15,18 @@ class ServicesPage extends StatefulWidget {
     required this.onOpen,
     this.onGroup,
     this.onCourse,
+    this.onRefresh,
+    this.lastRefreshedAt,
+    this.offline = false,
   });
 
   final Snapshot snap;
   final ValueChanged<ServiceItem> onOpen;
   final ValueChanged<ServiceGroup>? onGroup;
   final ValueChanged<Course>? onCourse;
+  final Future<void> Function()? onRefresh;
+  final DateTime? lastRefreshedAt;
+  final bool offline;
 
   @override
   State<ServicesPage> createState() => _ServicesPageState();
@@ -44,8 +50,9 @@ class _ServicesPageState extends State<ServicesPage> {
         ? groups
         : groups.where((group) => group.id == _group).toList();
     final total = groups.fold<int>(0, (sum, group) => sum + group.items.length);
-    return ListView(
+    final content = ListView(
       key: const Key('services-scroll'),
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
         const PageTitle(title: '服务'),
@@ -57,6 +64,19 @@ class _ServicesPageState extends State<ServicesPage> {
             color: HuayanColors.sub,
           ),
         ),
+        if (widget.lastRefreshedAt != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: UpdateStamp(time: widget.lastRefreshedAt),
+          ),
+        if (widget.offline)
+          Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: OfflineBanner(
+              message: '当前显示缓存服务目录，下拉可重试',
+              onRetry: widget.onRefresh,
+            ),
+          ),
         const SizedBox(height: 14),
         TextField(
           key: const Key('service-search'),
@@ -80,6 +100,21 @@ class _ServicesPageState extends State<ServicesPage> {
               minWidth: 40,
               minHeight: 20,
             ),
+            suffixIcon: query.isEmpty
+                ? null
+                : IconButton(
+                    key: const Key('service-search-clear'),
+                    tooltip: '清除搜索',
+                    onPressed: () {
+                      _query.clear();
+                      setState(() {});
+                    },
+                    icon: const Icon(
+                      Icons.close_rounded,
+                      size: 18,
+                      color: HuayanColors.faint,
+                    ),
+                  ),
             filled: true,
             fillColor: HuayanColors.card,
             contentPadding: const EdgeInsets.symmetric(vertical: 13),
@@ -138,8 +173,19 @@ class _ServicesPageState extends State<ServicesPage> {
             query: query,
             onOpen: widget.onOpen,
             onCourse: widget.onCourse,
+            onClear: () {
+              _query.clear();
+              setState(() {});
+            },
           ),
       ],
+    );
+    final refresh = widget.onRefresh;
+    if (refresh == null) return content;
+    return RefreshIndicator(
+      key: const Key('services-refresh'),
+      onRefresh: refresh,
+      child: content,
     );
   }
 }
@@ -301,17 +347,30 @@ class _SearchBody extends StatelessWidget {
     required this.query,
     required this.onOpen,
     required this.onCourse,
+    required this.onClear,
   });
 
   final Snapshot snap;
   final String query;
   final ValueChanged<ServiceItem> onOpen;
   final ValueChanged<Course>? onCourse;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
     final services = searchServices(snap.services, query);
     final courses = searchCourses(snap.courses, query);
+    if (services.isEmpty && courses.isEmpty) {
+      return EmptyHint(
+        title: '没有找到「$query」',
+        text: '换个关键词试试，或清除搜索查看全部服务。',
+        action: TextButton(
+          key: const Key('service-search-empty-clear'),
+          onPressed: onClear,
+          child: const Text('清除搜索'),
+        ),
+      );
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

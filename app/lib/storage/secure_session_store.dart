@@ -12,6 +12,7 @@ class SecureSessionStore {
 
   static const directKey = 'huayan_gmis_session';
   static const webVpnKey = 'huayan_gmis_webvpn_session';
+  static const webVpnTicketKey = 'huayan_webvpn_ticket';
 
   final FlutterSecureStorage _storage;
   final String _key;

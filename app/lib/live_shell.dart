@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'academics_page.dart';
 import 'app_controller.dart';
+import 'auth/auth_gateway.dart';
+import 'auth/login_flow.dart';
 import 'config/app_config.dart';
 import 'course_sheet.dart';
 import 'gate.dart';
@@ -24,6 +26,8 @@ import 'subpages.dart';
 import 'term_calendar.dart';
 import 'theme.dart';
 import 'timetable_page.dart';
+import 'ui/feedback.dart';
+import 'ui/startup_pages.dart';
 import 'webvpn/sso_login_page.dart';
 import 'webvpn/webvpn_login_page.dart';
 import 'webvpn/webvpn_session.dart';
@@ -41,9 +45,10 @@ class LiveShell extends StatefulWidget {
   State<LiveShell> createState() => _LiveShellState();
 }
 
-class _LiveShellState extends State<LiveShell> {
+class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   late final DateTime _now = widget.now ?? DateTime.now();
   final _settings = AppSettings();
+  final _flow = LoginFlowState();
   AppController? _controller;
   PrefsStore? _store;
   int _tab = 0;
@@ -54,26 +59,57 @@ class _LiveShellState extends State<LiveShell> {
   bool _needsWebVpnLogin = AppConfig.useWebVpnByDefault;
   bool _usingWebVpn = false;
   String? _lastNotice;
+  String _bootStage = '正在启动';
+  DateTime? _lastResumeRefresh;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     final initial = widget.initialTab ?? 0;
     _tab = initial < 0 || initial > 4 ? 0 : initial;
+    _flow.recordTab(_tab);
     _boot();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final controller = _controller;
+    if (controller == null || controller.phase != AppPhase.ready) return;
+    final last = _lastResumeRefresh;
+    final now = DateTime.now();
+    if (last != null && now.difference(last) < const Duration(minutes: 10)) {
+      return;
+    }
+    _lastResumeRefresh = now;
+    controller.refresh();
   }
 
   Future<void> _boot() async {
     final store = await PrefsStore.tryOpen();
     store?.apply(_settings);
+    if (mounted) setState(() => _bootStage = '正在读取本机会话');
     final webVpnStore = SecureSessionStore(key: SecureSessionStore.webVpnKey);
+    final ticketStore = SecureSessionStore(
+      key: SecureSessionStore.webVpnTicketKey,
+    );
+    final directStore = SecureSessionStore(key: SecureSessionStore.directKey);
     final storedWebVpn = await webVpnStore.read();
-    final webVpnSession = storedWebVpn?.baseUrl == null
-        ? null
-        : WebVpnSession(
+    final storedTicket = await ticketStore.read();
+    final storedDirect = await directStore.read();
+    final webVpnSession = storedWebVpn?.baseUrl != null
+        ? WebVpnSession(
             baseUrl: storedWebVpn!.baseUrl!,
             cookies: storedWebVpn.cookies,
-          );
+          )
+        : storedTicket?.baseUrl != null
+        ? WebVpnSession(
+            baseUrl: storedTicket!.baseUrl!,
+            cookies: storedTicket.cookies,
+          )
+        : null;
+    if (mounted) setState(() => _bootStage = '正在恢复登录状态');
     final controller = _createController(
       store: store,
       webVpnSession: webVpnSession,
@@ -84,7 +120,10 @@ class _LiveShellState extends State<LiveShell> {
       _onboarded = store?.onboarded ?? false;
       _controller = controller;
       _usingWebVpn = webVpnSession != null;
-      _needsWebVpnLogin = webVpnSession == null && AppConfig.useWebVpnByDefault;
+      _needsWebVpnLogin =
+          webVpnSession == null &&
+          storedDirect == null &&
+          AppConfig.useWebVpnByDefault;
     });
     await controller.bootstrap();
   }
@@ -122,6 +161,20 @@ class _LiveShellState extends State<LiveShell> {
     await _acceptWebVpnSession(session);
   }
 
+  Future<void> _acceptSsoLogin(SsoLoginSuccess result) async {
+    _flow.acceptSso(result);
+    await SecureSessionStore(key: SecureSessionStore.webVpnTicketKey).write(
+      AuthSession(
+        userId: result.prefill.userId,
+        cookies: result.session.cookies,
+        savedAt: DateTime.now(),
+        baseUrl: result.session.baseUrl,
+      ),
+    );
+    if (!mounted) return;
+    await _acceptWebVpnSession(result.session);
+  }
+
   Future<void> _acceptWebVpnSession(WebVpnSession session) async {
     final old = _controller;
     if (old != null) {
@@ -156,6 +209,8 @@ class _LiveShellState extends State<LiveShell> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _flow.clear();
     _controller?.removeListener(_onController);
     _controller?.dispose();
     super.dispose();
@@ -166,22 +221,30 @@ class _LiveShellState extends State<LiveShell> {
     setState(() {});
     final controller = _controller;
     if (controller == null) return;
-    final notice = controller.notice ?? controller.error;
+    final notice = controller.notice;
     if (notice != null && notice.isNotEmpty && notice != _lastNotice) {
       _lastNotice = notice;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(notice),
-            action: controller.phase == AppPhase.offline
-                ? SnackBarAction(label: '重试', onPressed: controller.refresh)
-                : null,
-          ),
-        );
+        AppFeedback.show(notice);
       });
     }
+    if (controller.phase == AppPhase.sessionExpired) {
+      _flow.recordTab(_tab);
+    }
     if (controller.phase == AppPhase.ready) _scheduleRemind();
+  }
+
+  void _setTab(int index) {
+    _flow.recordTab(index);
+    setState(() => _tab = index);
+  }
+
+  Future<void> _refresh() async {
+    final controller = _controller;
+    if (controller == null) return;
+    await controller.refresh();
+    if (mounted) setState(() {});
   }
 
   void _queueSheet() {
@@ -215,11 +278,10 @@ class _LiveShellState extends State<LiveShell> {
     if (text == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(text),
-          duration: const Duration(milliseconds: 1200),
-        ),
+      AppFeedback.show(
+        text,
+        context: context,
+        duration: const Duration(milliseconds: 1200),
       );
     });
   }
@@ -245,8 +307,12 @@ class _LiveShellState extends State<LiveShell> {
       await _store?.setSid(null);
     }
     await _store?.setOnboarded();
+    _flow.markLoginComplete();
+    final resumeTab = _flow.resumeTab;
     if (!mounted) return;
-    setState(() {});
+    setState(() {
+      if (resumeTab >= 0 && resumeTab <= 4) _tab = resumeTab;
+    });
   }
 
   Future<void> _logout() async {
@@ -254,10 +320,28 @@ class _LiveShellState extends State<LiveShell> {
     await _controller?.logout();
     await SecureSessionStore(key: SecureSessionStore.directKey).clear();
     await SecureSessionStore(key: SecureSessionStore.webVpnKey).clear();
+    await SecureSessionStore(key: SecureSessionStore.webVpnTicketKey).clear();
+    _flow.clear();
     if (!mounted) return;
     setState(() {
+      _tab = 0;
       _usingWebVpn = false;
       _needsWebVpnLogin = AppConfig.useWebVpnByDefault;
+      _lastNotice = null;
+    });
+  }
+
+  /// 会话过期时保留课表和当前 Tab，只清 GMIS 会话。
+  Future<void> _handleSessionExpired() async {
+    final controller = _controller;
+    if (controller == null) return;
+    _flow.recordTab(_tab);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    await controller.expireSession();
+    if (!mounted) return;
+    setState(() {
+      _needsWebVpnLogin = _usingWebVpn ? false : AppConfig.useWebVpnByDefault;
+      _lastNotice = null;
     });
   }
 
@@ -319,7 +403,7 @@ class _LiveShellState extends State<LiveShell> {
               snap: snap,
               api: _controller?.api,
               onChanged: _refreshAfterChange,
-              onSessionExpired: () => _controller?.logout(),
+              onSessionExpired: _handleSessionExpired,
             ),
           );
         }
@@ -400,7 +484,7 @@ class _LiveShellState extends State<LiveShell> {
                 snap: snap,
                 api: _controller?.api,
                 onChanged: _refreshAfterChange,
-                onSessionExpired: () => _controller?.logout(),
+                onSessionExpired: _handleSessionExpired,
               ),
             );
         }
@@ -411,7 +495,7 @@ class _LiveShellState extends State<LiveShell> {
   Widget build(BuildContext context) {
     final controller = _controller;
     if (controller == null) {
-      return _loading('正在连接学校系统');
+      return SplashPage(message: _bootStage);
     }
     if (!_onboarded) {
       if (!_guide) {
@@ -431,25 +515,33 @@ class _LiveShellState extends State<LiveShell> {
       return SsoLoginPage(
         initialSid: _store?.sid ?? '',
         onUserId: (sid) => _store?.setSid(sid),
-        onSuccess: _acceptWebVpnSession,
+        onSuccess: _acceptSsoLogin,
         onDirect: _useDirectLogin,
       );
     }
     if (controller.phase == AppPhase.booting) {
-      return _loading('正在恢复登录状态');
+      return SplashPage(message: _bootStage);
     }
+    final prefill = _flow.prefill;
+    final loginDescription = _usingWebVpn
+        ? prefill != null
+              ? '统一身份认证已完成，请补研究生管理系统验证码。'
+              : '网页版 VPN 已连接，请登录研究生管理系统。'
+        : null;
     final snap = controller.snapshot;
     if (snap == null) {
       if (controller.phase == AppPhase.restoring) {
-        return _loading('正在读取学校数据');
+        return const HomeSkeleton();
       }
       return LiveLoginPage(
         controller: controller,
-        initialSid: _store?.sid ?? '',
+        initialSid: prefill?.userId ?? _store?.sid ?? '',
+        initialPassword: prefill?.password,
+        fromSso: prefill != null,
         notice: controller.error,
         onSuccess: _login,
         onWebVpnLogin: _openWebVpnLogin,
-        description: _usingWebVpn ? '网页版 VPN 已连接，请登录研究生管理系统。' : null,
+        description: loginDescription,
         webVpnLabel: _usingWebVpn ? '重新登录网页版 VPN' : '校外访问：使用网页版 VPN 登录',
       );
     }
@@ -457,32 +549,18 @@ class _LiveShellState extends State<LiveShell> {
         controller.phase == AppPhase.sessionExpired) {
       return LiveLoginPage(
         controller: controller,
-        initialSid: _store?.sid ?? '',
+        initialSid: prefill?.userId ?? _store?.sid ?? '',
+        initialPassword: prefill?.password,
+        fromSso: prefill != null,
         notice: controller.error,
         onSuccess: _login,
         onWebVpnLogin: _openWebVpnLogin,
-        description: _usingWebVpn ? '网页版 VPN 已连接，请登录研究生管理系统。' : null,
+        description: loginDescription,
         webVpnLabel: _usingWebVpn ? '重新登录网页版 VPN' : '校外访问：使用网页版 VPN 登录',
       );
     }
     _queueSheet();
     return _scaffold(snap);
-  }
-
-  Widget _loading(String text) {
-    return Scaffold(
-      backgroundColor: HuayanColors.bg,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(strokeWidth: 2),
-            const SizedBox(height: 14),
-            Text(text, style: const TextStyle(color: HuayanColors.sub)),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _scaffold(Snapshot snap) {
@@ -505,6 +583,9 @@ class _LiveShellState extends State<LiveShell> {
                   HomePage(
                     snap: snap,
                     now: _now,
+                    onRefresh: _refresh,
+                    lastRefreshedAt: _controller?.lastRefreshedAt,
+                    offline: _controller?.phase == AppPhase.offline,
                     onCourse: (course) =>
                         _openCourse(course, weekIndex(_now, snap.termStart)),
                     onProgress: () => _push(ProgressPage(snap: snap)),
@@ -531,6 +612,9 @@ class _LiveShellState extends State<LiveShell> {
                     snap: snap,
                     now: _now,
                     settings: _settings,
+                    onRefresh: _refresh,
+                    lastRefreshedAt: _controller?.lastRefreshedAt,
+                    offline: _controller?.phase == AppPhase.offline,
                     onCourse: _openCourse,
                     onOnline: () => _push(
                       OnlinePage(
@@ -544,6 +628,8 @@ class _LiveShellState extends State<LiveShell> {
                   ),
                   AcademicsPage(
                     snap: snap,
+                    onRefresh: _refresh,
+                    lastRefreshedAt: _controller?.lastRefreshedAt,
                     onGrades: () => _push(GradesPage(snap: snap)),
                     onExams: () => _push(
                       ExamsPage(count: snap.exams, items: snap.examItems),
@@ -564,11 +650,16 @@ class _LiveShellState extends State<LiveShell> {
                   ServicesPage(
                     snap: snap,
                     onOpen: _openService,
+                    onRefresh: _refresh,
+                    lastRefreshedAt: _controller?.lastRefreshedAt,
+                    offline: _controller?.phase == AppPhase.offline,
                     onCourse: (course) =>
                         _openCourse(course, weekIndex(_now, snap.termStart)),
                   ),
                   MePage(
                     snap: snap,
+                    onRefresh: _refresh,
+                    lastRefreshedAt: _controller?.lastRefreshedAt,
                     onProfile: () => _push(ProfilePage(student: snap.student)),
                     onProgress: () => _push(ProgressPage(snap: snap)),
                     onApplications: () => _push(ApplicationsPage(snap: snap)),
@@ -618,10 +709,7 @@ class _LiveShellState extends State<LiveShell> {
               left: 16,
               right: 16,
               bottom: 12 + bottom,
-              child: HuayanTabBar(
-                index: _tab,
-                onChanged: (index) => setState(() => _tab = index),
-              ),
+              child: HuayanTabBar(index: _tab, onChanged: _setTab),
             ),
           ],
         ),

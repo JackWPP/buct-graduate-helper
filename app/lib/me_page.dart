@@ -19,6 +19,8 @@ class MePage extends StatelessWidget {
     required this.onExams,
     required this.onNotices,
     required this.onSettings,
+    this.onRefresh,
+    this.lastRefreshedAt,
   });
 
   final Snapshot snap;
@@ -31,6 +33,8 @@ class MePage extends StatelessWidget {
   final VoidCallback onExams;
   final VoidCallback onNotices;
   final VoidCallback onSettings;
+  final Future<void> Function()? onRefresh;
+  final DateTime? lastRefreshedAt;
 
   @override
   Widget build(BuildContext context) {
@@ -38,11 +42,17 @@ class MePage extends StatelessWidget {
     final credits = snap.credits;
     final apps = previewApplications(snap.applications);
     final pending = pendingEvalCount(snap.evaluations);
-    return ListView(
+    final content = ListView(
       key: const Key('me-scroll'),
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 24),
       children: [
         const PageTitle(title: '我的'),
+        if (lastRefreshedAt != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: UpdateStamp(time: lastRefreshedAt),
+          ),
         HuayanCard(
           onTap: onProfile,
           child: Row(
@@ -225,6 +235,13 @@ class MePage extends StatelessWidget {
           ],
         ),
       ],
+    );
+    final refresh = onRefresh;
+    if (refresh == null) return content;
+    return RefreshIndicator(
+      key: const Key('me-refresh'),
+      onRefresh: refresh,
+      child: content,
     );
   }
 }
