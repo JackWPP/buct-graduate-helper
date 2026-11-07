@@ -847,7 +847,7 @@
           "id": "xswsxk_kb",
           "name": "学生网上选课",
           "path": "/student/pygl/xswsxk_kb",
-          "native": "selected"
+          "native": "catalog"
         },
         {
           "id": "xkjgcx",
