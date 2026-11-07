@@ -16,11 +16,18 @@ enum CaptchaKind {
 
 /// GMIS 登录和 JSON 请求客户端。一个学生账号对应一个实例。
 class GmisClient implements AuthGateway {
-  GmisClient({required this.transport, String baseUrl = AppConfig.baseUrl})
-    : _baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), '');
+  GmisClient({
+    required this.transport,
+    String baseUrl = AppConfig.baseUrl,
+    Map<String, String> initialCookies = const {},
+  }) : _baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), ''),
+       _initialCookies = Map<String, String>.from(initialCookies) {
+    _cookies.addAll(initialCookies);
+  }
 
   final GmisTransport transport;
   final String _baseUrl;
+  final Map<String, String> _initialCookies;
   final Map<String, String> _cookies = {};
 
   String? _pendingPublicKey;
@@ -29,7 +36,7 @@ class GmisClient implements AuthGateway {
 
   /// GET /home/stulogin，并记住本次登录页的 #pubkey。
   Future<String> fetchLoginPage() async {
-    _cookies.clear();
+    _resetCookiesForLogin();
     _pendingPublicKey = null;
     final response = await _send(
       const GmisRequest(
@@ -116,6 +123,7 @@ class GmisClient implements AuthGateway {
       userId: userId.trim(),
       cookies: Map<String, String>.from(_cookies),
       savedAt: DateTime.now(),
+      baseUrl: _baseUrl == AppConfig.baseUrl ? null : _baseUrl,
     );
   }
 
@@ -140,7 +148,7 @@ class GmisClient implements AuthGateway {
     } catch (_) {
       // 退出登录时网络失败也要清掉本地状态。
     } finally {
-      _cookies.clear();
+      _resetCookiesForLogin();
       _pendingPublicKey = null;
     }
   }
@@ -185,6 +193,12 @@ class GmisClient implements AuthGateway {
     return response;
   }
 
+  void _resetCookiesForLogin() {
+    _cookies
+      ..clear()
+      ..addAll(_initialCookies);
+  }
+
   void _absorbCookies(GmisResponse response) {
     final setCookies = response.headers['set-cookie'] ?? const <String>[];
     for (final raw in setCookies) {
@@ -206,7 +220,9 @@ class GmisClient implements AuthGateway {
     final status = response.statusCode;
     if (status >= 300 && status < 400) {
       final location = response.header('location') ?? '';
-      if (location.contains('stulogin')) {
+      if (location.contains('stulogin') ||
+          location.contains('/login') ||
+          location.contains('w.buct.edu.cn/login')) {
         throw const GmisSessionExpired();
       }
       throw GmisApiException('接口发生跳转: $path -> $location');

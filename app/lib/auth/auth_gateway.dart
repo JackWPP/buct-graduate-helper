@@ -19,25 +19,32 @@ class AuthSession {
     required this.userId,
     required this.cookies,
     required this.savedAt,
+    this.baseUrl,
   });
 
   final String userId;
   final Map<String, String> cookies;
   final DateTime savedAt;
 
+  /// 非空表示这次会话走网页版 VPN，baseUrl 是 w.buct.edu.cn 的代理根地址。
+  final String? baseUrl;
+
   Map<String, dynamic> toJson() => {
     'userId': userId,
     'cookies': cookies,
     'savedAt': savedAt.toIso8601String(),
+    if (baseUrl != null) 'baseUrl': baseUrl,
   };
 
   factory AuthSession.fromJson(Map<String, dynamic> json) {
+    final baseUrl = '${json['baseUrl'] ?? ''}'.trim();
     return AuthSession(
       userId: '${json['userId'] ?? ''}',
       cookies: (json['cookies'] as Map? ?? const {}).map(
         (key, value) => MapEntry('$key', '$value'),
       ),
       savedAt: DateTime.tryParse('${json['savedAt'] ?? ''}') ?? DateTime.now(),
+      baseUrl: baseUrl.isEmpty ? null : baseUrl,
     );
   }
 }

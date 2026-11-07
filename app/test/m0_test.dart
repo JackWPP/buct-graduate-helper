@@ -106,6 +106,22 @@ void main() {
     expect(loaded.noticeItems.single.title, '通知');
   });
 
+  test('auth session json keeps the optional WebVPN base URL', () {
+    final session = AuthSession(
+      userId: '2026000001',
+      cookies: const {'wengine_vpn_ticketw_buct_edu_cn': 'abc'},
+      savedAt: DateTime(2026, 11, 7, 12),
+      baseUrl: 'https://w.buct.edu.cn/https/token/',
+    );
+    final restored = AuthSession.fromJson(
+      Map<String, dynamic>.from(
+        jsonDecode(jsonEncode(session.toJson())) as Map,
+      ),
+    );
+    expect(restored.baseUrl, 'https://w.buct.edu.cn/https/token/');
+    expect(restored.cookies['wengine_vpn_ticketw_buct_edu_cn'], 'abc');
+  });
+
   test(
     'demo gateway accepts only its demo student and local captcha',
     () async {

@@ -6,12 +6,15 @@ import '../auth/auth_gateway.dart';
 
 /// Cookie 和学号用系统安全存储保存；密码永远不在这里。
 class SecureSessionStore {
-  SecureSessionStore({FlutterSecureStorage? storage})
-    : _storage = storage ?? const FlutterSecureStorage();
+  SecureSessionStore({FlutterSecureStorage? storage, String? key})
+    : _storage = storage ?? const FlutterSecureStorage(),
+      _key = key ?? directKey;
 
-  static const _key = 'huayan_gmis_session';
+  static const directKey = 'huayan_gmis_session';
+  static const webVpnKey = 'huayan_gmis_webvpn_session';
 
   final FlutterSecureStorage _storage;
+  final String _key;
 
   Future<AuthSession?> read() async {
     final raw = await _storage.read(key: _key);

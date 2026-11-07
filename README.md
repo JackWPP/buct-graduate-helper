@@ -6,7 +6,7 @@
 
 <p align="center">北京化工大学研究生管理系统的移动层。<br>课表、培养进度和办事入口先在手机上读清。密码不离开自己的设备。</p>
 
-**Android 版在 `app/`，是项目主线。** `web/` 保留为 390px 可点击设计预览和回归参照，不再承担功能主线。Android 版已经接入真实 GMIS 登录和只读数据：验证码、课表、已选课、成绩、评教、通知、考场和服务菜单都从学校接口读取，登录会话存系统安全存储，课表快照缓存在本机。选课提交/退选、后台提醒和深色模式仍未做。
+**Android 版在 `app/`，是项目主线。** `web/` 保留为 390px 可点击设计预览和回归参照，不再承担功能主线。Android 版已经接入真实 GMIS 登录和只读数据：验证码、课表、已选课、成绩、评教、通知、考场和服务菜单都从学校接口读取，登录会话存系统安全存储，课表快照缓存在本机。校外无法解析 `gmis.buct.edu.cn` 时，登录页提供「使用网页版 VPN 登录」，在应用内打开 `w.buct.edu.cn` 完成统一身份认证后继续。选课提交/退选、后台提醒和深色模式仍未做。
 
 ## 界面
 
@@ -63,7 +63,7 @@ flutter build apk --debug
 
 debug 产物在 `app/build/app/outputs/flutter-apk/app-debug.apk`；打 release 包用 `flutter build apk --release`，产物在 `app/build/app/outputs/flutter-apk/app-release.apk`。正式包还需要在 `app/android/app/build.gradle.kts` 里换成自己的 release 签名密钥；当前 release 仍用模板的 debug 签名。当前源码版本是 `1.2.0+3`，release APK 的 versionCode 为 3；已发布的 [v1.0.0](https://github.com/JackWPP/buct-graduate-helper/releases/tag/v1.0.0) Android 包只用于侧载试装，`v1.1.0` 标签尚无独立 APK。
 
-真实登录需要手机能访问 `gmis.buct.edu.cn`（校园网或 VPN），并且需要自己的研究生账号；仓库里没有可用账号。
+真实登录需要手机能访问 `gmis.buct.edu.cn`（校园网，或登录页的网页版 VPN `w.buct.edu.cn`），并且需要自己的研究生账号；仓库里没有可用账号。
 
 CI 在 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)：push 和 PR 会跑 `flutter analyze`、`flutter test`、debug APK 构建，以及 Python 和网页课表规则测试。
 

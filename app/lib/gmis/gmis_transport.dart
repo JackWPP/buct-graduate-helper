@@ -56,7 +56,7 @@ class DioGmisTransport implements GmisTransport {
           dio ??
           Dio(
             BaseOptions(
-              baseUrl: baseUrl,
+              baseUrl: baseUrl.endsWith('/') ? baseUrl : '$baseUrl/',
               connectTimeout: AppConfig.connectTimeout,
               receiveTimeout: AppConfig.receiveTimeout,
               sendTimeout: AppConfig.receiveTimeout,
@@ -67,7 +67,8 @@ class DioGmisTransport implements GmisTransport {
                 'User-Agent': AppConfig.userAgent,
                 'Accept': 'application/json, text/javascript, */*; q=0.01',
                 'X-Requested-With': 'XMLHttpRequest',
-                'Referer': '$baseUrl/home/stulogin',
+                'Referer':
+                    '${baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl}/home/stulogin',
               },
             ),
           );
@@ -77,8 +78,11 @@ class DioGmisTransport implements GmisTransport {
   @override
   Future<GmisResponse> send(GmisRequest request) async {
     try {
+      final path = request.path.startsWith('/')
+          ? request.path.substring(1)
+          : request.path;
       final response = await _dio.request<dynamic>(
-        request.path,
+        path,
         data: request.form,
         queryParameters: request.query,
         options: Options(

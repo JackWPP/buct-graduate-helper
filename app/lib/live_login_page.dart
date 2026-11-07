@@ -13,12 +13,14 @@ class LiveLoginPage extends StatefulWidget {
     required this.initialSid,
     this.notice,
     this.onSuccess,
+    this.onWebVpnLogin,
   });
 
   final AppController controller;
   final String initialSid;
   final String? notice;
   final void Function(String sid, bool remember)? onSuccess;
+  final VoidCallback? onWebVpnLogin;
 
   @override
   State<LiveLoginPage> createState() => _LiveLoginPageState();
@@ -264,7 +266,14 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
                     )
                   : const Text('登录'),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              key: const Key('live-login-webvpn'),
+              onPressed: widget.onWebVpnLogin,
+              icon: const Icon(Icons.public, size: 18),
+              label: const Text('校外访问：使用网页版 VPN 登录'),
+            ),
+            const SizedBox(height: 8),
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [

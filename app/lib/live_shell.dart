@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app_controller.dart';
+import 'config/app_config.dart';
 import 'course_sheet.dart';
 import 'gate.dart';
 import 'gmis/gmis_api.dart';
@@ -21,6 +22,8 @@ import 'subpages.dart';
 import 'term_calendar.dart';
 import 'theme.dart';
 import 'timetable_page.dart';
+import 'webvpn/webvpn_login_page.dart';
+import 'webvpn/webvpn_session.dart';
 import 'widgets.dart';
 
 /// 真实模式的外壳：登录、会话恢复、刷新和 4 个主 Tab。
@@ -58,20 +61,66 @@ class _LiveShellState extends State<LiveShell> {
   Future<void> _boot() async {
     final store = await PrefsStore.tryOpen();
     store?.apply(_settings);
-    final client = GmisClient(transport: DioGmisTransport());
-    final controller = AppController(
-      gateway: client,
-      api: GmisApi(client),
-      sessionStore: SecureSessionStore(),
-      cache: SnapshotCache(),
-      calendar: TermCalendar(prefs: store),
+    final webVpnStore = SecureSessionStore(key: SecureSessionStore.webVpnKey);
+    final storedWebVpn = await webVpnStore.read();
+    final webVpnSession = storedWebVpn?.baseUrl == null
+        ? null
+        : WebVpnSession(
+            baseUrl: storedWebVpn!.baseUrl!,
+            cookies: storedWebVpn.cookies,
+          );
+    final controller = _createController(
+      store: store,
+      webVpnSession: webVpnSession,
     );
-    controller.addListener(_onController);
     if (!mounted) return;
     setState(() {
       _store = store;
       _onboarded = store?.onboarded ?? false;
       _controller = controller;
+    });
+    await controller.bootstrap();
+  }
+
+  AppController _createController({
+    PrefsStore? store,
+    WebVpnSession? webVpnSession,
+  }) {
+    final baseUrl = webVpnSession?.baseUrl ?? AppConfig.baseUrl;
+    final client = GmisClient(
+      transport: DioGmisTransport(baseUrl: baseUrl),
+      baseUrl: baseUrl,
+      initialCookies: webVpnSession?.cookies ?? const {},
+    );
+    final controller = AppController(
+      gateway: client,
+      api: GmisApi(client),
+      sessionStore: SecureSessionStore(
+        key: webVpnSession == null
+            ? SecureSessionStore.directKey
+            : SecureSessionStore.webVpnKey,
+      ),
+      cache: SnapshotCache(),
+      calendar: TermCalendar(prefs: store),
+    );
+    controller.addListener(_onController);
+    return controller;
+  }
+
+  Future<void> _openWebVpnLogin() async {
+    final session = await Navigator.of(context).push<WebVpnSession>(
+      MaterialPageRoute(builder: (_) => const WebVpnLoginPage()),
+    );
+    if (session == null || !mounted) return;
+    final old = _controller;
+    if (old != null) {
+      old.removeListener(_onController);
+      old.dispose();
+    }
+    final controller = _createController(store: _store, webVpnSession: session);
+    setState(() {
+      _controller = controller;
+      _lastNotice = null;
     });
     await controller.bootstrap();
   }
@@ -174,6 +223,8 @@ class _LiveShellState extends State<LiveShell> {
   Future<void> _logout() async {
     Navigator.of(context).popUntil((route) => route.isFirst);
     await _controller?.logout();
+    await SecureSessionStore(key: SecureSessionStore.directKey).clear();
+    await SecureSessionStore(key: SecureSessionStore.webVpnKey).clear();
     if (!mounted) return;
     setState(() {});
   }
@@ -264,6 +315,7 @@ class _LiveShellState extends State<LiveShell> {
         initialSid: _store?.sid ?? '',
         notice: controller.error,
         onSuccess: _login,
+        onWebVpnLogin: _openWebVpnLogin,
       );
     }
     if (controller.phase == AppPhase.signedOut ||
@@ -273,6 +325,7 @@ class _LiveShellState extends State<LiveShell> {
         initialSid: _store?.sid ?? '',
         notice: controller.error,
         onSuccess: _login,
+        onWebVpnLogin: _openWebVpnLogin,
       );
     }
     _queueSheet();

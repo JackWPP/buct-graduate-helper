@@ -10,6 +10,7 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 
 - 默认启动走 `app/lib/live_shell.dart`：引导 → 真实登录 → 首页/周课表/服务/我的。
 - 登录页 `app/lib/live_login_page.dart` 从学校接口取验证码图，密码只在本次登录内存里使用；登录成功后 Cookie 写系统安全存储（`flutter_secure_storage`），密码不落盘。
+- 校外访问走 `app/lib/webvpn/`：登录页的「使用网页版 VPN 登录」打开 `w.buct.edu.cn` 统一身份认证 WebView，读取 `wengine_vpn_ticket` Cookie 后，把 GMIS 请求改走 `https://w.buct.edu.cn/https/<token>/`；WebVPN 会话单独存储在 `huayan_gmis_webvpn_session`。
 - `app/lib/gmis/` 是 Dart 版适配层：`GmisClient` 负责登录、Cookie、302 会话过期、JSON 解析；`GmisApi` 封装学期、学生卡、已选课、培养计划、选课列表、成绩、评教、申请、通知、考场、调课和服务菜单。
 - `app/lib/gmis/live_snapshot_builder.dart` 把多个接口装配成 `Snapshot`（schemaVersion=2）；`AppController` 管理 `booting/signedOut/restoring/ready/offline/sessionExpired` 状态和缓存。课表来自 `py_kbcx_yw`，已选课列表也来自这里；成绩、通知、考试、选课列表分别进详情页。
 - 缓存：`SnapshotCache` 写 `app` 支持目录；`SecureSessionStore` 存会话。没有登录会话时不展示缓存，避免泄露课表。
@@ -19,11 +20,11 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 
 网页预览仍是设计参照：`web/data/snapshot.json` 来自 2026-10-30 课表导出；`gmis_cli.py login` 用学校验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`gmis_cli.py timetable` 把只读课表写到被忽略的 `web/data/live.json`，预览优先读它。Python 只读导出不再服务 Android 默认数据通路。
 
-真机验证记录（2026-11-06）：`M531DA`（Android 17）安装过 release APK 并启动到引导/首页；之后新增了真实登录与适配层，需要重新安装并确认登录、课表、刷新、退出和会话过期。学校域名可能只在校园网/VPN 内可访问，手机测试前先确认网络。
+真机验证记录（2026-11-07）：`M531DA`（Android 17）已安装 1.2.0 release 包，真实登录后首页、课表、服务可用；`gmis.buct.edu.cn` 在校外可能无法解析，此时用登录页的「使用网页版 VPN 登录」。真机联调时仍需确认验证码、刷新、退出和会话过期重登。
 
 ## 下一轮按这个顺序
 
-1. 真机联调 M0：在校园网/VPN 下登录真实账号，确认验证码、课表、成绩、通知、考试列表、刷新、退出和会话过期重登；修复接口字段与真实返回不一致的地方。
+1. 真机联调 M0：在校园网或网页版 VPN 下登录真实账号，确认验证码、课表、成绩、通知、考试列表、刷新、退出和会话过期重登；修复接口字段与真实返回不一致的地方。
 2. 选课三屏、提交/退选、考试倒计时、真实通知详情页；设计稿没画完之前不要编数据。选课提交必须保留二次确认和验证码。
 3. 后台提醒：现在只有前台提示；接 `flutter_local_notifications` 前先做权限申请与通知设置页。
 4. Android release 换正式签名密钥；iOS 包要在 macOS 上用 Xcode 打。
