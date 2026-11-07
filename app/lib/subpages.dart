@@ -670,7 +670,7 @@ class SelectedPage extends StatelessWidget {
       title: '选课',
       children: [
         Text(
-          '这里是本学期选课结果${credits == null ? '' : '，共 ${formatNum(credits.selected)} 学分'}。这版只读，不能退课或代选。',
+          '这里是本学期已选课程${credits == null ? '' : '，共 ${formatNum(credits.selected)} 学分'}。选课或退课请从服务页进入「选课」，提交前需要二次确认和验证码。',
           style: const TextStyle(
             fontSize: 13,
             height: 1.5,
