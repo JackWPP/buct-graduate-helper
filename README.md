@@ -25,6 +25,14 @@
   </tr>
 </table>
 
+默认入口是网页版 VPN + 原生统一身份认证：
+
+<p align="center">
+  <img src="docs/images/webvpn.jpg" width="220" alt="Android 网页版 VPN 原生统一身份认证登录页">
+  <br>
+  <sub>网页版 VPN / 统一身份认证（原生表单）</sub>
+</p>
+
 选课已经是可提交的真实流程：确认、验证码、失败原因归一化、提交后刷新课表与学分。筛选三屏和考试倒计时还在按设计稿细化。
 
 ## 三块怎么接在一起
