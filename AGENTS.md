@@ -21,7 +21,7 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 
 网页预览仍是设计参照：`web/data/snapshot.json` 来自 2026-10-30 课表导出；`gmis_cli.py login` 用学校验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`gmis_cli.py timetable` 把只读课表写到被忽略的 `web/data/live.json`，预览优先读它。Python 只读导出不再服务 Android 默认数据通路。
 
-验证记录（2026-11-07）：`M531DA`（Android 17）已安装 1.2.0 release 包，真实登录后首页、课表、服务可用；1.3.0 的 5 Tab 与原生服务目录已在 Android 16 模拟器（`emulator-5554`）用 `UI_PREVIEW=true` 预览验证，真机还需装 1.3.0 复核。`gmis.buct.edu.cn` 在校外可能无法解析，此时用登录页的「使用网页版 VPN 登录」。真机联调时仍需确认验证码、刷新、退出和会话过期重登。
+验证记录（2026-11-07）：`M531DA`（Android 17）已安装 1.2.0 release 包，真实登录后首页、课表、服务可用；1.3.0（versionCode 4）release 包已构建并安装到 Android 16 模拟器（`emulator-5554`），5 Tab、原生服务目录、课程目录、通知详情和考试倒计时已用 `UI_PREVIEW=true` 预览验证，真机还需装 1.3.0 复核。`gmis.buct.edu.cn` 在校外可能无法解析，此时用登录页的「使用网页版 VPN 登录」。真机联调时仍需确认验证码、刷新、退出和会话过期重登。
 
 ## 下一轮按这个顺序
 
