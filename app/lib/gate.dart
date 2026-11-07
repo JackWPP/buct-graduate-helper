@@ -78,11 +78,13 @@ class GuidePage extends StatelessWidget {
     required this.updatedLabel,
     required this.onStart,
     required this.onSkip,
+    this.live = false,
   });
 
   final String updatedLabel;
   final VoidCallback onStart;
   final VoidCallback onSkip;
+  final bool live;
 
   static const _items = [
     (
@@ -200,7 +202,9 @@ class GuidePage extends StatelessWidget {
                       const SizedBox(height: 18),
                     ],
                     Text(
-                      '数据来自 $when导出的学校快照。演示版不保存密码，也不连接学校服务器。',
+                      live
+                          ? '登录后从学校系统同步课表、成绩和通知。密码只用于登录，不保存在本机。'
+                          : '数据来自 $when导出的学校快照。演示版不保存密码，也不连接学校服务器。',
                       style: const TextStyle(
                         fontSize: 12,
                         height: 1.5,

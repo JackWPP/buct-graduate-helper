@@ -166,9 +166,9 @@ def render_layers() -> None:
     body = font(22)
     small = font(18)
     cards = [
-        (BLUE, "Android 版", "app/", "项目主线。引导、登录、\n首页、周课表、服务、我的。\nFlutter 双端共用。"),
+        (BLUE, "Android 版", "app/", "项目主线。真实 GMIS 登录，\n课表、成绩、通知和服务。\nFlutter 双端共用。"),
         (VIOLET, "网页预览", "web/", "设计参照和回归页。\n同一套页面与课表规则。\n浏览器打开 8899。"),
-        (GREEN, "学校接口", "gmis_cli.py", "GMIS 登录与只读导出。\n密码只从环境变量\n或交互输入读取。"),
+        (GREEN, "学校接口", "gmis.buct.edu.cn", "GMIS 登录与只读接口。\n密码只在登录内存里，\n会话进系统安全存储。"),
     ]
     gap = 28
     card_w = (width - 80 - gap * 2) // 3
@@ -198,11 +198,11 @@ def render_layers() -> None:
 
     bar_top = top + card_h + 36
     draw.rounded_rectangle((40, bar_top, width - 40, bar_top + 132), radius=22, fill=WHITE, outline=LINE, width=2)
-    draw.text((68, bar_top + 28), "演示快照", font=title, fill=INK)
-    draw.text((68, bar_top + 74), "app/assets/snapshot.json", font=body, fill=BLUE)
+    draw.text((68, bar_top + 28), "实时数据", font=title, fill=INK)
+    draw.text((68, bar_top + 74), "app/lib/gmis/", font=body, fill=BLUE)
     draw.text(
         (440, bar_top + 48),
-        "Android 读自带快照；网页的 live.json 只作预览覆盖，不提交。",
+        "Android 登录后拉取并缓存；网页预览读快照，live.json 只作覆盖。",
         font=body,
         fill=MUTED,
     )

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'course_sheet.dart';
 import 'gate.dart';
 import 'home_page.dart';
+import 'live_shell.dart';
 import 'me_page.dart';
 import 'prefs.dart';
 import 'remind.dart';
@@ -57,13 +58,19 @@ class HuayanApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: huayanTheme(fontFamily: fontFamily),
       themeMode: ThemeMode.light,
-      home: Shell(
-        now: now,
-        snapshot: snapshot,
-        initialTab: initialTab,
-        openCourseName: openCourseName,
-        skipGate: skipGate,
-      ),
+      home: snapshot != null || skipGate
+          ? Shell(
+              now: now,
+              snapshot: snapshot,
+              initialTab: initialTab,
+              openCourseName: openCourseName,
+              skipGate: skipGate,
+            )
+          : LiveShell(
+              now: now,
+              initialTab: initialTab,
+              openCourseName: openCourseName,
+            ),
     );
   }
 }

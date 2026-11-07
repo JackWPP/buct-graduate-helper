@@ -178,6 +178,71 @@ class GradesPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final credits = snap.credits;
+    if (snap.grades.isNotEmpty) {
+      return Subpage(
+        title: '成绩单',
+        children: [
+          Text(
+            '共 ${snap.grades.length} 门课程。成绩以学校系统为准。',
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.5,
+              color: HuayanColors.sub,
+            ),
+          ),
+          const SizedBox(height: 10),
+          for (final grade in snap.grades)
+            Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: HuayanColors.card,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: HuayanColors.lineSoft),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          grade.courseName,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: HuayanColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          '${grade.termName} · ${formatNum(grade.credits)} 学分${grade.category.isEmpty ? '' : ' · ${grade.category}'}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: HuayanColors.sub,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    grade.score.isEmpty ? '—' : grade.score,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: grade.score.isEmpty
+                          ? HuayanColors.faint
+                          : HuayanColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      );
+    }
     return Subpage(
       title: '成绩单',
       children: [
@@ -236,46 +301,134 @@ class GradesPage extends StatelessWidget {
 }
 
 class ExamsPage extends StatelessWidget {
-  const ExamsPage({super.key, required this.count});
+  const ExamsPage({super.key, required this.count, this.items = const []});
 
   final int count;
+  final List<ExamItem> items;
 
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Subpage(
+        title: '考试',
+        children: [
+          Text(
+            count == 0 ? '考场和调课导出是空的，这里不编倒计时。' : '$count 条',
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: HuayanColors.sub,
+            ),
+          ),
+        ],
+      );
+    }
     return Subpage(
       title: '考试',
       children: [
-        Text(
-          count == 0 ? '考场和调课导出是空的，这里不编倒计时。' : '$count 条',
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.5,
-            color: HuayanColors.sub,
+        for (final exam in items)
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: HuayanColors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: HuayanColors.lineSoft),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  exam.courseName,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: HuayanColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    exam.date,
+                    exam.startTime,
+                    exam.room,
+                  ].where((value) => value.isNotEmpty).join(' · '),
+                  style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
+                ),
+                if (exam.seatNo.isNotEmpty)
+                  Text(
+                    '座位 ${exam.seatNo}${exam.seats == null ? '' : ' · ${exam.seats} 人考场'}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: HuayanColors.faint,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
 }
 
 class NoticesPage extends StatelessWidget {
-  const NoticesPage({super.key, required this.count});
+  const NoticesPage({super.key, required this.count, this.items = const []});
 
   final int count;
+  final List<NoticeItem> items;
 
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Subpage(
+        title: '通知',
+        children: [
+          Text(
+            count == 0 ? '通知列表还没有学校数据，这里保持空态。' : '$count 条',
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: HuayanColors.sub,
+            ),
+          ),
+        ],
+      );
+    }
     return Subpage(
       title: '通知',
       children: [
-        Text(
-          count == 0 ? '通知列表还没有学校数据，这里保持空态。' : '$count 条',
-          style: const TextStyle(
-            fontSize: 15,
-            height: 1.5,
-            color: HuayanColors.sub,
+        for (final notice in items)
+          Container(
+            margin: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: HuayanColors.card,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: HuayanColors.lineSoft),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  notice.title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: HuayanColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  [
+                    notice.department,
+                    notice.publisher,
+                    notice.publishedAt,
+                  ].where((value) => value.isNotEmpty).join(' · '),
+                  style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
+                ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }
@@ -393,17 +546,31 @@ class SelectedPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final credits = snap.credits;
+    final options = snap.selectionCourses;
     return Subpage(
-      title: '已选课程',
+      title: '选课',
       children: [
         Text(
-          '这里是选课结果${credits == null ? '' : '，共 ${formatNum(credits.selected)} 学分'}。选课三屏还没有设计，这版不能退课或代选。',
+          '这里是本学期选课结果${credits == null ? '' : '，共 ${formatNum(credits.selected)} 学分'}。这版只读，不能退课或代选。',
           style: const TextStyle(
             fontSize: 13,
             height: 1.5,
             color: HuayanColors.sub,
           ),
         ),
+        if (options.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          const Text(
+            '可选课程',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: HuayanColors.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final course in options) _SelectionLine(course: course),
+        ],
         const SizedBox(height: 12),
         if (snap.courses.isEmpty)
           const EmptyHint(title: '没有已选课程', text: '快照里没有课程。')
@@ -411,6 +578,66 @@ class SelectedPage extends StatelessWidget {
           for (final course in snap.courses)
             _CourseLine(course: course, onTap: () => onCourse(course)),
       ],
+    );
+  }
+}
+
+class _SelectionLine extends StatelessWidget {
+  const _SelectionLine({required this.course});
+
+  final SelectionCourse course;
+
+  @override
+  Widget build(BuildContext context) {
+    final status = course.selected
+        ? '已选'
+        : (course.selectable == 1
+              ? '已选'
+              : (course.selectable == 2 ? '可退选' : '可选'));
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      decoration: BoxDecoration(
+        color: HuayanColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: HuayanColors.lineSoft),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: HuayanColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    course.teacher,
+                    course.room,
+                    course.weeks,
+                  ].where((value) => value.isNotEmpty).join(' · '),
+                  style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            status,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: course.selected ? HuayanColors.ok : HuayanColors.faint,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -655,7 +882,7 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
         const Text(
-          '证件号、手机号、家庭住址、邮箱和密码没有放进这个演示版。',
+          '界面只读。证件号、手机号、家庭住址和邮箱不写入快照，也不保存密码。',
           style: TextStyle(
             fontSize: 12,
             height: 1.45,
@@ -675,6 +902,10 @@ class SettingsPage extends StatefulWidget {
     required this.now,
     required this.onChanged,
     required this.onLogout,
+    this.isLive = false,
+    this.onRefresh,
+    this.termCode,
+    this.onTermStart,
   });
 
   final Snapshot snap;
@@ -682,6 +913,10 @@ class SettingsPage extends StatefulWidget {
   final DateTime now;
   final VoidCallback onChanged;
   final VoidCallback onLogout;
+  final bool isLive;
+  final Future<bool> Function()? onRefresh;
+  final String? termCode;
+  final Future<void> Function(String firstMonday)? onTermStart;
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();
@@ -736,6 +971,26 @@ class _SettingsPageState extends State<SettingsPage> {
     if (ok == true) widget.onLogout();
   }
 
+  Future<void> _pickTermStart() async {
+    final callback = widget.onTermStart;
+    if (callback == null) return;
+    final current = DateTime.tryParse(widget.snap.termStart) ?? widget.now;
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: current,
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2035),
+      helpText: '选择本学期第 1 周周一',
+    );
+    if (picked == null) return;
+    final iso =
+        '${picked.year.toString().padLeft(4, '0')}-'
+        '${picked.month.toString().padLeft(2, '0')}-'
+        '${picked.day.toString().padLeft(2, '0')}';
+    await callback(iso);
+    if (context.mounted) _toast('学期开始日已保存');
+  }
+
   Future<void> _confirmReset() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -779,11 +1034,28 @@ class _SettingsPageState extends State<SettingsPage> {
                   Navigator.of(context)
                       .push(huayanRoute<void>(ProfilePage(student: student))),
             ),
-            const ListTile(
+            ListTile(
               contentPadding: EdgeInsets.zero,
-              title: Text('登录状态', style: TextStyle(fontSize: 15)),
-              subtitle: Text('这版直接读本机快照，没有学校登录会话。'),
+              title: const Text('登录状态', style: TextStyle(fontSize: 15)),
+              subtitle: Text(
+                widget.isLive
+                    ? '已登录学校系统，Cookie 存在系统安全存储。'
+                    : '这版直接读本机快照，没有学校登录会话。',
+              ),
             ),
+            if (widget.isLive && widget.onRefresh != null)
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: const Text('刷新学校数据'),
+                subtitle: const Text('课表、成绩、考试和通知都会重新拉取'),
+                trailing: const HuayanChevron(),
+                onTap: () async {
+                  final ok = await widget.onRefresh!();
+                  if (context.mounted) {
+                    _toast(ok ? '学校数据已刷新' : '刷新失败，请查看提示后重试');
+                  }
+                },
+              ),
             ListTile(
               key: const Key('logout-button'),
               contentPadding: EdgeInsets.zero,
@@ -834,6 +1106,19 @@ class _SettingsPageState extends State<SettingsPage> {
                     ? 'sun'
                     : 'mon',
               ),
+            ),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('学期第 1 周'),
+              subtitle: Text(
+                widget.snap.termStartKnown
+                    ? '已确认 · ${widget.snap.termStart}'
+                    : '按当前日期估算 · ${widget.snap.termStart}',
+              ),
+              trailing: widget.onTermStart == null
+                  ? null
+                  : const HuayanChevron(),
+              onTap: widget.onTermStart == null ? null : _pickTermStart,
             ),
             _SwitchRow(
               title: '显示非本周课程',
@@ -1249,7 +1534,7 @@ class SchoolPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 const Text(
-                  '这个演示版不会代持学校登录。打开后如果学校要求登录，需要你自己再登一次。',
+                  '学校页面会在系统浏览器里打开。应用不内嵌网页，也不把登录凭据交给浏览器；如果学校要求登录，需要你在浏览器里再登一次。',
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.55,

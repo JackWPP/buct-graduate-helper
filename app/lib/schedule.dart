@@ -169,6 +169,40 @@ class Course {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'className': className,
+    'code': code,
+    'credits': credits,
+    'hours': hours,
+    'teacher': teacher,
+    'room': room,
+    'campus': campus,
+    'online': online,
+    'ksz': ksz,
+    'jsz': jsz,
+    'pattern': pattern,
+    'enrolled': enrolled,
+    'sjms': sjms,
+    'category': category,
+    'degree': degree,
+    'weeks': weeks,
+    'segments': segments
+        .map(
+          (segment) => {
+            'weekday': segment.weekday,
+            'startName': segment.startName,
+            'endName': segment.endName,
+            'startPeriod': segment.startPeriod,
+            'endPeriod': segment.endPeriod,
+            'startTime': segment.startTime,
+            'endTime': segment.endTime,
+          },
+        )
+        .toList(),
+  };
+
   Course copyWith({List<int>? weeks, List<Segment>? segments}) {
     return Course(
       id: id,

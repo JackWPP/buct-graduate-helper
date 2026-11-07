@@ -13,6 +13,7 @@ class PrefsStore {
   static const onboardedKey = 'buct_onboarded';
   static const sidKey = 'buct_sid';
   static const settingsKey = 'buct_settings';
+  static const termStartPrefix = 'buct_term_start_';
 
   /// 小组件没接上时返回 null。Widget 测试因此直接进入首页。
   static Future<PrefsStore?> tryOpen() async {
@@ -33,6 +34,12 @@ class PrefsStore {
     if (value == null || value.isEmpty) return _prefs.remove(sidKey);
     return _prefs.setString(sidKey, value);
   }
+
+  String? termStart(String termCode) =>
+      _prefs.getString('$termStartPrefix$termCode');
+
+  Future<void> setTermStart(String termCode, String firstMonday) =>
+      _prefs.setString('$termStartPrefix$termCode', firstMonday);
 
   void apply(AppSettings settings) {
     final raw = _prefs.getString(settingsKey);

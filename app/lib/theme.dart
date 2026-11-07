@@ -44,7 +44,7 @@ Color parseHex(String hex) {
   return Color(int.parse('FF$value', radix: 16));
 }
 
-const appVersionLabel = '1.1.0';
+const appVersionLabel = '1.2.0';
 
 ThemeData huayanTheme({String? fontFamily}) {
   final family = fontFamily ?? 'Noto Sans SC';
