@@ -85,6 +85,21 @@ void main() {
     expect(restored.exams, 1);
   });
 
+  test('bundled snapshot exposes 49 service entries including notices', () {
+    final snap = Snapshot.fromJson(
+      jsonDecode(File('assets/snapshot.json').readAsStringSync())
+          as Map<String, dynamic>,
+    );
+    expect(
+      snap.services.fold<int>(0, (sum, group) => sum + group.items.length),
+      49,
+    );
+    final notices = snap.services
+        .expand((group) => group.items)
+        .singleWhere((item) => item.id == 'tzgg');
+    expect(notices.native, 'notices');
+  });
+
   test('snapshot cache round trips schema v2 in a temp directory', () async {
     final dir = await Directory.systemTemp.createTemp('huayan-cache-');
     addTearDown(() => dir.delete(recursive: true));
