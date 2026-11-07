@@ -7,6 +7,10 @@ class AppConfig {
     defaultValue: 'https://gmis.buct.edu.cn',
   );
 
+  /// 默认走学校网页版 VPN；设置 `--dart-define=DIRECT_GMIS=true` 可切回校内直连。
+  static const bool directGmis = bool.fromEnvironment('DIRECT_GMIS');
+  static const bool useWebVpnByDefault = !directGmis;
+
   static const Duration connectTimeout = Duration(seconds: 15);
   static const Duration receiveTimeout = Duration(seconds: 30);
 

@@ -24,6 +24,7 @@ import 'subpages.dart';
 import 'term_calendar.dart';
 import 'theme.dart';
 import 'timetable_page.dart';
+import 'webvpn/sso_login_page.dart';
 import 'webvpn/webvpn_login_page.dart';
 import 'webvpn/webvpn_session.dart';
 import 'widgets.dart';
@@ -50,6 +51,8 @@ class _LiveShellState extends State<LiveShell> {
   bool _guide = false;
   bool _sheetQueued = false;
   bool _reminded = false;
+  bool _needsWebVpnLogin = AppConfig.useWebVpnByDefault;
+  bool _usingWebVpn = false;
   String? _lastNotice;
 
   @override
@@ -80,6 +83,8 @@ class _LiveShellState extends State<LiveShell> {
       _store = store;
       _onboarded = store?.onboarded ?? false;
       _controller = controller;
+      _usingWebVpn = webVpnSession != null;
+      _needsWebVpnLogin = webVpnSession == null && AppConfig.useWebVpnByDefault;
     });
     await controller.bootstrap();
   }
@@ -114,6 +119,10 @@ class _LiveShellState extends State<LiveShell> {
       MaterialPageRoute(builder: (_) => const WebVpnLoginPage()),
     );
     if (session == null || !mounted) return;
+    await _acceptWebVpnSession(session);
+  }
+
+  Future<void> _acceptWebVpnSession(WebVpnSession session) async {
     final old = _controller;
     if (old != null) {
       old.removeListener(_onController);
@@ -122,6 +131,24 @@ class _LiveShellState extends State<LiveShell> {
     final controller = _createController(store: _store, webVpnSession: session);
     setState(() {
       _controller = controller;
+      _usingWebVpn = true;
+      _needsWebVpnLogin = false;
+      _lastNotice = null;
+    });
+    await controller.bootstrap();
+  }
+
+  Future<void> _useDirectLogin() async {
+    final old = _controller;
+    if (old != null) {
+      old.removeListener(_onController);
+      old.dispose();
+    }
+    final controller = _createController(store: _store);
+    setState(() {
+      _controller = controller;
+      _usingWebVpn = false;
+      _needsWebVpnLogin = false;
       _lastNotice = null;
     });
     await controller.bootstrap();
@@ -228,7 +255,10 @@ class _LiveShellState extends State<LiveShell> {
     await SecureSessionStore(key: SecureSessionStore.directKey).clear();
     await SecureSessionStore(key: SecureSessionStore.webVpnKey).clear();
     if (!mounted) return;
-    setState(() {});
+    setState(() {
+      _usingWebVpn = false;
+      _needsWebVpnLogin = AppConfig.useWebVpnByDefault;
+    });
   }
 
   void _openCourse(Course course, int week) {
@@ -395,6 +425,13 @@ class _LiveShellState extends State<LiveShell> {
         onSkip: _finishGuide,
       );
     }
+    if (_needsWebVpnLogin) {
+      return SsoLoginPage(
+        initialSid: _store?.sid ?? '',
+        onSuccess: _acceptWebVpnSession,
+        onDirect: _useDirectLogin,
+      );
+    }
     if (controller.phase == AppPhase.booting) {
       return _loading('正在恢复登录状态');
     }
@@ -409,6 +446,8 @@ class _LiveShellState extends State<LiveShell> {
         notice: controller.error,
         onSuccess: _login,
         onWebVpnLogin: _openWebVpnLogin,
+        description: _usingWebVpn ? '网页版 VPN 已连接，请登录研究生管理系统。' : null,
+        webVpnLabel: _usingWebVpn ? '重新登录网页版 VPN' : '校外访问：使用网页版 VPN 登录',
       );
     }
     if (controller.phase == AppPhase.signedOut ||
@@ -419,6 +458,8 @@ class _LiveShellState extends State<LiveShell> {
         notice: controller.error,
         onSuccess: _login,
         onWebVpnLogin: _openWebVpnLogin,
+        description: _usingWebVpn ? '网页版 VPN 已连接，请登录研究生管理系统。' : null,
+        webVpnLabel: _usingWebVpn ? '重新登录网页版 VPN' : '校外访问：使用网页版 VPN 登录',
       );
     }
     _queueSheet();

@@ -14,6 +14,9 @@ class LiveLoginPage extends StatefulWidget {
     this.notice,
     this.onSuccess,
     this.onWebVpnLogin,
+    this.allowWebVpn = true,
+    this.description,
+    this.webVpnLabel = '校外访问：使用网页版 VPN 登录',
   });
 
   final AppController controller;
@@ -21,6 +24,9 @@ class LiveLoginPage extends StatefulWidget {
   final String? notice;
   final void Function(String sid, bool remember)? onSuccess;
   final VoidCallback? onWebVpnLogin;
+  final bool allowWebVpn;
+  final String? description;
+  final String webVpnLabel;
 
   @override
   State<LiveLoginPage> createState() => _LiveLoginPageState();
@@ -150,9 +156,9 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
-              '用学号和教务密码进入。密码只用于本次登录，不保存在本机。',
-              style: TextStyle(
+            Text(
+              widget.description ?? '用学号和教务密码进入。密码只用于本次登录，不保存在本机。',
+              style: const TextStyle(
                 fontSize: 14,
                 height: 1.5,
                 color: HuayanColors.sub,
@@ -267,12 +273,13 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
                   : const Text('登录'),
             ),
             const SizedBox(height: 8),
-            TextButton.icon(
-              key: const Key('live-login-webvpn'),
-              onPressed: widget.onWebVpnLogin,
-              icon: const Icon(Icons.public, size: 18),
-              label: const Text('校外访问：使用网页版 VPN 登录'),
-            ),
+            if (widget.allowWebVpn && widget.onWebVpnLogin != null)
+              TextButton.icon(
+                key: const Key('live-login-webvpn'),
+                onPressed: widget.onWebVpnLogin,
+                icon: const Icon(Icons.public, size: 18),
+                label: Text(widget.webVpnLabel),
+              ),
             const SizedBox(height: 8),
             Wrap(
               crossAxisAlignment: WrapCrossAlignment.center,
