@@ -95,7 +95,7 @@ flutter analyze
 flutter build apk --debug
 ```
 
-debug APK 在 `app/build/app/outputs/flutter-apk/app-debug.apk`；release 构建与签名说明见 [开发与构建](docs/development.md)。
+debug APK 在 `app/build/app/outputs/flutter-apk/app-debug.apk`。
 
 ### 网页预览
 
@@ -111,25 +111,15 @@ cd web && python3 -m http.server 8899
 | --- | --- |
 | `app/` | Android/iOS Flutter 应用，项目主线 |
 | `web/` | 390px 可点击设计预览与网页回归参照 |
-| `tools/` | Python 版 GMIS 客户端和命令行工具 |
-| `data/` | 课表、成绩等测试/构建用学业数据样本 |
-| `docs/` | 产品、架构、开发、接口和发布文档 |
-| `research/` | 竞品调研、功能-API 矩阵和抓取快照 |
-| `design/` | 设计说明、导出稿和品牌标志 |
+| `docs/` | 对外文档、发布说明与视觉素材 |
 
-## 文档导航
+## 文档
 
 | 文档 | 内容 |
 | --- | --- |
 | [产品说明](docs/product.md) | 为什么做、给谁用、核心体验、页面地图、产品边界 |
-| [架构与数据流](docs/architecture.md) | App / 网页 / Python 三块关系、登录链路、缓存与会话 |
-| [开发与构建](docs/development.md) | 环境要求、Android/网页/Python 命令、测试、CI、目录结构、排障 |
-| [学校接口笔记](docs/gmis-notes.md) | GMIS 登录、WebVPN/SSO、课表、选课、成绩等接口注意事项 |
-| [路线图与限制](docs/roadmap.md) | 当前版本、已上线、下一步、已知限制、验证基线 |
 | [1.7.0 发布说明](docs/releases/v1.7.0.md) | 本版亮点、安装方式、验证情况、已知限制 |
-| [PRD](PRD.md) | 完整产品需求 |
-| [设计交接](design/02-handoff.md) | 页面结构、交互规则、设计前提 |
-| [文档导航](docs/README.md) | 全部文档入口 |
+| [视觉素材](docs/assets/README.md) | README 首图、Release 图、功能图与社媒海报 |
 
 ## 安全边界
 

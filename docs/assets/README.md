@@ -22,7 +22,7 @@
 - `banners/readme-hero.png` 是 README 首图；`features/*` 用于“核心体验”四宫格；`screenshots/real-ui-gallery.png` 用于“实际界面”。
 - GitHub Social preview 需要在仓库 Settings → Social preview 手动上传 `banners/github-social-preview.png`，不能只靠提交文件生效。
 - Release 图可以放在 Release 正文顶部，也可以作为发布附件；当前 `docs/releases/v1.7.0.md` 已引用。
-- 社媒海报可直接使用，也可以按 `poster-kit/` 的提示词重新生成其他尺寸。
+- 社媒海报可直接使用，也可以按本地海报工具包里的提示词重新生成其他尺寸。
 
 ## 注意
 

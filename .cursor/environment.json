@@ -1,4 +1,0 @@
-{
-  "install": "python3 -m pip install --user -r requirements.txt",
-  "start": "cd web && exec python3 -m http.server 8899 --bind 0.0.0.0"
-}
