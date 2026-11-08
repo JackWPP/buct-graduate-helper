@@ -11,7 +11,7 @@
 <p align="center">
   <img alt="Android" src="https://img.shields.io/badge/Android-Mainline-2F6BFF?style=flat-square">
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square">
-  <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Real%20Data-12A05C?style=flat-square">
+  <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Native-12A05C?style=flat-square">
   <img alt="Services" src="https://img.shields.io/badge/Services-49-7C5CFF?style=flat-square">
   <img alt="Version" src="https://img.shields.io/badge/Version-1.7.0-555?style=flat-square">
 </p>
@@ -33,7 +33,7 @@
 - **打开就看今天**：首页直接显示当前教学周、今日课程、下一节课、评教提醒和培养进度。
 - **课表像手机应用，不像网页**：周视图、左右滑换周、长课名折行、课程详情、提醒、ICS 分享。
 - **49 项服务一个入口**：搜索、分组筛选，点开即用，不跳系统浏览器。
-- **真实数据，真能登录**：默认网页版 VPN + 原生统一身份认证（含短信二次认证）；SSO 成功后学号/密码只在内存中带入 GMIS 登录页，只补图形验证码。
+- **原生体验，真能登录**：默认网页版 VPN + 原生统一身份认证（含短信二次认证）；SSO 成功后学号/密码只在内存中带入 GMIS 登录页，只补图形验证码。
 - **校外也能访问**：默认走学校网页版 VPN，统一身份认证在应用内完成，不需要额外打开浏览器。
 - **选课可以直接完成**：二次确认 + 选课验证码，提交后刷新课表与学分。
 - **学术报告 / 劳动实践不再错过**：可报名活动、我的报名、活动详情、报名/取消和独立验证码；登录后自动监测新活动，报名开始/截止前发本地提醒。
