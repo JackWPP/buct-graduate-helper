@@ -111,13 +111,15 @@ cd web && python3 -m http.server 8899
 | --- | --- |
 | `app/` | Android/iOS Flutter 应用，项目主线 |
 | `web/` | 390px 可点击设计预览与网页回归参照 |
-| `docs/` | 对外文档、发布说明与视觉素材 |
+| `docs/` | 产品、架构、开发、发布文档与视觉素材 |
 
 ## 文档
 
 | 文档 | 内容 |
 | --- | --- |
 | [产品说明](docs/product.md) | 为什么做、给谁用、核心体验、页面地图、产品边界 |
+| [架构说明](docs/architecture.md) | Android 主线、登录链路、缓存会话与安全边界 |
+| [开发与构建](docs/development.md) | 环境要求、Android/网页构建、测试与常见问题 |
 | [1.7.0 发布说明](docs/releases/v1.7.0.md) | 本版亮点、安装方式、验证情况、已知限制 |
 | [视觉素材](docs/assets/README.md) | README 首图、Release 图、功能图与社媒海报 |
 
