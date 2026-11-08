@@ -1,11 +1,11 @@
 <p align="center">
-  <img src="design/brand/icon-256.png" width="96" alt="化研助手标志：蓝底圆角方块中的苯环，环内是三节不同颜色的课">
+  <img src="docs/assets/banners/readme-hero.png" alt="化研助手：课表随手查，学术报告与劳动实践提醒报名，内置 WebVPN 桥接" width="100%">
 </p>
 
-<h1 align="center">化研助手</h1>
-
 <p align="center">
-  把北化研究生的课表、成绩、培养进度和 49 项办事入口，收进一部手机。
+  <strong>化研助手</strong> · 北化研究生 · 学生自建
+  <br>
+  把研究生事务，装进一个 App。
 </p>
 
 <p align="center">
@@ -26,36 +26,35 @@
 
 ---
 
-## 一分钟了解
+## 为什么做化研助手？
 
-化研助手是北京化工大学研究生管理系统的移动增强层。它不重做学校系统，而是把每天要看的课表、成绩、考试、通知和办事入口整理成一部更顺手的手机应用。
+研究生常用服务往往分散在多个网页里，手机上反复寻找、切换入口不够方便；部分场景还需要通过校园网或 WebVPN 访问。化研助手是北京化工大学研究生管理系统的移动增强层，它不重做学校系统，而是把每天要看的课表、成绩、考试、通知和办事入口整理成一部更顺手的手机应用。
 
 - **打开就看今天**：首页直接显示当前教学周、今日课程、下一节课、评教提醒和培养进度。
 - **课表像手机应用，不像网页**：周视图、左右滑换周、长课名折行、课程详情、提醒、ICS 分享。
 - **49 项服务一个入口**：搜索、分组筛选，点开即用，不跳系统浏览器。
 - **真实数据，真能登录**：默认网页版 VPN + 原生统一身份认证（含短信二次认证）；SSO 成功后学号/密码只在内存中带入 GMIS 登录页，只补图形验证码。
+- **校外也能访问**：默认走学校网页版 VPN，统一身份认证在应用内完成，不需要额外打开浏览器。
 - **选课可以直接完成**：二次确认 + 选课验证码，提交后刷新课表与学分。
 - **学术报告 / 劳动实践不再错过**：可报名活动、我的报名、活动详情、报名/取消和独立验证码；登录后自动监测新活动，报名开始/截止前发本地提醒。
 
-## 界面
+## 核心体验
 
 <table>
   <tr>
-    <td align="center"><img src="docs/images/home.jpg" width="220" alt="Android 首页：今日课程、快捷入口、评教提醒和培养进度"></td>
-    <td align="center"><img src="docs/images/timetable.jpg" width="220" alt="Android 课表：第 10 周，长课名折行"></td>
-    <td align="center"><img src="docs/images/services.jpg" width="220" alt="Android 服务：49 项服务扁平目录"></td>
+    <td width="50%"><img src="docs/assets/features/01-timetable.png" alt="课表：课程名称、时间与教室直接在 App 里查看"></td>
+    <td width="50%"><img src="docs/assets/features/02-activity-reminder-signup.png" alt="学术报告与劳动实践：自动监测、提醒和 App 内报名"></td>
   </tr>
   <tr>
-    <td align="center">首页：今天要做什么</td>
-    <td align="center">课表：一周一张表</td>
-    <td align="center">服务：49 项一个入口</td>
+    <td width="50%"><img src="docs/assets/features/03-webvpn-bridge.png" alt="内置 WebVPN 桥接，校外网络也能访问"></td>
+    <td width="50%"><img src="docs/assets/features/04-services.png" alt="49 项研究生服务，一个入口"></td>
   </tr>
 </table>
 
+## 实际界面
+
 <p align="center">
-  <img src="docs/images/webvpn.jpg" width="220" alt="Android 网页版 VPN 原生统一身份认证登录页">
-  <br>
-  <sub>默认通过学校网页版 VPN，统一身份认证在应用内完成</sub>
+  <img src="docs/assets/screenshots/real-ui-gallery.png" alt="化研助手实际界面：首页、周课表、服务目录" width="100%">
 </p>
 
 ## 现在能做什么
