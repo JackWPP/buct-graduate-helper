@@ -31,12 +31,15 @@ dependencies:
   dio: ^5.11.1
   flutter:
     sdk: flutter
+  flutter_local_notifications: ^22.3.3
   flutter_secure_storage: ^11.2.0
   flutter_svg: ^2.3.2
+  flutter_timezone: ^5.1.1
   path_provider: ^2.1.6
   pointycastle: ^4.0.0
   share_plus: ^13.3.1
   shared_preferences: ^2.5.6
+  timezone: ^0.11.2
   webview_flutter: ^4.14.1
 
 dev_dependencies:

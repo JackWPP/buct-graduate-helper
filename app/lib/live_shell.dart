@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'academics_page.dart';
+import 'activities/activity_models.dart';
+import 'activity_page.dart';
+import 'activities/activity_monitor.dart';
 import 'app_controller.dart';
 import 'auth/auth_gateway.dart';
 import 'auth/login_flow.dart';
@@ -74,7 +77,12 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      ActivityMonitor.instance.pause();
+    }
     if (state != AppLifecycleState.resumed) return;
+    ActivityMonitor.instance.resume();
     final controller = _controller;
     if (controller == null || controller.phase != AppPhase.ready) return;
     final last = _lastResumeRefresh;
@@ -232,7 +240,13 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     if (controller.phase == AppPhase.sessionExpired) {
       _flow.recordTab(_tab);
     }
-    if (controller.phase == AppPhase.ready) _scheduleRemind();
+    if (controller.phase == AppPhase.ready) {
+      ActivityMonitor.instance.start(
+        controller.api,
+        onSessionExpired: _handleSessionExpired,
+      );
+      _scheduleRemind();
+    }
   }
 
   void _setTab(int index) {
@@ -316,6 +330,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   }
 
   Future<void> _logout() async {
+    ActivityMonitor.instance.stop();
     Navigator.of(context).popUntil((route) => route.isFirst);
     await _controller?.logout();
     await SecureSessionStore(key: SecureSessionStore.directKey).clear();
@@ -333,6 +348,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
 
   /// 会话过期时保留课表和当前 Tab，只清 GMIS 会话。
   Future<void> _handleSessionExpired() async {
+    ActivityMonitor.instance.stop();
     final controller = _controller;
     if (controller == null) return;
     _flow.recordTab(_tab);
@@ -343,6 +359,57 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       _needsWebVpnLogin = _usingWebVpn ? false : AppConfig.useWebVpnByDefault;
       _lastNotice = null;
     });
+  }
+
+  Future<void> _openActivities() async {
+    final api = _controller?.api;
+    if (api == null) return;
+    final kind = await showModalBottomSheet<ActivityKind>(
+      context: context,
+      backgroundColor: HuayanColors.card,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 8),
+            ListTile(
+              leading: const Icon(
+                Icons.flag_outlined,
+                color: HuayanColors.blue,
+              ),
+              title: const Text('学术报告'),
+              subtitle: const Text('可报名活动、我的报名和自动提醒'),
+              onTap: () =>
+                  Navigator.of(context).pop(ActivityKind.academicReport),
+            ),
+            ListTile(
+              leading: const Icon(
+                Icons.volunteer_activism_outlined,
+                color: HuayanColors.amberInk,
+              ),
+              title: const Text('劳动实践'),
+              subtitle: const Text('抢实践、累计劳动小时和自动提醒'),
+              onTap: () =>
+                  Navigator.of(context).pop(ActivityKind.laborPractice),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (kind == null || !mounted) return;
+    final controller = _controller;
+    if (controller == null) return;
+    _push(
+      ActivityPage(
+        kind: kind,
+        dataSource: api,
+        onSessionExpired: _handleSessionExpired,
+      ),
+    );
   }
 
   void _openCourse(Course course, int week) {
@@ -597,6 +664,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
                     onExams: () => _push(
                       ExamsPage(count: snap.exams, items: snap.examItems),
                     ),
+                    onActivities: _openActivities,
                     onSelected: () => _push(
                       SelectedPage(
                         snap: snap,

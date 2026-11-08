@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import '../activities/activity_models.dart';
 import 'gmis_client.dart';
 import 'gmis_exception.dart';
 
@@ -79,7 +80,7 @@ class SelectionResult {
 }
 
 /// GMIS 业务接口封装。只做请求和 JSON 形状校验，不负责页面模型。
-class GmisApi {
+class GmisApi implements ActivityDataSource {
   const GmisApi(this._client);
 
   final GmisClient _client;
@@ -323,6 +324,98 @@ class GmisApi {
       rethrow;
     } on GmisException {
       return _asList(await rawGet(path, query: form));
+    }
+  }
+
+  /// 学术报告/劳动实践的可报名列表。页面脚本用 POST；部分部署对 GET
+  /// 也做了兼容，失败时回退，避免一个方法写死请求方式。
+  @override
+  Future<List<ActivityItem>> activityAvailable(ActivityKind kind) async {
+    final rows = await _activityRows(kind.availablePath);
+    return rows
+        .map((row) => ActivityItem.fromJson(row, kind: kind, applied: false))
+        .toList();
+  }
+
+  @override
+  Future<List<ActivityItem>> activityApplied(ActivityKind kind) async {
+    final rows = await _activityRows(kind.appliedPath);
+    return rows
+        .map((row) => ActivityItem.fromJson(row, kind: kind, applied: true))
+        .toList();
+  }
+
+  /// 劳动实践累计小时。学校返回 `{zt:'1', hdzsc: '12.5'}`。
+  @override
+  Future<double> laborPracticeHours() async {
+    final value = _asMap(await _client.postJson('/student/yggl/getldsjzsc'));
+    final raw = '${value['hdzsc'] ?? ''}'.trim();
+    return double.tryParse(raw) ?? 0;
+  }
+
+  /// 学术报告报名前预检；`sign=0` 表示当前不在报名时间内。
+  @override
+  Future<bool> canApplyAcademicReport(String id) async {
+    final value = _asMap(
+      await _client.getJson('/student/yggl/xshdbm_sfkysq', query: {'id': id}),
+    );
+    final sign = '${value['sign'] ?? ''}'.trim();
+    return sign != '0';
+  }
+
+  @override
+  Future<Uint8List> activityCaptcha() => _client.fetchActivityCaptcha();
+
+  /// 学术报告/劳动实践共用报名接口；`VeriCode` 是独立的活动验证码。
+  @override
+  Future<ActivitySignResult> registerActivity({
+    required String id,
+    required String captcha,
+  }) async {
+    final value = _asMap(
+      await _client.postJson(
+        '/student/yggl/xshdbm_bm',
+        form: {'id': id, 'VeriCode': captcha.trim()},
+      ),
+    );
+    final message = '${value['msg'] ?? ''}'.trim();
+    final sign = '${value['sign'] ?? ''}'.trim();
+    final zt = '${value['zt'] ?? ''}'.trim();
+    final ok = message.isEmpty && (zt == '1' || (zt.isEmpty && sign.isEmpty));
+    if (ok) return const ActivitySignResult(ok: true, message: '');
+    if (message.isNotEmpty) {
+      return ActivitySignResult(ok: false, message: message);
+    }
+    if (sign == '-1') {
+      return const ActivitySignResult(ok: false, message: '不在报名时间内，请刷新活动列表。');
+    }
+    return const ActivitySignResult(ok: false, message: '学校没有返回报名结果，请刷新后查看。');
+  }
+
+  @override
+  Future<ActivitySignResult> cancelActivity({
+    required ActivityKind kind,
+    required String applicationId,
+  }) async {
+    final value = _asMap(
+      await _client.postJson(kind.cancelPath, form: {'hdid': applicationId}),
+    );
+    final message = '${value['msg'] ?? ''}'.trim();
+    final sign = '${value['sign'] ?? ''}'.trim();
+    final zt = '${value['zt'] ?? ''}'.trim();
+    final ok =
+        message.isEmpty &&
+        (zt == '1' || sign == '1' || (zt.isEmpty && sign.isEmpty));
+    return ActivitySignResult(ok: ok, message: message);
+  }
+
+  Future<List<Map<String, dynamic>>> _activityRows(String path) async {
+    try {
+      return _asList(await _client.postJson(path));
+    } on GmisAuthException {
+      rethrow;
+    } on GmisException {
+      return _asList(await _client.getJson(path));
     }
   }
 

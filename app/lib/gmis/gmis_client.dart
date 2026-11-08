@@ -83,6 +83,56 @@ class GmisClient implements AuthGateway {
     return bytes;
   }
 
+  /// 学术报告/劳动实践报名页的验证码。页面脚本引用的相对路径是
+  /// `/student/yggl/VerificationCode`，旧版入口则用 `/Home/VerificationCode`；
+  /// 两个路径在不同部署上可能只启用其中一个，按顺序回退。
+  Future<Uint8List> fetchActivityCaptcha() async {
+    final paths = <String>[
+      '/student/yggl/VerificationCode',
+      '/Home/VerificationCode',
+      '/home/verificationcode',
+    ];
+    for (final path in paths) {
+      try {
+        final response = await _send(
+          GmisRequest(
+            method: 'GET',
+            path: path,
+            query: {'t': '${DateTime.now().millisecondsSinceEpoch}'},
+            headers: {'Referer': '$_baseUrl/student/yggl/xshdbm'},
+            asBytes: true,
+          ),
+        );
+        final bytes = response.bytes;
+        if (bytes != null && _looksLikeImage(bytes)) return bytes;
+      } on GmisApiException {
+        // 换下一个兼容路径。
+      }
+    }
+    throw const GmisApiException('活动报名验证码加载失败，请稍后重试');
+  }
+
+  bool _looksLikeImage(Uint8List bytes) {
+    if (bytes.length < 4) return false;
+    // PNG / JPEG / GIF / WEBP 的常见文件头。
+    if (bytes[0] == 0x89 &&
+        bytes[1] == 0x50 &&
+        bytes[2] == 0x4E &&
+        bytes[3] == 0x47) {
+      return true;
+    }
+    if (bytes[0] == 0xFF && bytes[1] == 0xD8) return true;
+    if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) return true;
+    if (bytes.length >= 12 &&
+        bytes[0] == 0x52 &&
+        bytes[1] == 0x49 &&
+        bytes[2] == 0x46 &&
+        bytes[3] == 0x46) {
+      return true;
+    }
+    return false;
+  }
+
   @override
   Future<AuthSession> login({
     required String userId,

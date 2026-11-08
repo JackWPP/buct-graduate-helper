@@ -19,6 +19,7 @@ class HomePage extends StatelessWidget {
     required this.onGrades,
     required this.onExams,
     required this.onSelected,
+    this.onActivities,
     this.onRefresh,
     this.lastRefreshedAt,
     this.offline = false,
@@ -33,6 +34,7 @@ class HomePage extends StatelessWidget {
   final VoidCallback onGrades;
   final VoidCallback onExams;
   final VoidCallback onSelected;
+  final VoidCallback? onActivities;
   final Future<void> Function()? onRefresh;
   final DateTime? lastRefreshedAt;
   final bool offline;
@@ -99,6 +101,7 @@ class HomePage extends StatelessWidget {
             ),
           ),
         _HeroCard(now: now, hero: hero, items: day.items, onCourse: onCourse),
+        if (onActivities != null) _ActivityEntry(onTap: onActivities!),
         const SizedBox(height: 4),
         _QuickActions(
           onGrades: onGrades,
@@ -230,6 +233,62 @@ int? _daysUntil(String date) {
   final today = DateTime(now.year, now.month, now.day);
   final day = DateTime(parsed.year, parsed.month, parsed.day);
   return day.difference(today).inDays;
+}
+
+class _ActivityEntry extends StatelessWidget {
+  const _ActivityEntry({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: HuayanCard(
+        key: const Key('home-activities'),
+        onTap: onTap,
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: HuayanColors.amberSoft,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Icon(
+                Icons.event_available_outlined,
+                color: HuayanColors.amberInk,
+                size: 23,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '活动报名',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: HuayanColors.ink,
+                    ),
+                  ),
+                  SizedBox(height: 3),
+                  Text(
+                    '学术报告 · 劳动实践 · 自动监测',
+                    style: TextStyle(fontSize: 12, color: HuayanColors.sub),
+                  ),
+                ],
+              ),
+            ),
+            const HuayanChevron(),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _QuickActions extends StatelessWidget {

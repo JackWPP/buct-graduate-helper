@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'activities/activity_models.dart';
+import 'activity_page.dart';
 import 'gmis/gmis_api.dart';
 import 'icons.dart';
 import 'remote_pages.dart';
@@ -204,11 +206,12 @@ class NativeServicePage extends StatelessWidget {
           onSessionExpired: onSessionExpired,
         );
       case 'xshdbm':
-        return RemoteListPage(
-          title: item.name,
-          intro: '可以报名的学术报告。',
-          load: () => api.rawListGet('/student/yggl/xshdbm_cklist'),
-          onSessionExpired: onSessionExpired,
+        return ActivityPage(
+          kind: ActivityKind.academicReport,
+          dataSource: api,
+          onSessionExpired: onSessionExpired == null
+              ? null
+              : () async => onSessionExpired!(),
         );
       case 'xwsxsq':
         return RemoteListPage(
@@ -218,11 +221,12 @@ class NativeServicePage extends StatelessWidget {
           onSessionExpired: onSessionExpired,
         );
       case 'zyzfwbm':
-        return RemoteListPage(
-          title: item.name,
-          intro: '劳动实践项目。',
-          load: () => api.rawListGet('/student/yggl/zyzfwbm_cklist'),
-          onSessionExpired: onSessionExpired,
+        return ActivityPage(
+          kind: ActivityKind.laborPractice,
+          dataSource: api,
+          onSessionExpired: onSessionExpired == null
+              ? null
+              : () async => onSessionExpired!(),
         );
       case 'tyydbm':
         return RemoteListPage(

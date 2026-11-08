@@ -53,6 +53,17 @@
 - 通知列表：`GET /student/grgl/tzgg_list`，参数 `page, rows, bt, ksrq, jsrq`
 - 通知详情可由系统浏览器或原生页承载；化研助手优先原生列表，详情页按接口能力扩展
 
+## 学术报告 / 劳动实践
+
+- 学术报告可报名列表：`POST /student/yggl/xshdbm_sqlist`；我的报名：`POST /student/yggl/xshdbm_cklist`
+- 学术报告报名前预检：`GET /student/yggl/xshdbm_sfkysq?id=`，`sign=0` 表示不在报名时间
+- 劳动实践可报名列表：`POST /student/yggl/zyzfwbm_sqlist`；我的报名：`POST /student/yggl/zyzfwbm_cklist`
+- 劳动实践累计小时：`POST /student/yggl/getldsjzsc`，返回 `{zt:'1', hdzsc}`
+- 报名：`POST /student/yggl/xshdbm_bm`，表单 `{id, VeriCode}`；学术报告和劳动实践共用
+- 取消：学术报告 `POST /student/yggl/xshdbm_del` `{hdid}`；劳动实践 `POST /student/yggl/ldsjbm_del` `{hdid}`
+- 活动验证码是独立的 `VeriCode` 图片；优先 `/student/yggl/VerificationCode`，兼容 `/Home/VerificationCode`
+- 列表字段：`rs` 容量、`bmrs` 已报名、`bmkssj/bmjzsj` 报名时间、`kssj/jzsj` 活动时间、`hdsc` 时长、`shbj` 审核状态
+
 ## 其他约定
 
 - 业务接口正文是 JSON，`Content-Type` 常是 `text/html`，按文本解析

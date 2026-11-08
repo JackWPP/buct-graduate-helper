@@ -15,7 +15,8 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 - `app/lib/gmis/live_snapshot_builder.dart` 把多个接口装配成 `Snapshot`（schemaVersion=2）；`AppController` 管理 `booting/signedOut/restoring/ready/offline/sessionExpired` 状态和缓存。课表来自 `py_kbcx_yw`，已选课列表也来自这里；成绩、通知、考试、选课列表分别进详情页。
 - 缓存：`SnapshotCache` 写 `app` 支持目录；`SecureSessionStore` 存会话。没有登录会话时不展示缓存，避免泄露课表。
 - 学期第 1 周：`TermCalendar` 内置 55 学期 = 2026-08-31；未知学期会提示周次可能不准，用户本机补充过的值优先。
-- 选课可以在应用内提交：`app/lib/selection_page.dart` 读当前选课窗口的课程列表，选课/退课都要先二次确认，再输入独立的选课验证码（`xkyzm`），提交成功后刷新课表与学分；失败原因归一化成满员/冲突/不在窗口/门数/已选五类提示。通知没有后台调度，只有前台 SnackBar；深色模式仍是浅色。
+- 选课可以在应用内提交：`app/lib/selection_page.dart` 读当前选课窗口的课程列表，选课/退课都要先二次确认，再输入独立的选课验证码（`xkyzm`），提交成功后刷新课表与学分；失败原因归一化成满员/冲突/不在窗口/门数/已选五类提示。
+- 学术报告 / 劳动实践在 `app/lib/activity_page.dart`：可报名、我的报名、详情、报名/取消、独立 `VeriCode` 验证码；`ActivityMonitor` 登录后每 30 秒轮询可报名列表，发现新活动发本地通知和全局提示；`ActivityNotificationService` 为报名开始/截止/活动开始安排本地通知。当前监测只在应用进程运行期间有效，系统级后台常驻尚未实现；深色模式仍是浅色。
 - 全原生改造进行中：`app/lib/academics_page.dart`、`app/lib/services_page.dart`、`app/lib/native_service_page.dart`、`app/lib/remote_pages.dart` 已加入；已接入 5 Tab、49 项服务扁平目录和一批只读远程页。
 - `app/assets/snapshot.json` 只用于组件测试、截图和旧演示路径（`HuayanApp(snapshot: ...)` / `skipGate`），不是默认启动数据。
 
@@ -25,9 +26,9 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 
 ## 下一轮按这个顺序
 
-1. 真机联调 M0：在校园网或网页版 VPN 下登录真实账号，确认验证码、课表、成绩、通知、考试列表、刷新、退出和会话过期重登；修复接口字段与真实返回不一致的地方。
+1. 真机联调 M0：在校园网或网页版 VPN 下登录真实账号，确认验证码、课表、成绩、通知、考试列表、活动报名、刷新、退出和会话过期重登；修复接口字段与真实返回不一致的地方。
 2. 选课筛选（院系/星期/节次/学位课）与选课结果三屏细化、考试倒计时、真实通知详情页；设计稿没画完之前不要编数据。选课提交必须保留二次确认和验证码。
-3. 后台提醒：现在只有前台提示；接 `flutter_local_notifications` 前先做权限申请与通知设置页。
+3. 活动监测目前只在前台运行；补系统后台任务、通知设置页和免打扰规则，并验证真实活动字段/验证码。
 4. Android release 换正式签名密钥；iOS 包要在 macOS 上用 Xcode 打。
 5. 深色模式设计写了跟随系统，网页预览和 Android 版都还没做。
 
@@ -47,7 +48,7 @@ flutter build apk --debug
 flutter build apk --release
 ```
 
-`flutter test` 目前包含课表规则、登录门禁、真实适配层的公钥解析/RSA 密文/会话恢复、快照 v2 与缓存、Demo 网关测试。改课表计算后同时跑两边规则：
+`flutter test` 目前包含课表规则、登录门禁、真实适配层的公钥解析/RSA 密文/会话恢复、快照 v2 与缓存、活动模型/页面测试、Demo 网关测试。改课表计算后同时跑两边规则：
 
 ```bash
 node --test web/js/schedule.test.mjs
