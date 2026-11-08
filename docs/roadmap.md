@@ -2,7 +2,7 @@
 
 ## 当前版本
 
-- 版本：`1.6.0+7`
+- 版本：`1.7.0+8`
 - 平台：Android 主线；iOS 共用 Flutter 代码但尚未出包
 - 信息架构：5 Tab（首页 / 课表 / 学业 / 服务 / 我的）
 - 服务入口：49 项，全原生扁平目录
@@ -45,5 +45,5 @@
 
 - `flutter test`：62 个测试通过
 - `flutter analyze`：无问题
-- `flutter build apk --release`：成功，约 59.8 MB，versionName 1.6.0 / versionCode 7
+- `flutter build apk --release`：成功，约 59.8 MB，versionName 1.7.0 / versionCode 8
 - 模拟器：Android 16 `emulator-5554`，真实账号登录、5 Tab、49 项服务、重启会话恢复已确认

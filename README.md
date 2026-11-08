@@ -13,7 +13,7 @@
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square">
   <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Real%20Data-12A05C?style=flat-square">
   <img alt="Services" src="https://img.shields.io/badge/Services-49-7C5CFF?style=flat-square">
-  <img alt="Version" src="https://img.shields.io/badge/Version-1.6.0-555?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/Version-1.7.0-555?style=flat-square">
 </p>
 
 <p align="center">
@@ -76,7 +76,7 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `1.6.0+7` |
+| 当前版本 | `1.7.0+8` |
 | 主线 | Android / Flutter；iOS 共用代码，尚未出包 |
 | 业务页面 | 全原生；WebView 仅保留为 WebVPN 认证页兜底 |
 | 登录 | 网页版 VPN + 原生统一身份认证（含短信 2FA）+ GMIS 验证码（SSO 凭据仅内存预填） |
@@ -127,7 +127,7 @@ cd web && python3 -m http.server 8899
 | [开发与构建](docs/development.md) | 环境要求、Android/网页/Python 命令、测试、CI、目录结构、排障 |
 | [学校接口笔记](docs/gmis-notes.md) | GMIS 登录、WebVPN/SSO、课表、选课、成绩等接口注意事项 |
 | [路线图与限制](docs/roadmap.md) | 当前版本、已上线、下一步、已知限制、验证基线 |
-| [1.6.0 发布说明](docs/releases/v1.6.0.md) | 本版亮点、安装方式、验证情况、已知限制 |
+| [1.7.0 发布说明](docs/releases/v1.7.0.md) | 本版亮点、安装方式、验证情况、已知限制 |
 | [PRD](PRD.md) | 完整产品需求 |
 | [设计交接](design/02-handoff.md) | 页面结构、交互规则、设计前提 |
 | [文档导航](docs/README.md) | 全部文档入口 |

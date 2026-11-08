@@ -22,7 +22,7 @@ Android 版（Flutter）已经接入真实 GMIS 数据通路：
 
 网页预览仍是设计参照：`web/data/snapshot.json` 来自 2026-10-30 课表导出；`tools/gmis_cli.py login` 用学校验证码图，密码只从 `GMIS_PASSWORD` 或交互输入读取，Cookie 写进被忽略的 `cookies.json`。`tools/gmis_cli.py timetable` 把只读课表写到被忽略的 `web/data/live.json`，预览优先读它。Python 只读导出不再服务 Android 默认数据通路。
 
-验证记录（2026-11-07）：`M531DA`（Android 17）已安装过 1.2.0 release 包；1.6.0（versionCode 7）在 `emulator-5554`（Android 16）用真实账号完成网页版 VPN → 原生统一身份认证（含短信二次认证）→ GMIS 验证码登录，首页/课表/学业/服务/我的均已加载真实数据（第 10 周、28/40 学分、14 门待评、49 项服务）。`gmis.buct.edu.cn` 在校外无法解析，默认走 `w.buct.edu.cn`；真机仍需复核刷新、退出和会话过期重登。
+验证记录（2026-11-08）：当前版本 `1.7.0+8`。`M531DA`（Android 17）已安装过 1.2.0 release 包；1.6.0（versionCode 7）在 `emulator-5554`（Android 16）用真实账号完成网页版 VPN → 原生统一身份认证（含短信二次认证）→ GMIS 验证码登录，首页/课表/学业/服务/我的均已加载真实数据（第 10 周、28/40 学分、14 门待评、49 项服务）。`gmis.buct.edu.cn` 在校外无法解析，默认走 `w.buct.edu.cn`；真机仍需复核刷新、退出和会话过期重登。
 
 ## 下一轮按这个顺序
 
