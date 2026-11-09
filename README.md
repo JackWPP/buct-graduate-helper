@@ -14,6 +14,7 @@
   <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Native-12A05C?style=flat-square">
   <img alt="Services" src="https://img.shields.io/badge/Services-49-7C5CFF?style=flat-square">
   <img alt="Version" src="https://img.shields.io/badge/Version-1.7.0-555?style=flat-square">
+  <a href="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml/badge.svg?branch=main"></a>
 </p>
 
 <p align="center">
