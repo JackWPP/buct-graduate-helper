@@ -91,7 +91,9 @@ ActivityItem _item({
   int capacity = 50,
   int enrolled = 12,
 }) {
-  final now = DateTime(2026, 11, 8, 15);
+  // 报名窗口相对当前时间生成：固定日期一旦过期，依赖真实时钟的页面
+  // 会把“立即报名”按钮置灰，测试就会随运行日期变成红的。
+  final now = DateTime.now();
   return ActivityItem(
     kind: ActivityKind.academicReport,
     id: id,
