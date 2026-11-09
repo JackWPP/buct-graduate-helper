@@ -21,11 +21,30 @@ final _pngBytes = Uint8List.fromList(
 
 class _FakeTransport implements GmisTransport {
   final submitted = <Map<String, String>?>[];
+  final courseQueries = <Map<String, String>>[];
 
   @override
   Future<GmisResponse> send(GmisRequest request) async {
     switch (request.path) {
+      case '/student/pygl/xswsxk_kb_load':
+        return GmisResponse(
+          statusCode: 200,
+          headers: const {},
+          body: jsonEncode({
+            'yx': [
+              {'xsbh': '001', 'xsmc': '化学工程学院'},
+              {'xsbh': '002', 'xsmc': '材料科学与工程学院'},
+            ],
+            'jc': [
+              {'id': 41, 'mc': '上午1'},
+              {'id': 42, 'mc': '上午2'},
+              {'id': 46, 'mc': '下午6'},
+              {'id': 50, 'mc': '晚上10'},
+            ],
+          }),
+        );
       case '/student/pygl/xswsxk_kb_list':
+        courseQueries.add(request.form ?? const <String, String>{});
         return GmisResponse(
           statusCode: 200,
           headers: const {},
@@ -50,6 +69,7 @@ class _FakeTransport implements GmisTransport {
                 'bjmc': '数值分析B班',
                 'rkjsxm': '常延贞',
                 'kcxf': '3',
+                'sjms': '星期二 上午1-上午2',
                 'xkrs': '40',
                 'rnrs': '40',
                 'yxkc': '2',
@@ -163,5 +183,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(transport.submitted, isEmpty);
+  });
+
+  testWidgets('selection filters by department and period', (tester) async {
+    final transport = _FakeTransport();
+    final api = GmisApi(GmisClient(transport: transport));
+    await tester.pumpWidget(_wrap(api, _snapshot()));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('selection-filter-院系-001')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('selection-filter-院系-001')));
+    await tester.pumpAndSettle();
+    expect(transport.courseQueries.last['yxsh'], '001');
+
+    await tester.tap(find.byKey(const Key('selection-filter-节次-下午')));
+    await tester.pumpAndSettle();
+    expect(find.text('催化化学'), findsOneWidget);
+    expect(find.text('数值分析'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('selection-filter-节次-上午')));
+    await tester.pumpAndSettle();
+    expect(find.text('数值分析'), findsOneWidget);
+    expect(find.text('催化化学'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('selection-filter-节次-')));
+    await tester.pumpAndSettle();
+    expect(find.text('催化化学'), findsOneWidget);
+    expect(find.text('数值分析'), findsOneWidget);
   });
 }

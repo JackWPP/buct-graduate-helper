@@ -45,6 +45,9 @@ class _SelectionPageState extends State<SelectionPage> {
   String _xwk = '';
   String _zh = '';
   String? _yxsh;
+  List<(String, String)> _departments = const [];
+  List<String> _periods = const [];
+  String _period = '';
   String? _error;
   String? _pendingBjid;
 
@@ -56,6 +59,7 @@ class _SelectionPageState extends State<SelectionPage> {
         .map((course) => course.id)
         .toSet();
     _load();
+    _loadMeta();
   }
 
   @override
@@ -106,10 +110,57 @@ class _SelectionPageState extends State<SelectionPage> {
     );
   }
 
+  /// 院系与节次来自 `xswsxk_kb_load`。取不到时只是少两行筛选，
+  /// 不影响课程列表和提交；会话过期交给课程列表统一处理。
+  Future<void> _loadMeta() async {
+    try {
+      final meta = await widget.api.selectionMeta();
+      final departments = <(String, String)>[];
+      final yx = meta['yx'];
+      if (yx is List) {
+        for (final row in yx.whereType<Map>()) {
+          final code = _text(row['xsbh'] ?? row['yxsh']);
+          final name = _text(row['xsmc'] ?? row['yxmc']);
+          if (code.isNotEmpty && name.isNotEmpty) {
+            departments.add((code, name));
+          }
+        }
+      }
+      const order = ['上午', '下午', '晚上'];
+      final found = <String>{};
+      final jc = meta['jc'];
+      if (jc is List) {
+        for (final row in jc.whereType<Map>()) {
+          final name = _text(row['mc'] ?? row['name']);
+          for (final bucket in order) {
+            if (name.startsWith(bucket)) found.add(bucket);
+          }
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _departments = departments;
+        _periods = [
+          for (final bucket in order)
+            if (found.contains(bucket)) bucket,
+        ];
+      });
+    } on GmisSessionExpired {
+      return;
+    } catch (_) {
+      return;
+    }
+  }
+
   List<Map<String, dynamic>> get _visible {
     final query = _query.text.trim().toLowerCase();
-    if (query.isEmpty) return _courses;
-    return _courses.where((row) {
+    final rows = _period.isEmpty
+        ? _courses
+        : _courses
+              .where((row) => _text(row['sjms']).contains(_period))
+              .toList();
+    if (query.isEmpty) return rows;
+    return rows.where((row) {
       final text = [
         _text(row['kcmc']),
         _text(row['kcbh']),
@@ -213,6 +264,10 @@ class _SelectionPageState extends State<SelectionPage> {
           lb: _lb,
           xwk: _xwk,
           zh: _zh,
+          departments: _departments,
+          yxsh: _yxsh,
+          periods: _periods,
+          period: _period,
           onLb: (value) {
             setState(() => _lb = value);
             _load();
@@ -225,6 +280,11 @@ class _SelectionPageState extends State<SelectionPage> {
             setState(() => _zh = value);
             _load();
           },
+          onYxsh: (value) {
+            setState(() => _yxsh = value.isEmpty ? null : value);
+            _load();
+          },
+          onPeriod: (value) => setState(() => _period = value),
         ),
         const SizedBox(height: 10),
         TextField(
@@ -344,17 +404,29 @@ class _FilterBar extends StatelessWidget {
     required this.lb,
     required this.xwk,
     required this.zh,
+    required this.departments,
+    required this.yxsh,
+    required this.periods,
+    required this.period,
     required this.onLb,
     required this.onXwk,
     required this.onZh,
+    required this.onYxsh,
+    required this.onPeriod,
   });
 
   final String lb;
   final String xwk;
   final String zh;
+  final List<(String, String)> departments;
+  final String? yxsh;
+  final List<String> periods;
+  final String period;
   final ValueChanged<String> onLb;
   final ValueChanged<String> onXwk;
   final ValueChanged<String> onZh;
+  final ValueChanged<String> onYxsh;
+  final ValueChanged<String> onPeriod;
 
   @override
   Widget build(BuildContext context) {
@@ -385,6 +457,28 @@ class _FilterBar extends StatelessWidget {
           value: zh,
           onTap: onZh,
         ),
+        if (departments.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          _ChipRow(
+            prefix: '院系',
+            options: [('', '全部'), ...departments],
+            value: yxsh ?? '',
+            onTap: onYxsh,
+            scrollable: true,
+          ),
+        ],
+        if (periods.isNotEmpty) ...[
+          const SizedBox(height: 6),
+          _ChipRow(
+            prefix: '节次',
+            options: [
+              ('', '全部'),
+              for (final bucket in periods) (bucket, bucket),
+            ],
+            value: period,
+            onTap: onPeriod,
+          ),
+        ],
       ],
     );
   }
@@ -396,6 +490,7 @@ class _ChipRow extends StatelessWidget {
     required this.options,
     required this.value,
     required this.onTap,
+    this.scrollable = false,
   });
 
   final String prefix;
@@ -403,8 +498,37 @@ class _ChipRow extends StatelessWidget {
   final String value;
   final ValueChanged<String> onTap;
 
+  /// 院系有二十多个，横向滚动比换行更省高度。
+  final bool scrollable;
+
   @override
   Widget build(BuildContext context) {
+    Widget chip((String, String) option) {
+      final selected = value == option.$1;
+      return GestureDetector(
+        key: Key('selection-filter-$prefix-${option.$1}'),
+        onTap: () => onTap(option.$1),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: selected ? HuayanColors.blue : HuayanColors.card,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: selected ? HuayanColors.blue : HuayanColors.lineSoft,
+            ),
+          ),
+          child: Text(
+            option.$2,
+            style: TextStyle(
+              fontSize: 12,
+              color: selected ? Colors.white : HuayanColors.sub,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final chips = [for (final option in options) chip(option)];
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
@@ -416,43 +540,19 @@ class _ChipRow extends StatelessWidget {
           ),
         ),
         Expanded(
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              for (final option in options)
-                GestureDetector(
-                  key: Key('selection-filter-$prefix-${option.$1}'),
-                  onTap: () => onTap(option.$1),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: value == option.$1
-                          ? HuayanColors.blue
-                          : HuayanColors.card,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: value == option.$1
-                            ? HuayanColors.blue
-                            : HuayanColors.lineSoft,
-                      ),
-                    ),
-                    child: Text(
-                      option.$2,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: value == option.$1
-                            ? Colors.white
-                            : HuayanColors.sub,
-                      ),
-                    ),
+          child: scrollable
+              ? SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (var i = 0; i < chips.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 6),
+                        chips[i],
+                      ],
+                    ],
                   ),
-                ),
-            ],
-          ),
+                )
+              : Wrap(spacing: 6, runSpacing: 6, children: chips),
         ),
       ],
     );
