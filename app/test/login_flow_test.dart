@@ -11,11 +11,11 @@ void main() {
           baseUrl: 'https://w.buct.edu.cn/https/token/',
           cookies: {'wengine_vpn_ticketw_buct_edu_cn': 'ticket'},
         ),
-        prefill: LoginPrefill(userId: '2026201060', password: 'dummy-secret'),
+        prefill: LoginPrefill(userId: '2026000001', password: 'dummy-secret'),
       ),
     );
 
-    expect(state.prefill?.userId, '2026201060');
+    expect(state.prefill?.userId, '2026000001');
     expect(state.prefill?.password, 'dummy-secret');
     expect(state.prefill.toString(), isNot(contains('dummy-secret')));
 

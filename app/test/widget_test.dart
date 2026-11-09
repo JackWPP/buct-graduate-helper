@@ -40,7 +40,7 @@ void main() {
     tester,
   ) async {
     await boot(tester);
-    expect(find.text('上午好，王海翔'), findsOneWidget);
+    expect(find.text('上午好，李华'), findsOneWidget);
     expect(find.textContaining('2026-2027秋季学期 · 第 10 周'), findsOneWidget);
     expect(find.text('下一节'), findsOneWidget);
     expect(find.text('化学生物学导论'), findsWidgets);
@@ -178,7 +178,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('tab-me')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('2026201060'), findsOneWidget);
+    expect(find.textContaining('2026000001'), findsOneWidget);
     expect(find.text('化学学院'), findsNothing);
     expect(find.textContaining('化学学院'), findsOneWidget);
     expect(find.textContaining('手机'), findsNothing);
@@ -332,7 +332,7 @@ void main() {
     await phone(tester);
     await tester.pumpWidget(HuayanApp(now: now, skipGate: true));
     await tester.pumpAndSettle();
-    expect(find.text('上午好，王海翔'), findsOneWidget);
+    expect(find.text('上午好，李华'), findsOneWidget);
     expect(find.text('28 / 40'), findsOneWidget);
   });
 }

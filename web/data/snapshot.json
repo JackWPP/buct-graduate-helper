@@ -3,11 +3,11 @@
   "updatedLabel": "10月30日 14:32",
   "source": "GMIS 导出快照，演示版不连接学校服务器",
   "student": {
-    "xh": "2026201060",
-    "xm": "王海翔",
+    "xh": "2026000001",
+    "xm": "李华",
     "college": "化学学院",
     "major": "化学工程与技术",
-    "advisor": "孙晓明",
+    "advisor": "张老师",
     "grade": "2026",
     "kind": "全日制学术学位硕士"
   },
@@ -17,7 +17,7 @@
     "start": "2026-08-31",
     "startLabel": "第 1 周周一 2026-08-31"
   },
-  "demoStudentId": "2026201060",
+  "demoStudentId": "2026000001",
   "courses": [
     {
       "id": "97779bae-e90d-420e-9ce5-d6bd1941f6da",

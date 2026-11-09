@@ -68,7 +68,7 @@ void main() {
     ]);
 
     final client = WebVpnAuthClient(ssoTransport: sso, webVpnTransport: webVpn);
-    final result = await client.login(userId: '2026201060', password: 'secret');
+    final result = await client.login(userId: '2026000001', password: 'secret');
     expect(result.needsSms, isFalse);
     final session = result.session!;
 
@@ -79,7 +79,7 @@ void main() {
     final form = sso.requests.last.form!;
     expect(form['type'], 'UsernamePassword');
     expect(form['execution'], 'flow-1');
-    expect(form['username'], '2026201060');
+    expect(form['username'], '2026000001');
     expect(form['password'], isNotEmpty);
     expect(form['password'], isNot('secret'));
     expect(
@@ -105,7 +105,7 @@ void main() {
     );
 
     expect(
-      () => client.login(userId: '2026201060', password: 'bad'),
+      () => client.login(userId: '2026000001', password: 'bad'),
       throwsA(
         isA<GmisAuthException>().having(
           (error) => error.message,
@@ -139,7 +139,7 @@ void main() {
         body:
             '<p id="current-login-type">smsLogin</p>'
             '<p id="sso-second">true</p>'
-            '<p id="second-auth-user-id">2026201060</p>'
+            '<p id="second-auth-user-id">2026000001</p>'
             '<p id="phone-number">13800138000</p>'
             '<p id="login-page-flowkey">flow-2</p>',
       ),
@@ -171,7 +171,7 @@ void main() {
     ]);
     final client = WebVpnAuthClient(ssoTransport: sso, webVpnTransport: webVpn);
 
-    final first = await client.login(userId: '2026201060', password: 'secret');
+    final first = await client.login(userId: '2026000001', password: 'secret');
     expect(first.needsSms, isTrue);
     expect(first.challenge!.maskedPhone, '138****8000');
 

@@ -88,14 +88,14 @@ void main() {
     final code = readCaptcha(tester);
     await submitLogin(tester, code: code == '0000' ? '1111' : '0000');
     expect(find.text('验证码错误'), findsOneWidget);
-    expect(find.text('上午好，王海翔'), findsNothing);
+    expect(find.text('上午好，李华'), findsNothing);
     expect(find.byKey(const Key('login-submit')), findsOneWidget);
   });
 
   testWidgets('demo login reaches home and the eval card', (tester) async {
     await openLogin(tester);
     await submitLogin(tester);
-    expect(find.text('上午好，王海翔'), findsOneWidget);
+    expect(find.text('上午好，李华'), findsOneWidget);
     expect(find.text('最要紧的一件事'), findsOneWidget);
     expect(
       find.text('还有 ${pendingEvalCount(snap.evaluations)} 门课没评'),
@@ -108,7 +108,7 @@ void main() {
         .join('\n');
     expect(stored.contains('snapshot-only'), isFalse);
     expect(stored.toLowerCase().contains('password'), isFalse);
-    expect(prefs.getString(PrefsStore.sidKey), '2026201060');
+    expect(prefs.getString(PrefsStore.sidKey), '2026000001');
 
     await tester.tap(find.text('去评教'));
     await tester.pumpAndSettle();
@@ -178,7 +178,7 @@ void main() {
         matching: find.byType(TextField),
       ),
     );
-    expect(field.controller?.text, '2026201060');
-    expect(find.text('上午好，王海翔'), findsNothing);
+    expect(field.controller?.text, '2026000001');
+    expect(find.text('上午好，李华'), findsNothing);
   });
 }

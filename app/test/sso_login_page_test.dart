@@ -15,7 +15,7 @@ class _FakeSsoClient extends WebVpnAuthClient {
   }) async {
     return const WebVpnLoginResult.smsRequired(
       WebVpnSmsChallenge(
-        userId: '2026201060',
+        userId: '2026000001',
         phoneNumber: '13800138000',
         execution: 'flow-2',
       ),
@@ -52,7 +52,7 @@ void main() {
       ),
     );
 
-    await tester.enterText(find.byKey(const Key('sso-sid')), '2026201060');
+    await tester.enterText(find.byKey(const Key('sso-sid')), '2026000001');
     await tester.enterText(find.byKey(const Key('sso-pwd')), 'dummy-secret');
     await tester.tap(find.byKey(const Key('sso-submit')));
     await tester.pumpAndSettle();
@@ -70,7 +70,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(result, isNotNull);
-    expect(result!.prefill.userId, '2026201060');
+    expect(result!.prefill.userId, '2026000001');
     expect(result!.prefill.password, 'dummy-secret');
     expect(result!.prefill.toString(), isNot(contains('dummy-secret')));
   });
