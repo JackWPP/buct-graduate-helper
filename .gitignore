@@ -12,6 +12,8 @@ __pycache__/
 
 # 登录会话、验证码和调试日志
 *cookies*
+# 源码里的 Cookie 通道不是登录数据，不能被上面的通配符误伤
+!app/lib/webvpn/webview_cookies.dart
 web/data/live.json
 cookies.txt
 cookie_header.txt
