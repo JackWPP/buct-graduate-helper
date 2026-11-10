@@ -195,13 +195,15 @@ curl -sD - -o /dev/null \
 - [x] WebView 兜底页在 ATD 上只拿到匿名凭证；校验器拒绝后自动回统一身份认证，没有误入 GMIS 登录。
 - [x] 退出登录后回到 SSO，安全存储/WebView Cookie 清理。
 - [x] 清应用数据后重新用真实账号登录：新 ticket → GMIS 登录页（`#pubkey` 正常解析）→ 图形验证码 → 首页真实数据，重启后直接恢复。
+- [x] 强制 GMIS 服务端会话失效（WebVPN ticket 保持有效）：应用只回到 GMIS 登录页，不回到 SSO；补密码 + 新验证码后回到首页真实数据，重启仍直接恢复。
 
 本轮复现还确认了两件事：
 
 - **ATD 上 WebView 不可用**：打开门户登录页后，一旦聚焦输入框/弹出键盘，WebView 渲染进程就崩溃（logcat 有 `crashpad_client_linux.cc` FATAL），并连带整个应用退出。这是镜像裁剪导致的 WebView 限制，不是应用逻辑；完整 WebView 登录只能在正式镜像或真机补测。
-- **门户会替同一 ticket 缓存目标站会话**：只删除本机 GMIS 会话条目后重启，ticket 仍有效，`/home/stulogin` 直接 302 到 `/student/default/index` 并返回已登录首页，因此“GMIS 过期、SSO 不过期”没法用删本地 Cookie 的方式模拟。真实 GMIS 过期要等门户侧会话失效，或后续加可控的服务端退出用例。
+- **门户会替同一 ticket 缓存目标站会话**：只删除本机 GMIS 会话条目后重启，ticket 仍有效，`/home/stulogin` 直接 302 到 `/student/default/index` 并返回已登录首页，因此“GMIS 过期、SSO 不过期”没法用删本地 Cookie 的方式模拟。要复现 GMIS-only 过期，需要在保留 ticket 的同时真正结束 GMIS 服务端会话（本轮用一次性的本地登出探针完成，探针未提交）。
+- **GMIS 会话失效时 JSON 接口不一定 302**：`/student/default/bindterm` 在会话失效后返回 HTTP 200 + `{}`，旧逻辑会当成“学校没有返回学期列表”而停在离线缓存。现在 `terms()` 把空对象视为会话过期，直接走 GMIS 登录；`gmis_client_test.dart` 覆盖了这个响应。
 
-尚未强制触发的真实场景：服务端 GMIS 会话自然过期、WebVPN ticket 自然过期、完整 WebView 登录成功。这些已由单测覆盖，仍需后续在可用 WebView 的模拟器或真机上补测。
+尚未强制触发的真实场景：GMIS 会话自然超时（本轮用强制登出复现，过期路径一致）、WebVPN ticket 自然过期、完整 WebView 登录成功。这些已由单测覆盖，仍需后续在可用 WebView 的模拟器或真机上补测。
 
 ### 5.4 真机人工回归
 

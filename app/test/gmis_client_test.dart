@@ -145,6 +145,12 @@ void main() {
     expect(card['xm'], '测试');
   });
 
+  test('an empty terms payload is treated as an expired GMIS session', () async {
+    final transport = _FakeTransport((request) => _response('{}'));
+    final api = GmisApi(GmisClient(transport: transport));
+    expect(() => api.terms(), throwsA(isA<GmisSessionExpired>()));
+  });
+
   test('restoring a session reuses its cookies', () async {
     final transport = _FakeTransport((request) => _response('{}'));
     final client = GmisClient(transport: transport);

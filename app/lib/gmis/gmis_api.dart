@@ -86,7 +86,13 @@ class GmisApi implements ActivityDataSource {
   final GmisClient _client;
 
   Future<List<Map<String, dynamic>>> terms() async {
-    return _asList(await _client.getJson('/student/default/bindterm'));
+    final value = await _client.getJson('/student/default/bindterm');
+    // GMIS 会话过期时 JSON 接口不一定 302，而是返回空对象；这里必须
+    // 主动转成会话过期，否则启动会被当成“学校没返回学期列表”而走离线缓存。
+    if (value is Map && value.isEmpty) {
+      throw const GmisSessionExpired();
+    }
+    return _asList(value);
   }
 
   Future<Map<String, dynamic>> studentCard() async {
