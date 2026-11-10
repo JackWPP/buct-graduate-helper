@@ -119,19 +119,13 @@ cd web && python3 -m http.server 8899
 | 文档 | 内容 |
 | --- | --- |
 | [产品说明](docs/product.md) | 为什么做、给谁用、核心体验、页面地图、产品边界 |
-| [架构说明](docs/architecture.md) | Android 主线、登录链路、缓存会话与安全边界 |
+| [架构说明](docs/architecture.md) | Android 主线、登录链路、缓存与会话 |
+| [发版 SOP](docs/release-sop.md) | 版本、图片、Release、README 与文档的更新清单 |
 | [开发与构建](docs/development.md) | 环境要求、Android/网页构建、测试与常见问题 |
-| [1.7.2 发布说明](docs/releases/v1.7.2.md) | 第二天登录只输验证码、密码加密保存、安装方式 |
-| [1.7.1 发布说明](docs/releases/v1.7.1.md) | 静默续签与卡缓存修复 |
+| [1.7.2 发布说明](docs/releases/v1.7.2.md) | 回来就能继续、真实界面截图、下载方式 |
+| [1.7.1 发布说明](docs/releases/v1.7.1.md) | 上一版：会话续签与卡缓存修复 |
 | [1.7.0 发布说明](docs/releases/v1.7.0.md) | 上一版亮点与验证记录 |
 | [视觉素材](docs/assets/README.md) | README 首图、Release 图、功能图与社媒海报 |
-
-## 安全边界
-
-- 密码默认只用于当次登录；开启“保持登录”时加密写入系统安全存储，不写偏好、快照或日志，可在设置清除。
-- 登录 Cookie 只进系统安全存储。
-- 快照只保留课表和培养进度需要的学业字段。
-- 仓库不包含学校账号、Cookie、验证码、证件号、电话、住址或邮箱。
 
 ---
 

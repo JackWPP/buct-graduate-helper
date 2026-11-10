@@ -251,14 +251,19 @@ curl -sD - -o /dev/null \
 
 ## 7. 发版检查单
 
+完整流程、文案口径和图片规范见 [发版 SOP](release-sop.md)。这里只留最小检查项：
+
 1. `pubspec.yaml` 升版本号，`appVersionLabel` 同步。
-2. 更新 `docs/releases/` 与 `docs/roadmap.md`。
-3. `flutter analyze`、`flutter test`、`node --test` 全绿。
-4. `flutter build apk --debug` 与 `--release` 成功。
-5. release 使用正式 keystore；确认 `android/key.properties` 只在本机。
-6. 真机回归清单通过。
-7. 提交、推 `main`，确认 GitHub Actions 的 `flutter` 与 `web` 都绿。
-8. 打 tag、写 Release 说明、上传 APK（不提交 keystore/密码）。
+2. 新增 `docs/assets/banners/release-v<版本>.png` 和至少一张 Release 截图，更新 `docs/assets/README.md`。
+3. 写 `docs/releases/v<版本>.md`：顶部 Banner、正文截图、只写用户能感知的内容，不写修复列表/验证情况/内部技术细节。
+4. 更新 README 的版本 badge、当前版本、发布说明链接和文档表；README 不再保留 `## 安全边界`。
+5. `flutter analyze`、`flutter test`、`node --test` 全绿。
+6. `flutter build apk --debug` 与 `--release` 成功。
+7. release 使用正式 keystore；确认 `android/key.properties` 只在本机。
+8. 真机回归清单通过。
+9. 提交、推 `main`，确认 GitHub Actions 的 `flutter` 与 `web` 都绿。
+10. 写 SHA-256、建 tag、建 GitHub Release、上传 APK 与 `.sha256`；打开 Release 页面确认图片正常显示。
+11. 清理模拟器真实会话和含个人信息的截图。
 
 ## 8. 常见问题
 
