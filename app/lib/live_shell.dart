@@ -8,6 +8,7 @@ import 'activity_page.dart';
 import 'activities/activity_monitor.dart';
 import 'app_controller.dart';
 import 'auth/auth_gateway.dart';
+import 'auth/gmis_password_vault.dart';
 import 'auth/login_flow.dart';
 import 'config/app_config.dart';
 import 'course_sheet.dart';
@@ -64,6 +65,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   AppController? _controller;
   WebVpnSessionManager? _webVpn;
   WebVpnSilentLogin? _silentLogin;
+  GmisPasswordVault? _passwordVault;
+  SavedGmisLogin? _savedLogin;
   String? _webVpnNotice;
   bool _webVpnExpiryHandled = false;
   bool _webVpnRenewing = false;
@@ -113,6 +116,14 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     final store = await PrefsStore.tryOpen();
     store?.apply(_settings);
     if (mounted) setState(() => _bootStage = '正在读取本机会话');
+
+    final passwordVault = GmisPasswordVault();
+    _passwordVault = passwordVault;
+    try {
+      _savedLogin = await passwordVault.read();
+    } catch (_) {
+      _savedLogin = null;
+    }
 
     final silentLogin = WebVpnSilentLogin(store: SsoSessionStore());
     _silentLogin = silentLogin;
@@ -428,11 +439,25 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     });
   }
 
-  Future<void> _login(String sid, bool remember) async {
+  Future<void> _login(String sid, bool remember, String? password) async {
     if (remember) {
       await _store?.setSid(sid);
     } else {
       await _store?.setSid(null);
+    }
+    final vault = _passwordVault;
+    if (vault != null) {
+      try {
+        if (password == null) {
+          await vault.clear();
+          _savedLogin = null;
+        } else {
+          await vault.write(sid, password);
+          _savedLogin = await vault.read();
+        }
+      } catch (_) {
+        // 保存失败只影响下次预填，不阻塞登录。
+      }
     }
     await _store?.setOnboarded();
     _flow.markLoginComplete();
@@ -443,12 +468,19 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _clearSavedPassword() async {
+    await _passwordVault?.clear();
+    if (mounted) setState(() => _savedLogin = null);
+  }
+
   Future<void> _logout() async {
     ActivityMonitor.instance.stop();
     Navigator.of(context).popUntil((route) => route.isFirst);
     await _controller?.logout();
     await _webVpn?.clear();
     await _silentLogin?.clear();
+    await _passwordVault?.clear();
+    _savedLogin = null;
     await WebViewCookies.clear();
     await SecureSessionStore(key: SecureSessionStore.directKey).clear();
     await SecureSessionStore(key: SecureSessionStore.webVpnKey).clear();
@@ -768,6 +800,14 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       return SplashPage(message: _bootStage);
     }
     final prefill = _flow.prefill;
+    final savedLogin = _savedLogin;
+    final initialSid =
+        prefill?.userId ?? _store?.sid ?? savedLogin?.userId ?? '';
+    final initialPassword =
+        prefill?.password ??
+        (savedLogin != null && savedLogin.userId == initialSid
+            ? savedLogin.password
+            : null);
     final loginDescription = _usingWebVpn
         ? prefill != null
               ? '统一身份认证已完成，请补研究生管理系统验证码。'
@@ -780,8 +820,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       }
       return LiveLoginPage(
         controller: controller,
-        initialSid: prefill?.userId ?? _store?.sid ?? '',
-        initialPassword: prefill?.password,
+        initialSid: initialSid,
+        initialPassword: initialPassword,
         fromSso: prefill != null,
         notice: controller.error,
         onSuccess: _login,
@@ -794,8 +834,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
         controller.phase == AppPhase.sessionExpired) {
       return LiveLoginPage(
         controller: controller,
-        initialSid: prefill?.userId ?? _store?.sid ?? '',
-        initialPassword: prefill?.password,
+        initialSid: initialSid,
+        initialPassword: initialPassword,
         fromSso: prefill != null,
         notice: controller.error,
         onSuccess: _login,
@@ -935,6 +975,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
                         onChanged: _changed,
                         onLogout: _logout,
                         isLive: true,
+                        hasSavedPassword: _savedLogin != null,
+                        onClearSavedPassword: _clearSavedPassword,
                         onRefresh: _controller?.refresh,
                         termCode: snap.termCode,
                         onTermStart: (firstMonday) async {

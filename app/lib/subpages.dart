@@ -1073,7 +1073,7 @@ class ProfilePage extends StatelessWidget {
           ),
         ),
         const Text(
-          '界面只读。证件号、手机号、家庭住址和邮箱不写入快照，也不保存密码。',
+          '界面只读。证件号、手机号、家庭住址和邮箱不写入快照；密码仅在开启“保持登录”时加密保存在本机。',
           style: TextStyle(
             fontSize: 12,
             height: 1.45,
@@ -1094,6 +1094,8 @@ class SettingsPage extends StatefulWidget {
     required this.onChanged,
     required this.onLogout,
     this.isLive = false,
+    this.hasSavedPassword = false,
+    this.onClearSavedPassword,
     this.onRefresh,
     this.termCode,
     this.onTermStart,
@@ -1105,6 +1107,10 @@ class SettingsPage extends StatefulWidget {
   final VoidCallback onChanged;
   final VoidCallback onLogout;
   final bool isLive;
+
+  /// 本机是否保存了 GMIS 密码（只影响设置里的清除入口）。
+  final bool hasSavedPassword;
+  final Future<void> Function()? onClearSavedPassword;
   final Future<bool> Function()? onRefresh;
   final String? termCode;
   final Future<void> Function(String firstMonday)? onTermStart;
@@ -1142,7 +1148,7 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('退出登录？'),
-        content: const Text('需要重新输入验证码才能回来。记住的学号会留下，密码不会。'),
+        content: const Text('需要重新输入验证码才能回来。记住的学号会留下，加密保存的密码会一并清除。'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1229,7 +1235,9 @@ class _SettingsPageState extends State<SettingsPage> {
               title: const Text('登录状态', style: TextStyle(fontSize: 15)),
               subtitle: Text(
                 widget.isLive
-                    ? '已登录学校系统，Cookie 存在系统安全存储。'
+                    ? widget.hasSavedPassword
+                          ? '已登录学校系统；Cookie 和加密保存的密码都在系统安全存储。'
+                          : '已登录学校系统，Cookie 存在系统安全存储。'
                     : '这版直接读本机快照，没有学校登录会话。',
               ),
             ),
@@ -1244,6 +1252,37 @@ class _SettingsPageState extends State<SettingsPage> {
                   if (context.mounted) {
                     _toast(ok ? '学校数据已刷新' : '刷新失败，请查看提示后重试');
                   }
+                },
+              ),
+            if (widget.hasSavedPassword &&
+                widget.onClearSavedPassword != null)
+              ListTile(
+                key: const Key('clear-saved-password'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('清除已保存的登录密码', style: TextStyle(fontSize: 15)),
+                subtitle: const Text('清除后，下次会话过期需要重新输入密码'),
+                trailing: const HuayanChevron(),
+                onTap: () async {
+                  final ok = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('清除保存的密码？'),
+                      content: const Text('只删除本机加密保存的密码，不影响当前登录。'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('取消'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: const Text('清除'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (ok != true) return;
+                  await widget.onClearSavedPassword!();
+                  if (context.mounted) _toast('已清除保存的密码');
                 },
               ),
             ListTile(

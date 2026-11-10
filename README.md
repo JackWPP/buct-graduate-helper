@@ -13,7 +13,7 @@
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square">
   <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Native-12A05C?style=flat-square">
   <img alt="Services" src="https://img.shields.io/badge/Services-49-7C5CFF?style=flat-square">
-  <img alt="Version" src="https://img.shields.io/badge/Version-1.7.1-555?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/Version-1.7.2-555?style=flat-square">
   <a href="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml/badge.svg?branch=main"></a>
 </p>
 
@@ -34,7 +34,7 @@
 - **打开就看今天**：首页直接显示当前教学周、今日课程、下一节课、评教提醒和培养进度。
 - **课表像手机应用，不像网页**：周视图、左右滑换周、长课名折行、课程详情、提醒、ICS 分享。
 - **49 项服务一个入口**：搜索、分组筛选，点开即用，不跳系统浏览器。
-- **原生体验，真能登录**：默认网页版 VPN + 原生统一身份认证（含短信二次认证）；SSO 成功后学号/密码只在内存中带入 GMIS 登录页，只补图形验证码。
+- **原生体验，真能登录**：默认网页版 VPN + 原生统一身份认证（含短信二次认证）；SSO 成功后学号/密码先带入 GMIS 登录页；勾选“保持登录”后密码加密保存，下次只补图形验证码。
 - **校外也能访问**：默认走学校网页版 VPN，统一身份认证在应用内完成，不需要额外打开浏览器。
 - **选课可以直接完成**：二次确认 + 选课验证码，提交后刷新课表与学分。
 - **学术报告 / 劳动实践不再错过**：可报名活动、我的报名、活动详情、报名/取消和独立验证码；登录后自动监测新活动，报名开始/截止前发本地提醒。
@@ -76,10 +76,10 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `1.7.1+9` |
+| 当前版本 | `1.7.2+10` |
 | 主线 | Android / Flutter；iOS 共用代码，尚未出包 |
 | 业务页面 | 全原生；WebView 仅保留为 WebVPN 认证页兜底 |
-| 登录 | 网页版 VPN + 原生统一身份认证（含短信 2FA）+ GMIS 验证码（SSO 凭据仅内存预填） |
+| 登录 | 网页版 VPN + 原生统一身份认证（含短信 2FA）+ GMIS 验证码；SSO 会话可静默续签，GMIS 密码可选加密保存 |
 | 数据 | 真实 GMIS 接口；快照缓存，登录 Cookie 存系统安全存储 |
 | 选课 | 可提交/退课（二次确认 + 选课验证码） |
 | 尚未完成 | 活动监测的系统级后台常驻、深色模式、正式 release 签名、iOS 打包、部分复杂服务表单 |
@@ -121,13 +121,14 @@ cd web && python3 -m http.server 8899
 | [产品说明](docs/product.md) | 为什么做、给谁用、核心体验、页面地图、产品边界 |
 | [架构说明](docs/architecture.md) | Android 主线、登录链路、缓存会话与安全边界 |
 | [开发与构建](docs/development.md) | 环境要求、Android/网页构建、测试与常见问题 |
-| [1.7.1 发布说明](docs/releases/v1.7.1.md) | 第二天登录修复、静默续签、安装方式、验证情况 |
+| [1.7.2 发布说明](docs/releases/v1.7.2.md) | 第二天登录只输验证码、密码加密保存、安装方式 |
+| [1.7.1 发布说明](docs/releases/v1.7.1.md) | 静默续签与卡缓存修复 |
 | [1.7.0 发布说明](docs/releases/v1.7.0.md) | 上一版亮点与验证记录 |
 | [视觉素材](docs/assets/README.md) | README 首图、Release 图、功能图与社媒海报 |
 
 ## 安全边界
 
-- 密码只用于当次登录，不写入偏好、快照或日志。
+- 密码默认只用于当次登录；开启“保持登录”时加密写入系统安全存储，不写偏好、快照或日志，可在设置清除。
 - 登录 Cookie 只进系统安全存储。
 - 快照只保留课表和培养进度需要的学业字段。
 - 仓库不包含学校账号、Cookie、验证码、证件号、电话、住址或邮箱。

@@ -454,7 +454,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
               ),
             const SizedBox(height: 8),
             const Text(
-              '统一身份认证只用于换取网页版 VPN 凭证。密码不会被保存，也不会写入日志。',
+              '统一身份认证密码只用于换取网页版 VPN 凭证，不会保存，也不会写入日志。',
               style: TextStyle(
                 fontSize: 12,
                 height: 1.5,

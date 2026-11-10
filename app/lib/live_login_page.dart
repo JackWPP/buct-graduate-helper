@@ -5,7 +5,7 @@ import 'app_controller.dart';
 import 'auth/auth_gateway.dart';
 import 'theme.dart';
 
-/// 真实 GMIS 登录页：验证码来自学校接口，密码只用于本次登录。
+/// 真实 GMIS 登录页：验证码来自学校接口；密码可选择加密保存在本机，用于下次预填。
 class LiveLoginPage extends StatefulWidget {
   const LiveLoginPage({
     super.key,
@@ -24,7 +24,7 @@ class LiveLoginPage extends StatefulWidget {
   final AppController controller;
   final String initialSid;
   final String? notice;
-  final void Function(String sid, bool remember)? onSuccess;
+  final void Function(String sid, bool remember, String? password)? onSuccess;
   final VoidCallback? onWebVpnLogin;
   final bool allowWebVpn;
   final String? initialPassword;
@@ -45,6 +45,7 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
   final _codeFocus = FocusNode();
   var _showPwd = false;
   var _remember = true;
+  var _keepPassword = true;
   var _loading = false;
   var _captchaLoading = false;
   var _error = '';
@@ -120,7 +121,7 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
     }
     _pwd.clear();
     _code.clear();
-    widget.onSuccess?.call(sid, _remember);
+    widget.onSuccess?.call(sid, _remember, _keepPassword ? pwd : null);
   }
 
   @override
@@ -167,7 +168,8 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              widget.description ?? '用学号和教务密码进入。密码只用于本次登录，不保存在本机。',
+              widget.description ??
+                  '用学号和教务密码进入。勾选“保持登录”时密码会加密保存在本机，可随时清除。',
               style: const TextStyle(
                 fontSize: 14,
                 height: 1.5,
@@ -291,6 +293,41 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
                 ),
               ],
             ),
+            Row(
+              children: [
+                Expanded(
+                  child: InkWell(
+                    onTap: () =>
+                        setState(() => _keepPassword = !_keepPassword),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: Checkbox(
+                            key: const Key('live-login-keep-password'),
+                            value: _keepPassword,
+                            onChanged: (value) =>
+                                setState(() => _keepPassword = value ?? false),
+                            activeColor: HuayanColors.blue,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        const Flexible(
+                          child: Text(
+                            '保持登录（加密保存密码，下次只需验证码）',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: HuayanColors.sub,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
             if (_error.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -397,9 +434,9 @@ class _LiveLoginPageState extends State<LiveLoginPage> {
     final forgot = kind == 'forgot';
     final title = forgot ? '忘记密码' : (privacy ? '隐私政策' : '服务条款');
     final body = forgot
-        ? '请到学校研究生管理系统的登录页找回或重置密码。化研助手不保存密码。'
+        ? '请到学校研究生管理系统的登录页找回或重置密码。开启“保持登录”时密码只加密保存在本机，可在设置中清除。'
         : privacy
-        ? '化研助手使用你的学号和教务密码直接登录北京化工大学研究生管理系统。密码只用于本次登录，不写入本机存储，也不会上传到其他服务器。本机只保存登录 Cookie（系统安全存储）和最近一次课表/成绩快照。你可以随时退出登录清除这些数据。'
+        ? '化研助手使用你的学号和教务密码直接登录北京化工大学研究生管理系统。开启“保持登录”时，密码会加密保存在系统安全存储，仅用于下次登录预填；不开启则不保存密码。登录 Cookie、密码和最近一次课表/成绩快照都只留在本机，退出登录可一并清除。'
         : '化研助手不是学校官方客户端。课表、成绩、考试和流程信息以研究生管理系统为准。选课、退选等涉及学籍的操作必须由你本人确认。';
     showDialog<void>(
       context: context,
