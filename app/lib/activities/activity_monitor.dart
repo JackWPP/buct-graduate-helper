@@ -26,6 +26,7 @@ class ActivityMonitor extends ChangeNotifier {
   };
   final Set<String> _knownKeys = <String>{};
   final Set<String> _scheduledKeys = <String>{};
+  final Set<String> _releasedKeys = <String>{};
   final Set<ActivityKind> _seededKinds = <ActivityKind>{};
   ActivityDataSource? _api;
   Future<void> Function()? _onSessionExpired;
@@ -51,6 +52,7 @@ class ActivityMonitor extends ChangeNotifier {
     if (changed) {
       _knownKeys.clear();
       _scheduledKeys.clear();
+      _releasedKeys.clear();
       _seededKinds.clear();
       _feeds[ActivityKind.academicReport] = const ActivityFeed();
       _feeds[ActivityKind.laborPractice] = const ActivityFeed();
@@ -102,6 +104,9 @@ class ActivityMonitor extends ChangeNotifier {
     ActivityKind kind, {
     required bool notifyNew,
   }) async {
+    final previous = <String, ActivityItem>{
+      for (final item in feed(kind).available) item.stableKey: item,
+    };
     final hadData = feed(kind).lastChecked != null;
     _feeds[kind] = feed(kind).copyWith(loading: true, clearError: true);
     notifyListeners();
@@ -119,20 +124,30 @@ class ActivityMonitor extends ChangeNotifier {
       final available = results[0] as List<ActivityItem>;
       final applied = results[1] as List<ActivityItem>;
       final hours = results[2] as double;
+      final now = DateTime.now();
       final seeded = _seededKinds.contains(kind);
       final newItems = <ActivityItem>[];
+      final released = <ActivityItem>[];
       for (final item in available) {
         if (seeded && !_knownKeys.contains(item.stableKey)) {
           newItems.add(item);
         }
         _knownKeys.add(item.stableKey);
+        final old = previous[item.stableKey];
+        if (old != null &&
+            notifyNew &&
+            hadData &&
+            item.becameOpenFrom(old, now) &&
+            _releasedKeys.add(item.stableKey)) {
+          released.add(item);
+        }
       }
       _seededKinds.add(kind);
       _feeds[kind] = ActivityFeed(
         available: available,
         applied: applied,
         totalHours: hours,
-        lastChecked: DateTime.now(),
+        lastChecked: now,
       );
       notifyListeners();
       if (notifyNew && hadData) {
@@ -140,6 +155,10 @@ class ActivityMonitor extends ChangeNotifier {
           unawaited(ActivityNotificationService.instance.showNewActivity(item));
           AppFeedback.show('发现新的${kind.label}：${item.title}');
         }
+      }
+      for (final item in released) {
+        unawaited(ActivityNotificationService.instance.showSlotAvailable(item));
+        AppFeedback.show('有名额了：${item.title}');
       }
       for (final item in available) {
         final scheduleKey = [
@@ -153,10 +172,8 @@ class ActivityMonitor extends ChangeNotifier {
         }
       }
     } on WebVpnSessionExpired {
-      _feeds[kind] = feed(kind).copyWith(
-        loading: false,
-        error: '校外访问已过期，请重新登录统一身份认证',
-      );
+      _feeds[kind] = feed(kind)
+          .copyWith(loading: false, error: '校外访问已过期，请重新登录统一身份认证');
       notifyListeners();
       final callback = _onWebVpnExpired;
       if (callback != null) unawaited(callback());

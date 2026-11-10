@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 
+import 'activities/activity_models.dart';
 import 'icons.dart';
+import 'planner/day_agenda_sheet.dart';
+import 'planner/todo_editor.dart';
+import 'planner/todo_models.dart';
+import 'planner/week_agenda_view.dart';
 import 'schedule.dart';
 import 'settings.dart';
 import 'snapshot.dart';
@@ -19,6 +24,12 @@ class TimetablePage extends StatefulWidget {
     this.onRefresh,
     this.lastRefreshedAt,
     this.offline = false,
+    this.activities = const <ActivityItem>[],
+    this.todos = const <TodoItem>[],
+    this.termStartKnown = true,
+    this.onToggleTodo,
+    this.onSaveTodo,
+    this.onDeleteTodo,
   });
 
   final Snapshot snap;
@@ -30,6 +41,12 @@ class TimetablePage extends StatefulWidget {
   final Future<void> Function()? onRefresh;
   final DateTime? lastRefreshedAt;
   final bool offline;
+  final List<ActivityItem> activities;
+  final List<TodoItem> todos;
+  final bool termStartKnown;
+  final ValueChanged<TodoItem>? onToggleTodo;
+  final Future<void> Function(TodoItem)? onSaveTodo;
+  final Future<void> Function(String)? onDeleteTodo;
 
   @override
   State<TimetablePage> createState() => _TimetablePageState();
@@ -37,6 +54,7 @@ class TimetablePage extends StatefulWidget {
 
 class _TimetablePageState extends State<TimetablePage> {
   late int _week;
+  int _view = 0;
   double _dragDx = 0;
 
   @override
@@ -267,24 +285,57 @@ class _TimetablePageState extends State<TimetablePage> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.only(left: 4, right: 4),
-          child: SizedBox(
-            height: 36,
-            child: Row(
-              children: [
-                const SizedBox(width: 28),
-                for (final day in days)
-                  Expanded(
-                    child: _DayHead(
-                      day: day,
-                      date: addDays(monday, day),
-                      today: _week == todayWeek && day == todayIndex,
-                    ),
+          padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+          child: Row(
+            children: [
+              _ViewSwitch(
+                view: _view,
+                onChanged: (value) => setState(() => _view = value),
+              ),
+              const Spacer(),
+              if (widget.onSaveTodo != null)
+                TextButton.icon(
+                  key: const Key('timetable-add-todo'),
+                  onPressed: () => _addTodo(),
+                  style: TextButton.styleFrom(
+                    foregroundColor: HuayanColors.blue,
+                    minimumSize: const Size(0, 32),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
-              ],
-            ),
+                  icon: const Icon(Icons.add_rounded, size: 17),
+                  label: const Text(
+                    '待办',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                ),
+            ],
           ),
         ),
+        if (_view == 0)
+          Padding(
+            padding: const EdgeInsets.only(left: 4, right: 4),
+            child: SizedBox(
+              height: 44,
+              child: Row(
+                children: [
+                  const SizedBox(width: 28),
+                  for (final day in days)
+                    Expanded(
+                      child: _DayHead(
+                        key: Key('day-head-$day'),
+                        day: day,
+                        date: addDays(monday, day),
+                        today: _week == todayWeek && day == todayIndex,
+                        activityCount: _activityCountOn(addDays(monday, day)),
+                        todoCount: _todoCountOn(addDays(monday, day)),
+                        onTap: () => _openDay(addDays(monday, day)),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
         if (widget.lastRefreshedAt != null || widget.offline)
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 4, 16, 0),
@@ -303,24 +354,9 @@ class _TimetablePageState extends State<TimetablePage> {
             ),
           ),
         Expanded(
-          child: GestureDetector(
-            onHorizontalDragStart: (_) => _dragDx = 0,
-            onHorizontalDragUpdate: (details) => _dragDx += details.delta.dx,
-            onHorizontalDragEnd: (details) {
-              final velocity = details.primaryVelocity ?? 0;
-              final dx = _dragDx;
-              if (dx.abs() < 56 && velocity.abs() < 240) return;
-              final forward = dx.abs() >= 56 ? dx < 0 : velocity < 0;
-              _shift(forward ? 1 : -1);
-            },
-            child: widget.onRefresh == null
-                ? _grid(days, blocks, online)
-                : RefreshIndicator(
-                    key: const Key('timetable-refresh'),
-                    onRefresh: widget.onRefresh!,
-                    child: _grid(days, blocks, online),
-                  ),
-          ),
+          child: _view == 0
+              ? _gridBody(days, blocks, online)
+              : _agendaBody(monday),
         ),
       ],
     );
@@ -330,7 +366,7 @@ class _TimetablePageState extends State<TimetablePage> {
     return ListView(
       key: const Key('timetable-scroll'),
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 96),
       children: [
         SizedBox(
           height: gridHeight,
@@ -373,39 +409,283 @@ class _TimetablePageState extends State<TimetablePage> {
       ],
     );
   }
+
+  Widget _gridBody(List<int> days, List<Block> blocks, int online) {
+    final grid = _grid(days, blocks, online);
+    final content = GestureDetector(
+      onHorizontalDragStart: (_) => _dragDx = 0,
+      onHorizontalDragUpdate: (details) => _dragDx += details.delta.dx,
+      onHorizontalDragEnd: (details) {
+        final velocity = details.primaryVelocity ?? 0;
+        final dx = _dragDx;
+        if (dx.abs() < 56 && velocity.abs() < 240) return;
+        final forward = dx.abs() >= 56 ? dx < 0 : velocity < 0;
+        _shift(forward ? 1 : -1);
+      },
+      child: grid,
+    );
+    final refresh = widget.onRefresh;
+    if (refresh == null) return content;
+    return RefreshIndicator(
+      key: const Key('timetable-refresh'),
+      onRefresh: refresh,
+      child: content,
+    );
+  }
+
+  Widget _agendaBody(DateTime monday) {
+    final agenda = WeekAgendaView(
+      monday: monday,
+      now: widget.now,
+      courses: widget.snap.courses,
+      termStart: widget.snap.termStart,
+      activities: widget.activities,
+      todos: widget.todos,
+      termStartKnown: widget.termStartKnown,
+      onCourse: (course) => widget.onCourse(course, _week),
+      onOpenDay: _openDay,
+      onToggleTodo: widget.onToggleTodo,
+      onEditTodo: widget.onSaveTodo == null ? null : _editTodo,
+      onAddTodo: widget.onSaveTodo == null ? null : (date) => _addTodo(date),
+    );
+    final refresh = widget.onRefresh;
+    if (refresh == null) return agenda;
+    return RefreshIndicator(
+      key: const Key('timetable-agenda-refresh'),
+      onRefresh: refresh,
+      child: agenda,
+    );
+  }
+
+  void _openDay(DateTime date) {
+    showDayAgendaSheet(
+      context,
+      date: date,
+      courses: widget.snap.courses,
+      termStart: widget.snap.termStart,
+      now: widget.now,
+      activities: widget.activities,
+      todos: widget.todos,
+      termStartKnown: widget.termStartKnown,
+      onCourse: (course) => widget.onCourse(course, _week),
+      onToggleTodo: widget.onToggleTodo,
+      onEditTodo: widget.onSaveTodo == null ? null : _editTodo,
+      onAddTodo: widget.onSaveTodo == null
+          ? null
+          : (date, course) => _addTodo(date, course),
+    );
+  }
+
+  int _activityCountOn(DateTime date) {
+    return widget.activities.where((item) {
+      final start = item.activityStart;
+      if (start == null) return false;
+      final end = item.activityEnd;
+      final day = DateTime(date.year, date.month, date.day);
+      final next = day.add(const Duration(days: 1));
+      return start.isBefore(next) && (end == null || end.isAfter(day));
+    }).length;
+  }
+
+  int _todoCountOn(DateTime date) {
+    return widget.todos.where((todo) {
+      if (todo.done) return false;
+      final day = todo.day;
+      return day.year == date.year &&
+          day.month == date.month &&
+          day.day == date.day;
+    }).length;
+  }
+
+  DateTime _addTodoDefaultDate() {
+    final today = DateTime(widget.now.year, widget.now.month, widget.now.day);
+    final monday = weekMonday(_week, widget.snap.termStart);
+    final sunday = addDays(monday, 6);
+    if (!today.isBefore(monday) && !today.isAfter(sunday)) return today;
+    return today.isBefore(monday) ? monday : sunday;
+  }
+
+  Future<void> _addTodo([DateTime? date, Course? course]) {
+    final save = widget.onSaveTodo;
+    if (save == null) return Future<void>.value();
+    return showTodoEditor(
+      context,
+      defaultDate: date ?? _addTodoDefaultDate(),
+      courses: widget.snap.courses,
+      termStart: widget.snap.termStart,
+      initialCourse: course,
+      onSave: save,
+    );
+  }
+
+  Future<void> _editTodo(TodoItem todo) async {
+    final save = widget.onSaveTodo;
+    if (save == null) return;
+    await showTodoEditor(
+      context,
+      initial: todo,
+      defaultDate: todo.day,
+      courses: widget.snap.courses,
+      termStart: widget.snap.termStart,
+      onSave: save,
+      onDelete: widget.onDeleteTodo,
+    );
+  }
+}
+
+class _ViewSwitch extends StatelessWidget {
+  const _ViewSwitch({required this.view, required this.onChanged});
+
+  final int view;
+  final ValueChanged<int> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: HuayanColors.lineSoft,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ViewChoice(
+            key: const Key('timetable-view-grid'),
+            label: '课表',
+            selected: view == 0,
+            onTap: () => onChanged(0),
+          ),
+          _ViewChoice(
+            key: const Key('timetable-view-agenda'),
+            label: '日程',
+            selected: view == 1,
+            onTap: () => onChanged(1),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ViewChoice extends StatelessWidget {
+  const _ViewChoice({
+    super.key,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? HuayanColors.card : Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 6),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: selected ? HuayanColors.ink : HuayanColors.sub,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _DayHead extends StatelessWidget {
-  const _DayHead({required this.day, required this.date, required this.today});
+  const _DayHead({
+    super.key,
+    required this.day,
+    required this.date,
+    required this.today,
+    this.activityCount = 0,
+    this.todoCount = 0,
+    this.onTap,
+  });
 
   final int day;
   final DateTime date;
   final bool today;
+  final int activityCount;
+  final int todoCount;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = today ? HuayanColors.blue : HuayanColors.faint;
     final dateColor = today ? HuayanColors.blue : HuayanColors.ink;
-    return Column(
-      children: [
-        Text(
-          weekdayLabel[day],
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w500,
-            color: color,
-            letterSpacing: -0.4,
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: Semantics(
+        button: onTap != null,
+        label: '${weekdayLabel[day]} ${date.month}月${date.day}日日程',
+        child: SizedBox(
+          height: 44,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                weekdayLabel[day],
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                  color: color,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              Text(
+                '${date.day}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: dateColor,
+                ),
+              ),
+              SizedBox(
+                height: 6,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (activityCount > 0)
+                      const _DayDot(color: HuayanColors.blue),
+                    if (activityCount > 0 && todoCount > 0)
+                      const SizedBox(width: 3),
+                    if (todoCount > 0) const _DayDot(color: HuayanColors.amber),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-        Text(
-          '${date.day}',
-          style: TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: dateColor,
-          ),
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class _DayDot extends StatelessWidget {
+  const _DayDot({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 4,
+      height: 4,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

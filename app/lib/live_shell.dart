@@ -20,6 +20,9 @@ import 'home_page.dart';
 import 'live_login_page.dart';
 import 'me_page.dart';
 import 'native_service_page.dart';
+import 'planner/todo_controller.dart';
+import 'planner/todo_models.dart';
+import 'planner/todo_store.dart';
 import 'prefs.dart';
 import 'remind.dart';
 import 'schedule.dart';
@@ -59,8 +62,11 @@ class LiveShell extends StatefulWidget {
 }
 
 class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
-  late final DateTime _now = widget.now ?? DateTime.now();
+  late DateTime _now;
   final _settings = AppSettings();
+  Timer? _clock;
+  TodoController? _todos;
+  String _todoProfile = '';
   final _flow = LoginFlowState();
   AppController? _controller;
   WebVpnSessionManager? _webVpn;
@@ -86,6 +92,14 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _now = widget.now ?? DateTime.now();
+    if (widget.now == null) {
+      _clock = Timer.periodic(const Duration(minutes: 1), (_) {
+        if (!mounted) return;
+        setState(() => _now = DateTime.now());
+      });
+    }
+    ActivityMonitor.instance.addListener(_onActivityChanged);
     final initial = widget.initialTab ?? 0;
     _tab = initial < 0 || initial > 4 ? 0 : initial;
     _flow.recordTab(_tab);
@@ -162,9 +176,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
             }
             final cleanedCookies = Map<String, String>.from(
               storedWebVpn.cookies,
-            )..removeWhere(
-                (name, _) => name.startsWith(webVpnTicketPrefix),
-              );
+            )..removeWhere((name, _) => name.startsWith(webVpnTicketPrefix));
             await gmisWebVpnStore.write(
               AuthSession(
                 userId: storedWebVpn.userId,
@@ -277,9 +289,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       });
       return;
     }
-    await _acceptWebVpnSession(
-      WebVpnSession(credential: manager.credential!),
-    );
+    await _acceptWebVpnSession(WebVpnSession(credential: manager.credential!));
   }
 
   Future<void> _acceptSsoLogin(SsoLoginSuccess result) async {
@@ -337,15 +347,56 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _clock?.cancel();
+    ActivityMonitor.instance.removeListener(_onActivityChanged);
+    _todos?.removeListener(_onTodosChanged);
+    _todos?.dispose();
     _flow.clear();
     _controller?.removeListener(_onController);
     _controller?.dispose();
     super.dispose();
   }
 
+  void _onActivityChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _onTodosChanged() {
+    if (mounted) setState(() {});
+  }
+
+  void _syncTodos() {
+    final snap = _controller?.snapshot;
+    if (snap == null) return;
+    final profile = snap.student.id.isEmpty
+        ? snap.student.name
+        : snap.student.id;
+    if (profile.isEmpty || profile == _todoProfile) return;
+    _todos?.removeListener(_onTodosChanged);
+    _todos?.dispose();
+    final controller = TodoController(
+      store: PrefsTodoStore(profileKey: profile),
+    );
+    _todoProfile = profile;
+    _todos = controller..addListener(_onTodosChanged);
+    unawaited(controller.load());
+  }
+
+  List<ActivityItem> _appliedActivities() {
+    final seen = <String>{};
+    final result = <ActivityItem>[];
+    for (final kind in ActivityKind.values) {
+      for (final item in ActivityMonitor.instance.feed(kind).applied) {
+        if (seen.add(item.stableKey)) result.add(item);
+      }
+    }
+    return result;
+  }
+
   void _onController() {
     if (!mounted) return;
     setState(() {});
+    _syncTodos();
     final controller = _controller;
     if (controller == null) return;
     final notice = controller.notice;
@@ -609,6 +660,10 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       ActivityPage(
         kind: kind,
         dataSource: api,
+        courses: _controller?.snapshot?.courses ?? const <Course>[],
+        termStart: _controller?.snapshot?.termStart ?? '',
+        termStartKnown: _controller?.snapshot?.termStartKnown ?? true,
+        todos: _todos?.todos ?? const <TodoItem>[],
         onSessionExpired: _handleSessionExpired,
         onWebVpnExpired: _handleWebVpnExpired,
       ),
@@ -756,6 +811,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
                 item: item,
                 snap: snap,
                 api: _controller?.api,
+                todos: _todos?.todos ?? const <TodoItem>[],
                 onChanged: _refreshAfterChange,
                 onSessionExpired: _handleSessionExpired,
                 onWebVpnExpired: () {
@@ -898,6 +954,18 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
                     snap: snap,
                     now: _now,
                     settings: _settings,
+                    activities: _appliedActivities(),
+                    todos: _todos?.todos ?? const <TodoItem>[],
+                    termStartKnown: snap.termStartKnown,
+                    onToggleTodo: _todos == null
+                        ? null
+                        : (todo) => _todos!.toggle(todo),
+                    onSaveTodo: _todos == null
+                        ? null
+                        : (todo) => _todos!.upsert(todo),
+                    onDeleteTodo: _todos == null
+                        ? null
+                        : (id) => _todos!.delete(id),
                     onRefresh: _refresh,
                     lastRefreshedAt: _controller?.lastRefreshedAt,
                     offline: _controller?.phase == AppPhase.offline,

@@ -2,19 +2,21 @@
 
 这里放化研助手 GitHub README、Release 和社群分享用的成品图。素材以真实 App 截图为主，手机框内的界面不是重绘的概念稿；只有品牌插画例外。
 
-## 当前选用（v1.7.2）
+## 当前选用（v1.8.0）
 
 | 文件 | 尺寸 | 用途 |
 | --- | ---: | --- |
 | `banners/readme-hero.png` | 1600×700 | README 顶部主视觉，真实截图 |
 | `banners/github-social-preview.png` | 1280×640 | GitHub 仓库 Social preview（在仓库设置中手动上传） |
-| `banners/release-v1.7.2.png` | 1200×630 | v1.7.2 Release 顶部宣传图 |
-| `screenshots/release-v1.7.2-gallery.png` | 1600×930 | v1.7.2 Release 正文截图（首页 / 课表 / 服务） |
+| `banners/release-v1.8.0.png` | 1200×630 | v1.8.0 Release 顶部宣传图 |
+| `banners/release-v1.7.2.png` | 1200×630 | v1.7.2 Release 顶部宣传图（保留） |
+| `screenshots/release-v1.8.0-gallery.png` | 1600×930 | v1.8.0 Release 正文截图（活动待进行 / 活动详情 / 课表日程） |
+| `screenshots/release-v1.7.2-gallery.png` | 1600×930 | v1.7.2 Release 正文截图（保留） |
 | `features/01-timetable.png` | 1200×675 | 课表功能专题 |
-| `features/02-activity-reminder-signup.png` | 1200×675 | 学术报告 / 劳动实践监测、提醒与 App 内报名专题 |
+| `features/02-activity-reminder-signup.png` | 1200×675 | 活动报名与课表联动专题（v1.8.0 更新） |
 | `features/03-webvpn-bridge.png` | 1200×675 | 内置 WebVPN 桥接与校外访问专题 |
 | `features/04-services.png` | 1200×675 | 49 项服务入口专题 |
-| `screenshots/real-ui-gallery.png` | 1600×930 | 首页、课表、服务目录真实截图合集 |
+| `screenshots/real-ui-gallery.png` | 1600×930 | 首页、日程、活动页真实截图合集（v1.8.0 更新） |
 | `social/vertical-poster-3x4.png` | 1080×1440 | 朋友圈、小红书、群聊综合海报 |
 | `social/activities-poster-3x4.png` | 1080×1440 | 活动提醒与报名专题海报 |
 

@@ -88,6 +88,8 @@ ActivityItem _item({
   bool applied = false,
   DateTime? signupStart,
   DateTime? signupEnd,
+  DateTime? activityStart,
+  DateTime? activityEnd,
   int capacity = 50,
   int enrolled = 12,
 }) {
@@ -104,8 +106,8 @@ ActivityItem _item({
     organizer: '化学工程学院',
     location: '会议中心报告厅',
     method: '线下',
-    activityStart: now.add(const Duration(days: 3)),
-    activityEnd: now.add(const Duration(days: 3, hours: 2)),
+    activityStart: activityStart ?? now.add(const Duration(days: 3)),
+    activityEnd: activityEnd ?? now.add(const Duration(days: 3, hours: 2)),
     signupStart: signupStart ?? now.subtract(const Duration(hours: 1)),
     signupEnd: signupEnd ?? now.add(const Duration(days: 1)),
     capacity: capacity,
@@ -175,9 +177,8 @@ void main() {
   });
 
   testWidgets('activity cancellation asks for confirmation', (tester) async {
-    final source = _FakeActivitySource(
-      available: [_item(applied: true, id: 'a-2')],
-    );
+    final source = _FakeActivitySource();
+    source.applied = [_item(applied: true, id: 'a-2')];
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -192,6 +193,8 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('activity-tab-applied')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('activity-primary-a-2-cancel')));
     await tester.pumpAndSettle();
@@ -233,6 +236,144 @@ void main() {
     await tester.pumpAndSettle();
     expect(source.registerCalls, 1);
     expect(find.text('报名成功'), findsWidgets);
+    ActivityMonitor.instance.stop();
+  });
+
+  testWidgets('pending tab holds upcoming and full activities only', (
+    tester,
+  ) async {
+    final now = DateTime.now();
+    final source = _FakeActivitySource(
+      available: [
+        _item(id: 'a-open'),
+        _item(
+          id: 'a-soon',
+          signupStart: now.add(const Duration(days: 1)),
+          signupEnd: now.add(const Duration(days: 2)),
+          activityStart: now.add(const Duration(days: 3)),
+        ),
+        _item(id: 'a-full', capacity: 10, enrolled: 10),
+        _item(
+          id: 'a-closed',
+          signupStart: now.subtract(const Duration(days: 2)),
+          signupEnd: now.subtract(const Duration(hours: 1)),
+          activityStart: now.add(const Duration(days: 1)),
+        ),
+      ],
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(ActivityMonitor.instance.stop);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: huayanTheme(),
+        home: ActivityPage(
+          kind: ActivityKind.academicReport,
+          dataSource: source,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('可报名 1'), findsOneWidget);
+    expect(find.text('待进行 2'), findsOneWidget);
+    expect(find.text('我的报名 0'), findsOneWidget);
+    expect(
+      find.byKey(const Key('activity-card-a-open-available')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('activity-card-a-soon-available')),
+      findsNothing,
+    );
+
+    await tester.tap(find.byKey(const Key('activity-tab-pending')));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('activity-card-a-soon-available')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('activity-card-a-full-available')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('activity-card-a-closed-available')),
+      findsNothing,
+    );
+    expect(find.textContaining('报名开放'), findsOneWidget);
+    expect(find.text('等待名额'), findsOneWidget);
+    expect(
+      find.byKey(const Key('activity-primary-a-soon-apply')),
+      findsNothing,
+    );
+    ActivityMonitor.instance.stop();
+  });
+
+  testWidgets('empty open tab points to pending', (tester) async {
+    final now = DateTime.now();
+    final source = _FakeActivitySource(
+      available: [
+        _item(
+          id: 'a-soon',
+          signupStart: now.add(const Duration(days: 1)),
+          signupEnd: now.add(const Duration(days: 2)),
+        ),
+      ],
+    );
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(ActivityMonitor.instance.stop);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: huayanTheme(),
+        home: ActivityPage(
+          kind: ActivityKind.academicReport,
+          dataSource: source,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('查看待进行'), findsOneWidget);
+    await tester.tap(find.text('查看待进行'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('activity-card-a-soon-available')),
+      findsOneWidget,
+    );
+    ActivityMonitor.instance.stop();
+  });
+
+  testWidgets('detail sheet shows weekday and signup status', (tester) async {
+    final source = _FakeActivitySource(available: [_item()]);
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(ActivityMonitor.instance.stop);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: huayanTheme(),
+        home: ActivityPage(
+          kind: ActivityKind.academicReport,
+          dataSource: source,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('activity-card-a-1-available')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('报名状态'), findsOneWidget);
+    expect(find.text('活动时间'), findsOneWidget);
+    expect(find.text('报名时间'), findsOneWidget);
+    expect(find.textContaining('周'), findsWidgets);
     ActivityMonitor.instance.stop();
   });
 }

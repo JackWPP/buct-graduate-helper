@@ -178,6 +178,15 @@ class ActivityItem {
     return ActivityPhase.open;
   }
 
+  /// 上一轮已满、这一轮重新出现名额。
+  ///
+  /// 名额释放提醒只对“当前真的能报名”的活动触发；报名已截止、还没开始、
+  /// 容量未知（0）都不算，避免把学校字段缺失误报成“有名额了”。
+  bool becameOpenFrom(ActivityItem previous, DateTime now) {
+    if (!previous.isFull || isFull || capacity <= 0) return false;
+    return phaseAt(now) == ActivityPhase.open;
+  }
+
   String phaseLabel(DateTime now) {
     switch (phaseAt(now)) {
       case ActivityPhase.applied:

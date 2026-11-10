@@ -4,6 +4,7 @@ import 'activities/activity_models.dart';
 import 'activity_page.dart';
 import 'gmis/gmis_api.dart';
 import 'icons.dart';
+import 'planner/todo_models.dart';
 import 'remote_pages.dart';
 import 'selection_page.dart';
 import 'snapshot.dart';
@@ -23,6 +24,7 @@ class NativeServicePage extends StatelessWidget {
     this.onSessionExpired,
     this.onWebVpnExpired,
     this.onChanged,
+    this.todos = const <TodoItem>[],
   });
 
   final ServiceItem item;
@@ -30,6 +32,7 @@ class NativeServicePage extends StatelessWidget {
   final GmisApi? api;
   final VoidCallback? onSessionExpired;
   final VoidCallback? onWebVpnExpired;
+  final List<TodoItem> todos;
 
   /// 提交类操作成功后的刷新回调（例如选课后刷新课表和学分）。
   final Future<void> Function()? onChanged;
@@ -218,6 +221,10 @@ class NativeServicePage extends StatelessWidget {
         return ActivityPage(
           kind: ActivityKind.academicReport,
           dataSource: api,
+          courses: snap.courses,
+          termStart: snap.termStart,
+          termStartKnown: snap.termStartKnown,
+          todos: todos,
           onSessionExpired: onSessionExpired == null
               ? null
               : () async => onSessionExpired!(),
@@ -237,6 +244,10 @@ class NativeServicePage extends StatelessWidget {
         return ActivityPage(
           kind: ActivityKind.laborPractice,
           dataSource: api,
+          courses: snap.courses,
+          termStart: snap.termStart,
+          termStartKnown: snap.termStartKnown,
+          todos: todos,
           onSessionExpired: onSessionExpired == null
               ? null
               : () async => onSessionExpired!(),

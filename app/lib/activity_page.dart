@@ -3,10 +3,19 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
+import 'activities/activity_buckets.dart';
+import 'activities/activity_format.dart';
 import 'activities/activity_models.dart';
 import 'activities/activity_monitor.dart';
 import 'activities/activity_notifications.dart';
 import 'gmis/gmis_exception.dart';
+import 'planner/activity_conflict.dart';
+import 'planner/day_agenda_sheet.dart';
+import 'planner/day_plan.dart';
+import 'planner/planner_models.dart';
+import 'planner/time_text.dart';
+import 'planner/todo_models.dart';
+import 'schedule.dart';
 import 'webvpn/webvpn_exception.dart';
 import 'theme.dart';
 import 'ui/feedback.dart';
@@ -24,6 +33,10 @@ class ActivityPage extends StatefulWidget {
     this.onSessionExpired,
     this.onWebVpnExpired,
     this.monitor,
+    this.courses = const <Course>[],
+    this.termStart = '',
+    this.termStartKnown = true,
+    this.todos = const <TodoItem>[],
   });
 
   final ActivityKind kind;
@@ -31,14 +44,22 @@ class ActivityPage extends StatefulWidget {
   final Future<void> Function()? onSessionExpired;
   final Future<void> Function()? onWebVpnExpired;
   final ActivityMonitor? monitor;
+  final List<Course> courses;
+  final String termStart;
+  final bool termStartKnown;
+  final List<TodoItem> todos;
 
   @override
   State<ActivityPage> createState() => _ActivityPageState();
 }
 
 class _ActivityPageState extends State<ActivityPage> {
+  static const _tabOpen = 0;
+  static const _tabPending = 1;
+  static const _tabApplied = 2;
+
   late final ActivityMonitor _monitor;
-  int _tab = 0;
+  int _tab = _tabOpen;
   bool _busy = false;
 
   @override
@@ -78,6 +99,11 @@ class _ActivityPageState extends State<ActivityPage> {
       backgroundColor: Colors.transparent,
       builder: (context) => _ActivityDetailSheet(
         item: item,
+        courses: widget.courses,
+        termStart: widget.termStart,
+        termStartKnown: widget.termStartKnown,
+        todos: widget.todos,
+        dayActivities: _appliedActivities(),
         onApply:
             !item.applied && item.phaseAt(DateTime.now()) == ActivityPhase.open
             ? () => _register(item)
@@ -89,7 +115,36 @@ class _ActivityPageState extends State<ActivityPage> {
       await _register(item);
     } else if (action == 'cancel') {
       await _cancel(item);
+    } else if (action == 'day') {
+      await _openDay(item);
     }
+  }
+
+  List<ActivityItem> _appliedActivities() {
+    final seen = <String>{};
+    final result = <ActivityItem>[];
+    for (final kind in ActivityKind.values) {
+      for (final item in _monitor.feed(kind).applied) {
+        if (seen.add(item.stableKey)) result.add(item);
+      }
+    }
+    return result;
+  }
+
+  Future<void> _openDay(ActivityItem item) async {
+    final date = item.activityStart;
+    if (date == null) return;
+    await showDayAgendaSheet(
+      context,
+      date: date,
+      courses: widget.courses,
+      termStart: widget.termStart,
+      now: DateTime.now(),
+      activities: _appliedActivities(),
+      todos: widget.todos,
+      candidate: item.applied ? null : item,
+      termStartKnown: widget.termStartKnown,
+    );
   }
 
   Future<void> _register(ActivityItem item) async {
@@ -119,7 +174,7 @@ class _ActivityPageState extends State<ActivityPage> {
       if (!mounted) return;
       AppFeedback.show(result.display, context: context);
       if (result.ok) {
-        setState(() => _tab = 1);
+        setState(() => _tab = _tabApplied);
         await _refresh();
       }
     } on WebVpnSessionExpired {
@@ -177,7 +232,13 @@ class _ActivityPageState extends State<ActivityPage> {
   @override
   Widget build(BuildContext context) {
     final feed = _feed;
-    final items = _tab == 0 ? feed.available : feed.applied;
+    final now = DateTime.now();
+    final buckets = partitionAvailableActivities(feed.available, now);
+    final items = switch (_tab) {
+      _tabOpen => buckets.open,
+      _tabPending => buckets.pending,
+      _ => feed.applied,
+    };
     return Subpage(
       title: widget.kind.label,
       onRefresh: _refresh,
@@ -210,36 +271,42 @@ class _ActivityPageState extends State<ActivityPage> {
           OfflineBanner(message: feed.error!, onRetry: _refresh),
         _Tabs(
           tab: _tab,
-          availableCount: feed.available.length,
+          openCount: buckets.open.length,
+          pendingCount: buckets.pending.length,
           appliedCount: feed.applied.length,
           onChanged: (value) => setState(() => _tab = value),
         ),
+        if (_tab == _tabPending && items.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Text(
+              '还没开放报名、或名额已满的活动；名额释放后会回到“可报名”。',
+              style: const TextStyle(
+                fontSize: 12,
+                height: 1.5,
+                color: HuayanColors.faint,
+              ),
+            ),
+          ),
         if (feed.loading && feed.lastChecked == null)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 36),
             child: Center(child: CircularProgressIndicator()),
           )
         else if (items.isEmpty)
-          EmptyHint(
-            key: Key('activity-empty-${widget.kind.serviceId}'),
-            title: _tab == 0 ? '暂无可报名活动' : '还没有报名记录',
-            text: _tab == 0
-                ? '学校发布新活动后会出现在这里；打开自动监测后会在发现新活动时提醒。'
-                : '在“可报名”里选择活动，提交后会进入这里。',
-            icon: _tab == 0
-                ? Icons.event_available_outlined
-                : Icons.inbox_outlined,
-            action: TextButton(onPressed: _refresh, child: const Text('刷新一下')),
-          )
+          _emptyState(buckets)
         else
           ...items.map(
             (item) => _ActivityCard(
               item: item,
               busy: _busy,
+              courses: widget.courses,
+              termStart: widget.termStart,
+              termStartKnown: widget.termStartKnown,
               onTap: () => _openDetail(item),
               onPrimary: item.applied
                   ? () => _cancel(item)
-                  : (item.phaseAt(DateTime.now()) == ActivityPhase.open
+                  : (item.phaseAt(now) == ActivityPhase.open
                         ? () => _register(item)
                         : null),
             ),
@@ -247,6 +314,51 @@ class _ActivityPageState extends State<ActivityPage> {
         const SizedBox(height: 20),
       ],
     );
+  }
+
+  Widget _emptyState(ActivityBuckets buckets) {
+    switch (_tab) {
+      case _tabOpen:
+        final pending = buckets.pending.length;
+        return EmptyHint(
+          key: Key('activity-empty-${widget.kind.serviceId}-open'),
+          title: '当前没有正在报名的活动',
+          text: pending > 0
+              ? '有 $pending 个活动还不能报名，去“待进行”看看开放时间或名额。'
+              : '学校发布新活动后会出现在这里；打开自动监测后会在发现新活动时提醒。',
+          icon: Icons.event_available_outlined,
+          action: TextButton(
+            onPressed: pending > 0
+                ? () => setState(() => _tab = _tabPending)
+                : _refresh,
+            child: Text(pending > 0 ? '查看待进行' : '刷新一下'),
+          ),
+        );
+      case _tabPending:
+        final open = buckets.open.length;
+        return EmptyHint(
+          key: Key('activity-empty-${widget.kind.serviceId}-pending'),
+          title: '暂时没有待进行活动',
+          text: open > 0
+              ? '现在有 $open 个活动正在报名。'
+              : '还没开放报名、或名额已满的活动会出现在这里；学校未发布的活动无法提前显示。',
+          icon: Icons.upcoming_outlined,
+          action: TextButton(
+            onPressed: open > 0
+                ? () => setState(() => _tab = _tabOpen)
+                : _refresh,
+            child: Text(open > 0 ? '查看可报名' : '刷新一下'),
+          ),
+        );
+      default:
+        return EmptyHint(
+          key: Key('activity-empty-${widget.kind.serviceId}-applied'),
+          title: '还没有报名记录',
+          text: '在“可报名”里选择活动，提交后会进入这里。',
+          icon: Icons.inbox_outlined,
+          action: TextButton(onPressed: _refresh, child: const Text('刷新一下')),
+        );
+    }
   }
 }
 
@@ -296,7 +408,7 @@ class _StatusCard extends StatelessWidget {
                     const SizedBox(height: 3),
                     Text(
                       running
-                          ? '每 30 秒检查一次新活动 · 下拉可手动刷新'
+                          ? '每 30 秒检查新活动和名额 · 下拉可手动刷新'
                           : '登录后自动开始检查，打开页面即可刷新',
                       style: const TextStyle(
                         fontSize: 12,
@@ -318,13 +430,15 @@ class _StatusCard extends StatelessWidget {
 class _Tabs extends StatelessWidget {
   const _Tabs({
     required this.tab,
-    required this.availableCount,
+    required this.openCount,
+    required this.pendingCount,
     required this.appliedCount,
     required this.onChanged,
   });
 
   final int tab;
-  final int availableCount;
+  final int openCount;
+  final int pendingCount;
   final int appliedCount;
   final ValueChanged<int> onChanged;
 
@@ -336,16 +450,23 @@ class _Tabs extends StatelessWidget {
         children: [
           _TabButton(
             key: const Key('activity-tab-available'),
-            label: '可报名 $availableCount',
+            label: '可报名 $openCount',
             selected: tab == 0,
             onTap: () => onChanged(0),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
+          _TabButton(
+            key: const Key('activity-tab-pending'),
+            label: '待进行 $pendingCount',
+            selected: tab == 1,
+            onTap: () => onChanged(1),
+          ),
+          const SizedBox(width: 8),
           _TabButton(
             key: const Key('activity-tab-applied'),
             label: '我的报名 $appliedCount',
-            selected: tab == 1,
-            onTap: () => onChanged(1),
+            selected: tab == 2,
+            onTap: () => onChanged(2),
           ),
         ],
       ),
@@ -379,8 +500,10 @@ class _TabButton extends StatelessWidget {
             child: Text(
               label,
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: selected ? Colors.white : HuayanColors.sub,
               ),
@@ -396,24 +519,42 @@ class _ActivityCard extends StatelessWidget {
   const _ActivityCard({
     required this.item,
     required this.busy,
+    required this.courses,
+    required this.termStart,
+    required this.termStartKnown,
     required this.onTap,
     required this.onPrimary,
   });
 
   final ActivityItem item;
   final bool busy;
+  final List<Course> courses;
+  final String termStart;
+  final bool termStartKnown;
   final VoidCallback onTap;
   final VoidCallback? onPrimary;
 
   @override
   Widget build(BuildContext context) {
-    final phase = item.phaseAt(DateTime.now());
+    final now = DateTime.now();
+    final phase = item.phaseAt(now);
     final open = phase == ActivityPhase.open;
     final phaseColor = open
         ? HuayanColors.ok
         : phase == ActivityPhase.upcoming
         ? HuayanColors.blue
+        : phase == ActivityPhase.full
+        ? HuayanColors.amberInk
         : HuayanColors.sub;
+    final conflict = termStart.isEmpty
+        ? null
+        : activityConflict(
+            activity: item,
+            courses: courses,
+            termStart: termStart,
+            now: now,
+            termStartKnown: termStartKnown,
+          );
     return HuayanCard(
       key: Key(
         'activity-card-${item.id}-${item.applied ? 'applied' : 'available'}',
@@ -450,7 +591,7 @@ class _ActivityCard extends StatelessWidget {
                       ),
                     const Spacer(),
                     Text(
-                      item.phaseLabel(DateTime.now()),
+                      item.phaseLabel(now),
                       style: TextStyle(
                         fontSize: 12,
                         color: phaseColor,
@@ -478,15 +619,25 @@ class _ActivityCard extends StatelessWidget {
                 ),
                 if (item.location.isNotEmpty)
                   _MetaLine(icon: Icons.place_outlined, text: item.location),
+                if (conflict != null && conflict.hasConflict)
+                  _MetaLine(
+                    icon: Icons.event_busy_outlined,
+                    text: conflict.summary,
+                    color: HuayanColors.amberInk,
+                  ),
                 const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(
                       child: Text(
-                        '报名 ${_shortTime(item.signupStart)} - ${_shortTime(item.signupEnd)}',
-                        style: const TextStyle(
+                        _signupText(item, phase),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
                           fontSize: 12,
-                          color: HuayanColors.faint,
+                          color: phase == ActivityPhase.upcoming
+                              ? HuayanColors.blue
+                              : HuayanColors.faint,
                         ),
                       ),
                     ),
@@ -519,29 +670,32 @@ class _ActivityCard extends StatelessWidget {
                   style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
                 ),
               ),
-              TextButton(
-                key: Key(
-                  'activity-primary-${item.id}-${item.applied ? 'cancel' : 'apply'}',
-                ),
-                onPressed: busy ? null : onPrimary,
-                style: TextButton.styleFrom(
-                  foregroundColor: item.applied
-                      ? HuayanColors.danger
-                      : HuayanColors.blue,
-                  padding: const EdgeInsets.symmetric(horizontal: 10),
-                  minimumSize: const Size(0, 34),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-                child: Text(
-                  item.applied
-                      ? '取消报名'
-                      : open
-                      ? '立即报名'
-                      : phase == ActivityPhase.upcoming
-                      ? '未开始'
-                      : '不可报名',
-                ),
-              ),
+              if (item.applied)
+                TextButton(
+                  key: Key('activity-primary-${item.id}-cancel'),
+                  onPressed: busy ? null : onPrimary,
+                  style: TextButton.styleFrom(
+                    foregroundColor: HuayanColors.danger,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: const Size(0, 34),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('取消报名'),
+                )
+              else if (open)
+                TextButton(
+                  key: Key('activity-primary-${item.id}-apply'),
+                  onPressed: busy ? null : onPrimary,
+                  style: TextButton.styleFrom(
+                    foregroundColor: HuayanColors.blue,
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: const Size(0, 34),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text('立即报名'),
+                )
+              else
+                _TrailingHint(item: item, phase: phase, now: now),
             ],
           ),
         ],
@@ -550,24 +704,82 @@ class _ActivityCard extends StatelessWidget {
   }
 
   String _activityTime(ActivityItem item) {
-    final start = _shortTime(item.activityStart);
-    final end = _shortTime(item.activityEnd);
-    if (start.isEmpty && end.isEmpty) return '时间以学校通知为准';
-    return '$start - $end';
+    if (item.activityStart == null && item.activityEnd == null) {
+      return '时间以学校通知为准';
+    }
+    return activityRangeText(
+      item.activityStart,
+      item.activityEnd,
+      compact: true,
+    );
   }
 
-  String _shortTime(DateTime? value) {
-    if (value == null) return '待定';
-    return '${value.month}/${value.day} '
-        '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
+  String _signupText(ActivityItem item, ActivityPhase phase) {
+    switch (phase) {
+      case ActivityPhase.open:
+        return item.signupEnd == null
+            ? '报名中'
+            : '报名截止 ${activityDateTimeText(item.signupEnd!, compact: true)}';
+      case ActivityPhase.upcoming:
+        return item.signupStart == null
+            ? '报名时间待定'
+            : '报名开放 ${activityDateTimeText(item.signupStart!, compact: true)}';
+      case ActivityPhase.full:
+        return item.signupStart == null && item.signupEnd == null
+            ? '报名时间待定'
+            : '报名 ${activityRangeText(item.signupStart, item.signupEnd, compact: true)}';
+      case ActivityPhase.closed:
+        return '报名已截止';
+      case ActivityPhase.applied:
+        return item.signupStart == null && item.signupEnd == null
+            ? '已报名'
+            : '报名 ${activityRangeText(item.signupStart, item.signupEnd, compact: true)}';
+    }
+  }
+}
+
+class _TrailingHint extends StatelessWidget {
+  const _TrailingHint({
+    required this.item,
+    required this.phase,
+    required this.now,
+  });
+
+  final ActivityItem item;
+  final ActivityPhase phase;
+  final DateTime now;
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (phase) {
+      ActivityPhase.upcoming => (
+        item.signupStart == null
+            ? '待开放'
+            : '${relativeDayText(item.signupStart!, now)}开放',
+        HuayanColors.blue,
+      ),
+      ActivityPhase.full => ('等待名额', HuayanColors.amberInk),
+      ActivityPhase.open ||
+      ActivityPhase.closed ||
+      ActivityPhase.applied => ('不可报名', HuayanColors.faint),
+    };
+    return Text(
+      label,
+      style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.w600),
+    );
   }
 }
 
 class _MetaLine extends StatelessWidget {
-  const _MetaLine({required this.icon, required this.text});
+  const _MetaLine({
+    required this.icon,
+    required this.text,
+    this.color = HuayanColors.faint,
+  });
 
   final IconData icon;
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -575,14 +787,14 @@ class _MetaLine extends StatelessWidget {
       padding: const EdgeInsets.only(top: 3),
       child: Row(
         children: [
-          Icon(icon, size: 15, color: HuayanColors.faint),
+          Icon(icon, size: 15, color: color),
           const SizedBox(width: 5),
           Expanded(
             child: Text(
               text,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: HuayanColors.sub),
+              style: TextStyle(fontSize: 12, color: color),
             ),
           ),
         ],
@@ -594,16 +806,49 @@ class _MetaLine extends StatelessWidget {
 class _ActivityDetailSheet extends StatelessWidget {
   const _ActivityDetailSheet({
     required this.item,
+    required this.courses,
+    required this.termStart,
+    required this.termStartKnown,
+    required this.todos,
+    required this.dayActivities,
     required this.onApply,
     required this.onCancel,
   });
 
   final ActivityItem item;
+  final List<Course> courses;
+  final String termStart;
+  final bool termStartKnown;
+  final List<TodoItem> todos;
+  final List<ActivityItem> dayActivities;
   final Future<void> Function()? onApply;
   final Future<void> Function()? onCancel;
 
   @override
   Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final hasAction = onApply != null || onCancel != null;
+    final conflict = termStart.isEmpty
+        ? null
+        : activityConflict(
+            activity: item,
+            courses: courses,
+            termStart: termStart,
+            now: now,
+            termStartKnown: termStartKnown,
+          );
+    final day = item.activityStart == null
+        ? null
+        : buildDayPlan(
+            date: item.activityStart!,
+            courses: courses,
+            termStart: termStart,
+            now: now,
+            activities: dayActivities,
+            todos: todos,
+            candidate: item.applied ? null : item,
+            termStartKnown: termStartKnown,
+          );
     return Container(
       decoration: const BoxDecoration(
         color: HuayanColors.bg,
@@ -611,87 +856,115 @@ class _ActivityDetailSheet extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: HuayanColors.line,
-                    borderRadius: BorderRadius.circular(2),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.85,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(20, 10, 20, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: HuayanColors.line,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                item.title.isEmpty ? '活动详情' : item.title,
-                style: const TextStyle(
-                  fontSize: 21,
-                  height: 1.3,
-                  fontWeight: FontWeight.w700,
-                  color: HuayanColors.ink,
+                const SizedBox(height: 16),
+                Text(
+                  item.title.isEmpty ? '活动详情' : item.title,
+                  style: const TextStyle(
+                    fontSize: 21,
+                    height: 1.3,
+                    fontWeight: FontWeight.w700,
+                    color: HuayanColors.ink,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                '${item.kind.label} · ${item.phaseLabel(DateTime.now())}',
-                style: const TextStyle(fontSize: 13, color: HuayanColors.sub),
-              ),
-              const SizedBox(height: 16),
-              _DetailRow(
-                label: '活动时间',
-                value: _range(item.activityStart, item.activityEnd),
-              ),
-              _DetailRow(
-                label: '报名时间',
-                value: _range(item.signupStart, item.signupEnd),
-              ),
-              _DetailRow(label: '地点', value: item.location),
-              _DetailRow(
-                label: '主办',
-                value: item.organizer.isEmpty ? item.publisher : item.organizer,
-              ),
-              _DetailRow(label: '报名方式', value: item.method),
-              _DetailRow(label: '人数', value: item.capacityLabel),
-              if (item.score.isNotEmpty)
-                _DetailRow(label: '项目化加分', value: item.score),
-              if (item.duration.isNotEmpty)
-                _DetailRow(label: '活动时长', value: item.duration),
-              if (item.applied)
-                _DetailRow(label: '审核状态', value: item.auditLabel),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  if (onCancel != null)
-                    Expanded(
-                      child: OutlinedButton(
-                        key: const Key('activity-detail-cancel'),
-                        onPressed: () async {
-                          Navigator.of(context).pop('cancel');
-                        },
-                        child: const Text('取消报名'),
+                const SizedBox(height: 10),
+                Text(
+                  '${item.kind.label} · ${item.phaseLabel(now)}',
+                  style: const TextStyle(fontSize: 13, color: HuayanColors.sub),
+                ),
+                const SizedBox(height: 16),
+                _DetailRow(label: '报名状态', value: _statusText(now)),
+                if (conflict != null)
+                  _DetailRow(label: '课表冲突', value: conflict.summary),
+                if (day != null)
+                  _DetailRow(label: '当天空闲', value: _freeText(day)),
+                _DetailRow(
+                  label: '活动时间',
+                  value: _range(item.activityStart, item.activityEnd),
+                ),
+                _DetailRow(
+                  label: '报名时间',
+                  value: _range(item.signupStart, item.signupEnd),
+                ),
+                _DetailRow(label: '地点', value: item.location),
+                _DetailRow(
+                  label: '主办',
+                  value: item.organizer.isEmpty
+                      ? item.publisher
+                      : item.organizer,
+                ),
+                _DetailRow(label: '报名方式', value: item.method),
+                _DetailRow(label: '人数', value: item.capacityLabel),
+                if (item.score.isNotEmpty)
+                  _DetailRow(label: '项目化加分', value: item.score),
+                if (item.duration.isNotEmpty)
+                  _DetailRow(label: '活动时长', value: item.duration),
+                if (item.applied)
+                  _DetailRow(label: '审核状态', value: item.auditLabel),
+                if (item.activityStart != null)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      key: const Key('activity-view-day'),
+                      onPressed: () => Navigator.of(context).pop('day'),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 2),
+                        foregroundColor: HuayanColors.blue,
                       ),
+                      icon: const Icon(Icons.calendar_month_outlined, size: 17),
+                      label: const Text('查看当天日程'),
                     ),
-                  if (onCancel != null && onApply != null)
-                    const SizedBox(width: 12),
-                  if (onApply != null)
-                    Expanded(
-                      child: FilledButton(
-                        key: const Key('activity-detail-apply'),
-                        onPressed: () async {
-                          Navigator.of(context).pop('apply');
-                        },
-                        child: const Text('立即报名'),
-                      ),
-                    ),
+                  ),
+                if (hasAction) ...[
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      if (onCancel != null)
+                        Expanded(
+                          child: OutlinedButton(
+                            key: const Key('activity-detail-cancel'),
+                            onPressed: () async {
+                              Navigator.of(context).pop('cancel');
+                            },
+                            child: const Text('取消报名'),
+                          ),
+                        ),
+                      if (onCancel != null && onApply != null)
+                        const SizedBox(width: 12),
+                      if (onApply != null)
+                        Expanded(
+                          child: FilledButton(
+                            key: const Key('activity-detail-apply'),
+                            onPressed: () async {
+                              Navigator.of(context).pop('apply');
+                            },
+                            child: const Text('立即报名'),
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -700,11 +973,40 @@ class _ActivityDetailSheet extends StatelessWidget {
 
   String _range(DateTime? start, DateTime? end) {
     if (start == null && end == null) return '以学校通知为准';
-    String format(DateTime? value) => value == null
-        ? '待定'
-        : '${value.year}/${value.month}/${value.day} '
-              '${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
-    return '${format(start)} - ${format(end)}';
+    return activityRangeText(start, end, withYear: true);
+  }
+
+  String _freeText(DayPlan plan) {
+    if (plan.isPast) return '已过去';
+    if (!plan.termKnown) return '课表未确认，暂不计算';
+    if (!plan.hasCourseData) return '课表未加载，暂不计算';
+    if (plan.freeSlots.isEmpty) return '当天没有 30 分钟以上空闲';
+    final shown = plan.freeSlots
+        .take(2)
+        .map((slot) => '${planSlotText(slot)} · ${planSlotDuration(slot)}');
+    final more = plan.freeSlots.length > 2
+        ? '；另有 ${plan.freeSlots.length - 2} 段'
+        : '';
+    return '${shown.join('；')}$more';
+  }
+
+  String _statusText(DateTime now) {
+    switch (item.phaseAt(now)) {
+      case ActivityPhase.open:
+        return item.signupEnd == null
+            ? '报名中'
+            : '报名中 · ${activityDateTimeText(item.signupEnd!)} 截止';
+      case ActivityPhase.upcoming:
+        if (item.signupStart == null) return '报名时间待定';
+        return '未开始 · ${activityDateTimeText(item.signupStart!)} 开放'
+            '（${relativeDayText(item.signupStart!, now)}）';
+      case ActivityPhase.full:
+        return '名额已满 · 可等有人取消';
+      case ActivityPhase.closed:
+        return '报名已截止';
+      case ActivityPhase.applied:
+        return item.auditLabel;
+    }
   }
 }
 

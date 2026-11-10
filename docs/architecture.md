@@ -37,6 +37,7 @@
 - **状态机**：`app/lib/app_controller.dart` 管理 `booting / signedOut / restoring / ready / offline / sessionExpired / webVpnExpired`。
 - **GMIS 适配层**：`app/lib/gmis/gmis_client.dart` 负责登录、GMIS Cookie、JSON 解析和 302 分类；`gmis_api.dart` 封装业务接口。WebVPN ticket 由 `app/lib/webvpn/` 单独注入，不进入 GMIS Cookie。
 - **数据装配**：`app/lib/gmis/live_snapshot_builder.dart` 把学生卡、已选课、培养计划、成绩、评教、通知、考场、选课列表和服务菜单装配成 `Snapshot`（schemaVersion=2）。
+- **日程与待办**：`app/lib/planner/` 把课程、已报名活动和本地待办装成日计划/周计划，计算空闲段和活动冲突；`TodoController` 只写本机 SharedPreferences（按学号隔离），不进入快照、不上传学校接口。
 - **缓存**：`app/lib/storage/snapshot_cache.dart` 写应用支持目录；`secure_session_store.dart` 用 `flutter_secure_storage` 存 GMIS 会话；`webvpn_credential_store.dart` 只存 WebVPN ticket 和元数据；`sso_session_store.dart` 单独存统一身份认证的长期会话 Cookie（TGC/SESSION），用于 ticket 过期时静默续签；`auth/gmis_password_vault.dart` 可选保存 GMIS 密码（180 天上限，退出登录/手动清除即删除）。
 - **登录**：`app/lib/webvpn/` 负责网页版 VPN、统一身份认证（含短信 2FA）、ticket 校验和会话状态；`live_login_page.dart` 负责 GMIS 验证码登录。SSO 成功后学号/密码先在内存里预填；GMIS 登录页默认勾选“保持登录”，成功登录后密码写入系统安全存储，供下次预填。
 

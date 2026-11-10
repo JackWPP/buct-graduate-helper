@@ -6,6 +6,7 @@ import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
+import 'activity_format.dart';
 import 'activity_models.dart';
 
 /// 本地通知：活动新发布、报名开始/截止前提醒。
@@ -24,7 +25,7 @@ class ActivityNotificationService {
 
   static const _channelId = 'huayan_activity';
   static const _channelName = '活动报名提醒';
-  static const _channelDescription = '学术报告与劳动实践的新活动、报名开始和截止提醒';
+  static const _channelDescription = '学术报告与劳动实践的新活动、报名开始/截止和名额提醒';
 
   bool _initialized = false;
   bool _permissionAsked = false;
@@ -90,7 +91,7 @@ class ActivityNotificationService {
         body:
             item.title +
             (item.signupStart != null
-                ? ' · ${_dateLabel(item.signupStart!)} 开始报名'
+                ? ' · ${activityDateTimeText(item.signupStart!)} 开始报名'
                 : ''),
         notificationDetails: _details(),
         payload: item.stableKey,
@@ -112,13 +113,13 @@ class ActivityNotificationService {
           (
             '报名即将截止',
             item.signupEnd!.subtract(const Duration(minutes: 10)),
-            '${item.title} 将于 ${_dateLabel(item.signupEnd!)} 截止报名',
+            '${item.title} 将于 ${activityDateTimeText(item.signupEnd!)} 截止报名',
           ),
         if (item.activityStart != null && item.activityStart!.isAfter(now))
           (
             '活动即将开始',
             item.activityStart!.subtract(const Duration(hours: 1)),
-            '${item.title} 将于 ${_dateLabel(item.activityStart!)} 开始',
+            '${item.title} 将于 ${activityDateTimeText(item.activityStart!)} 开始',
           ),
       ];
       for (final (label, at, body) in events) {
@@ -135,6 +136,25 @@ class ActivityNotificationService {
       }
     } catch (error) {
       debugPrint('ActivityNotificationService schedule skipped: $error');
+    }
+  }
+
+  /// 已满的活动空出名额时提醒一次；调用方负责去重。
+  Future<void> showSlotAvailable(ActivityItem item) async {
+    try {
+      await ensureInitialized();
+      final deadline = item.signupEnd == null
+          ? ''
+          : '，${activityDateTimeText(item.signupEnd!)} 截止';
+      await _plugin.show(
+        id: _stableId('${item.stableKey}:slot'),
+        title: '有名额了',
+        body: '${item.title} 现在可以报名了$deadline',
+        notificationDetails: _details(),
+        payload: item.stableKey,
+      );
+    } catch (error) {
+      debugPrint('ActivityNotificationService slot skipped: $error');
     }
   }
 
@@ -157,7 +177,4 @@ class ActivityNotificationService {
     }
     return hash & 0x7fffffff;
   }
-
-  String _dateLabel(DateTime value) =>
-      '${value.month}月${value.day}日 ${value.hour.toString().padLeft(2, '0')}:${value.minute.toString().padLeft(2, '0')}';
 }

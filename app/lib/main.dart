@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'academics_page.dart';
+import 'activities/activity_models.dart';
+import 'activity_page.dart';
 import 'course_sheet.dart';
 import 'gate.dart';
 import 'home_page.dart';
@@ -11,6 +13,7 @@ import 'live_shell.dart';
 import 'me_page.dart';
 import 'native_service_page.dart';
 import 'prefs.dart';
+import 'preview/demo_activity.dart';
 import 'remind.dart';
 import 'schedule.dart';
 import 'services_page.dart';
@@ -304,6 +307,19 @@ class _ShellState extends State<Shell> {
           case 'lwkt':
           case 'lwdb':
             _push(ApplicationsPage(snap: snap));
+          case 'xshdbm' when _previewMode:
+          case 'zyzfwbm' when _previewMode:
+            _push(
+              ActivityPage(
+                kind: item.id == 'xshdbm'
+                    ? ActivityKind.academicReport
+                    : ActivityKind.laborPractice,
+                dataSource: DemoActivityDataSource(),
+                courses: snap.courses,
+                termStart: snap.termStart,
+                termStartKnown: snap.termStartKnown,
+              ),
+            );
           default:
             _push(NativeServicePage(item: item, snap: snap));
         }
@@ -421,6 +437,13 @@ class _ShellState extends State<Shell> {
                     snap: snap,
                     now: _now,
                     settings: _settings,
+                    activities: _previewMode
+                        ? demoAppliedActivities()
+                        : const <ActivityItem>[],
+                    todos: _previewMode ? demoTodos() : const [],
+                    onToggleTodo: _previewMode ? (_) {} : null,
+                    onSaveTodo: _previewMode ? (_) async {} : null,
+                    onDeleteTodo: _previewMode ? (_) async {} : null,
                     onCourse: _openCourse,
                     onOnline: () => _push(
                       OnlinePage(
