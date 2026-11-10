@@ -21,6 +21,7 @@ class NativeServicePage extends StatelessWidget {
     required this.snap,
     this.api,
     this.onSessionExpired,
+    this.onWebVpnExpired,
     this.onChanged,
   });
 
@@ -28,6 +29,7 @@ class NativeServicePage extends StatelessWidget {
   final Snapshot snap;
   final GmisApi? api;
   final VoidCallback? onSessionExpired;
+  final VoidCallback? onWebVpnExpired;
 
   /// 提交类操作成功后的刷新回调（例如选课后刷新课表和学分）。
   final Future<void> Function()? onChanged;
@@ -158,6 +160,7 @@ class NativeServicePage extends StatelessWidget {
             ('说明', 'zcsm'),
           ],
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'ccqjwh':
         return RemoteInfoPage(
@@ -168,6 +171,7 @@ class NativeServicePage extends StatelessWidget {
                   as Map<String, dynamic>,
           fields: const [('乘车区间', 'ccqj')],
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'ttkcx':
         return RemoteListPage(
@@ -176,6 +180,7 @@ class NativeServicePage extends StatelessWidget {
           emptyText: '暂无调课信息。',
           load: api.courseAdjustments,
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'djksbm':
         return RemoteListPage(
@@ -183,6 +188,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '可以报名的等级考试项目。',
           load: () => api.rawListGet('/student/grgl/djksbm_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'djkscj':
         return RemoteListPage(
@@ -190,6 +196,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '等级考试成绩。',
           load: () => api.rawListGet('/student/grgl/djkscjcx'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'pypgsq':
         return RemoteListPage(
@@ -197,6 +204,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '评优评干申请项目。',
           load: () => api.rawListGet('/student/yggl/pypgsq_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'szgwsq':
         return RemoteListPage(
@@ -204,6 +212,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '三助岗位列表。',
           load: () => api.rawListGet('/student/yggl/szgwsq_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'xshdbm':
         return ActivityPage(
@@ -212,6 +221,9 @@ class NativeServicePage extends StatelessWidget {
           onSessionExpired: onSessionExpired == null
               ? null
               : () async => onSessionExpired!(),
+          onWebVpnExpired: onWebVpnExpired == null
+              ? null
+              : () async => onWebVpnExpired!(),
         );
       case 'xwsxsq':
         return RemoteListPage(
@@ -219,6 +231,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '校外实习申请记录。',
           load: () => api.rawListGet('/student/yggl/xwsxsq_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'zyzfwbm':
         return ActivityPage(
@@ -227,6 +240,9 @@ class NativeServicePage extends StatelessWidget {
           onSessionExpired: onSessionExpired == null
               ? null
               : () async => onSessionExpired!(),
+          onWebVpnExpired: onWebVpnExpired == null
+              ? null
+              : () async => onWebVpnExpired!(),
         );
       case 'tyydbm':
         return RemoteListPage(
@@ -234,6 +250,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '体育活动项目。',
           load: () => api.rawListGet('/student/yggl/tyydbm_cklist'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'tyydmxsq':
         return RemoteListPage(
@@ -241,6 +258,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '体育运动免修申请。',
           load: () => api.rawListGet('/student/yggl/tyyd_mxsq_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'xsfblwdj':
         return RemoteListPage(
@@ -248,6 +266,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '已经登记的科研论文。',
           load: () => api.rawListGet('/student/bygl/xwlwdjlist'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'xskycgdj':
         return RemoteListPage(
@@ -255,6 +274,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '其他创新性成果。',
           load: () => api.rawListGet('/student/bygl/xskyxmdj_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'xszlcgdj':
         return RemoteListPage(
@@ -262,6 +282,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '专利与成果登记。',
           load: () => api.rawListGet('/student/bygl/zlcglist'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'xshjcgdj':
         return RemoteListPage(
@@ -269,6 +290,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '科研成果奖励登记。',
           load: () => api.rawListGet('/student/bygl/hjqklist'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'kcmxsq':
         return RemoteListPage(
@@ -276,6 +298,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '课程免修申请记录。',
           load: () => api.rawListGet('/student/pygl/kcmxsq_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'qxkczml':
         return RemoteListPage(
@@ -284,6 +307,7 @@ class NativeServicePage extends StatelessWidget {
           emptyText: '学校没有返回课程目录。',
           load: api.courseCatalogRows,
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'xswsxk':
       case 'xswsxk_kb':
@@ -293,6 +317,7 @@ class NativeServicePage extends StatelessWidget {
           snap: snap,
           onChanged: onChanged,
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'cxhkbksq':
         return RemoteListPage(
@@ -300,6 +325,7 @@ class NativeServicePage extends StatelessWidget {
           intro: '重缓补考申请信息。',
           load: () => api.rawListGet('/student/pygl/cxhkbksq_list'),
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       case 'wskscp':
         return RemoteListPage(
@@ -308,6 +334,7 @@ class NativeServicePage extends StatelessWidget {
           emptyText: '暂无网上考试。',
           load: api.onlineExamRows,
           onSessionExpired: onSessionExpired,
+          onWebVpnExpired: onWebVpnExpired,
         );
       default:
         return null;

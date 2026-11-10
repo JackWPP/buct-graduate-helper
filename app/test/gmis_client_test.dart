@@ -7,6 +7,7 @@ import 'package:huayan/gmis/gmis_api.dart';
 import 'package:huayan/gmis/gmis_client.dart';
 import 'package:huayan/gmis/gmis_exception.dart';
 import 'package:huayan/gmis/gmis_transport.dart';
+import 'package:huayan/webvpn/webvpn_exception.dart';
 
 const _publicKey = '''
 -----BEGIN PUBLIC KEY-----
@@ -255,5 +256,118 @@ void main() {
     expect(bytes, const [9, 9, 9]);
     expect(transport.requests.single.path, '/home/verificationcode');
     expect(transport.requests.single.query?['codetype'], 'xkyzm');
+  });
+
+  test('webvpn ticket 单独注入且不会写进 GMIS Cookie', () async {
+    final seen = <Map<String, String>>[];
+    final rotations = <(String, String?)>[];
+    final transport = _FakeTransport((request) {
+      seen.add(request.headers);
+      return _response(
+        '{}',
+        headers: {
+          'set-cookie': [
+            'wengine_vpn_ticketw_buct_edu_cn=rotated; Path=/; Secure; HttpOnly',
+          ],
+        },
+      );
+    });
+    final client = GmisClient(
+      transport: transport,
+      baseUrl: 'https://w.buct.edu.cn/https/token',
+      viaWebVpn: true,
+      webVpnTicketHeader: () => 'wengine_vpn_ticketw_buct_edu_cn=old',
+      onWebVpnTicket: (name, value) => rotations.add((name, value)),
+    );
+
+    await client.getJson('/student/default/getxscardinfo');
+
+    expect(seen.single['Cookie'], contains('wengine_vpn_ticketw_buct_edu_cn=old'));
+    expect(client.cookies.containsKey('wengine_vpn_ticketw_buct_edu_cn'), isFalse);
+    expect(rotations.single.$1, 'wengine_vpn_ticketw_buct_edu_cn');
+    expect(rotations.single.$2, 'rotated');
+  });
+
+  test('webvpn 门户 302 抛 WebVpnSessionExpired', () {
+    final client = GmisClient(
+      transport: _FakeTransport(
+        (_) => _response(
+          '',
+          status: 302,
+          headers: const {
+            'location': ['https://w.buct.edu.cn/login'],
+          },
+        ),
+      ),
+      baseUrl: 'https://w.buct.edu.cn/https/token',
+      viaWebVpn: true,
+    );
+
+    expect(
+      () => client.getJson('/student/default/getxscardinfo'),
+      throwsA(isA<WebVpnSessionExpired>()),
+    );
+  });
+
+  test('webvpn 目标登录 302 仍抛 GmisSessionExpired', () {
+    final client = GmisClient(
+      transport: _FakeTransport(
+        (_) => _response(
+          '',
+          status: 302,
+          headers: const {
+            'location': ['/home/stulogin'],
+          },
+        ),
+      ),
+      baseUrl: 'https://w.buct.edu.cn/https/token',
+      viaWebVpn: true,
+    );
+
+    expect(
+      () => client.getJson('/student/default/getxscardinfo'),
+      throwsA(isA<GmisSessionExpired>()),
+    );
+  });
+
+  test('登录页跟随重定向时保留 WebVPN 前缀', () async {
+    final transport = _FakeTransport(
+      (_) => _response(
+        '<input id="pubkey" type="hidden" value=\'$_publicKey\'>',
+      ),
+    );
+    final client = GmisClient(
+      transport: transport,
+      baseUrl: 'https://w.buct.edu.cn/https/token',
+      viaWebVpn: true,
+    );
+
+    await client.fetchLoginPage();
+
+    expect(
+      transport.requests.single.absoluteUri?.path,
+      '/https/token/home/stulogin',
+    );
+  });
+
+  test('登录页被门户 302 时抛 WebVpnSessionExpired', () {
+    final client = GmisClient(
+      transport: _FakeTransport(
+        (_) => _response(
+          '',
+          status: 302,
+          headers: const {
+            'location': ['/login'],
+          },
+        ),
+      ),
+      baseUrl: 'https://w.buct.edu.cn/https/token',
+      viaWebVpn: true,
+    );
+
+    expect(
+      () => client.fetchLoginPage(),
+      throwsA(isA<WebVpnSessionExpired>()),
+    );
   });
 }

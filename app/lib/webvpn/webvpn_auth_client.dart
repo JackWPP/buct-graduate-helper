@@ -8,8 +8,11 @@ import 'package:pointycastle/digests/md5.dart';
 
 import '../gmis/gmis_exception.dart';
 import '../gmis/gmis_transport.dart';
+import 'webvpn_credential.dart';
+import 'webvpn_exception.dart';
 import 'webvpn_session.dart';
 import 'webvpn_url.dart';
+import 'webvpn_validator.dart';
 
 /// 统一身份认证返回的短信二次认证挑战。
 class WebVpnSmsChallenge {
@@ -47,30 +50,47 @@ class SmsCodeSent {
   final int intervalSeconds;
 }
 
+class _ChainResult {
+  const _ChainResult({
+    required this.uri,
+    required this.response,
+    required this.tickets,
+  });
+
+  final Uri uri;
+  final GmisResponse response;
+  final List<(String, String)> tickets;
+}
+
 /// 学校统一身份认证的网页登录协议。
 ///
 /// 密码只用于本次登录，不会写入存储或日志。流程：
 /// 1. GET 登录页拿 croypto / flowkey；
 /// 2. AES-128-ECB 加密密码并 POST；
 /// 3. 若返回短信二次认证页，发送短信并再次提交验证码；
-/// 4. 用 CAS ticket 换取 WebVPN Cookie。
+/// 4. 收集重定向链上的 ticket 候选并逐个校验，只有门户认可的才返回会话。
 class WebVpnAuthClient {
   WebVpnAuthClient({
     GmisTransport? ssoTransport,
     GmisTransport? webVpnTransport,
+    WebVpnValidator? validator,
   }) : _ssoTransport =
            ssoTransport ??
-           DioGmisTransport(baseUrl: 'https://sidportal.buct.edu.cn'),
+           DioGmisTransport(baseUrl: ssoBase),
        _webVpnTransport =
            webVpnTransport ??
-           DioGmisTransport(baseUrl: 'https://${WebVpnUrls.host}');
+           DioGmisTransport(baseUrl: 'https://${WebVpnUrls.host}'),
+       _validator = validator ?? HttpWebVpnValidator();
 
   static const String ssoBase = 'https://sidportal.buct.edu.cn';
   static const String service = 'https://w.buct.edu.cn/login?cas_login=true';
 
   final GmisTransport _ssoTransport;
   final GmisTransport _webVpnTransport;
-  final Map<String, String> _ssoCookies = {};
+  final WebVpnValidator _validator;
+
+  /// Cookie 按 host 隔离：SSO Cookie 不发给门户，门户 Cookie 不发给 SSO。
+  final Map<String, Map<String, String>> _cookiesByHost = {};
   WebVpnSmsChallenge? _pendingSms;
 
   Future<WebVpnLoginResult> login({
@@ -81,73 +101,63 @@ class WebVpnAuthClient {
     if (id.isEmpty || password.isEmpty) {
       throw const GmisAuthException('请填写学号和密码');
     }
-    _ssoCookies.clear();
+    _cookiesByHost.clear();
     _pendingSms = null;
-    final page = await _ssoTransport.send(
-      GmisRequest(
-        method: 'GET',
-        path: '/login',
-        query: const {'service': service},
-        headers: const {
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Referer': '$ssoBase/login',
-        },
-        followRedirects: true,
-      ),
+
+    final loginUri = Uri.parse(
+      '$ssoBase/login',
+    ).replace(queryParameters: {'service': service});
+    final page = await _follow(
+      loginUri,
+      headers: _htmlHeaders(referer: '$ssoBase/login'),
     );
-    _absorbCookies(_ssoCookies, page);
-    if (page.statusCode != 200) {
+    final existing = await _trySession(page.tickets);
+    if (existing != null) return WebVpnLoginResult.session(existing);
+
+    if (page.response.statusCode != 200) {
       throw GmisApiException(
-        '统一身份认证页面加载失败（HTTP ${page.statusCode}）',
-        statusCode: page.statusCode,
+        '统一身份认证页面加载失败（HTTP ${page.response.statusCode}）',
+        statusCode: page.response.statusCode,
       );
     }
-    final croypto = _field(page.body, 'login-croypto');
-    final flowKey = _field(page.body, 'login-page-flowkey');
+    final croypto = _field(page.response.body, 'login-croypto');
+    final flowKey = _field(page.response.body, 'login-page-flowkey');
     if (croypto == null || flowKey == null) {
       throw const GmisFormatException('统一身份认证页面结构已变化，请稍后重试');
     }
 
-    final response = await _ssoTransport.send(
-      GmisRequest(
-        method: 'POST',
-        path: '/login',
-        query: const {'service': service},
-        form: {
-          'type': 'UsernamePassword',
-          '_eventId': 'submit',
-          'geolocation': '',
-          'execution': flowKey,
-          'croypto': croypto,
-          'username': id,
-          'password': encryptSsoPassword(croypto, password),
-        },
-        headers: {
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Referer': '$ssoBase/login?service=${Uri.encodeComponent(service)}',
-          'Cookie': _cookieHeader(_ssoCookies),
-        },
-        followRedirects: false,
-      ),
+    final postUri = Uri.parse(
+      '$ssoBase/login',
+    ).replace(queryParameters: {'service': service});
+    final response = await _follow(
+      postUri,
+      method: 'POST',
+      form: {
+        'type': 'UsernamePassword',
+        '_eventId': 'submit',
+        'geolocation': '',
+        'execution': flowKey,
+        'croypto': croypto,
+        'username': id,
+        'password': encryptSsoPassword(croypto, password),
+      },
+      headers: _htmlHeaders(referer: '$ssoBase/login'),
     );
-    _absorbCookies(_ssoCookies, response);
-
-    final location = response.header('location');
-    if (response.statusCode >= 300 &&
-        response.statusCode < 400 &&
-        location != null &&
-        location.isNotEmpty) {
-      return WebVpnLoginResult.session(await _exchangeTicket(location));
+    final session = await _trySession(response.tickets);
+    if (session != null) return WebVpnLoginResult.session(session);
+    if (response.tickets.isNotEmpty) {
+      throw const WebVpnAuthException(
+        '统一身份认证完成，但网页版 VPN 没有生效，请重试或使用网页版登录',
+      );
     }
 
-    final loginType = _field(response.body, 'current-login-type');
-    final second = _field(response.body, 'sso-second');
+    final body = response.response.body;
+    final loginType = _field(body, 'current-login-type');
+    final second = _field(body, 'sso-second');
     if (loginType == 'smsLogin' || second == 'true') {
-      final phone = _field(response.body, 'phone-number') ?? '';
-      final smsUserId = _field(response.body, 'second-auth-user-id') ?? id;
-      final execution = _field(response.body, 'login-page-flowkey') ?? '';
+      final phone = _field(body, 'phone-number') ?? '';
+      final smsUserId = _field(body, 'second-auth-user-id') ?? id;
+      final execution = _field(body, 'login-page-flowkey') ?? '';
       if (phone.isEmpty || execution.isEmpty) {
         throw const GmisFormatException('短信验证页面结构已变化，请稍后再试');
       }
@@ -160,35 +170,33 @@ class WebVpnAuthClient {
       return WebVpnLoginResult.smsRequired(challenge);
     }
 
-    final code = _field(response.body, 'login-error-msg');
+    final code =
+        _field(body, 'login-error-code') ?? _field(body, 'login-error-msg');
     if (code != null && code.isNotEmpty) {
       throw GmisAuthException(switch (code) {
         '1030028' => '学号或密码不正确',
         _ => '统一身份认证失败（$code）',
       });
     }
-    if (response.statusCode == 401) {
+    if (response.response.statusCode == 401) {
       throw const GmisAuthException('学号或密码不正确');
     }
     throw GmisApiException(
-      '统一身份认证没有返回跳转（HTTP ${response.statusCode}）',
-      statusCode: response.statusCode,
+      '统一身份认证没有返回跳转（HTTP ${response.response.statusCode}）',
+      statusCode: response.response.statusCode,
     );
   }
 
   /// 向当前短信挑战的手机号发送验证码，返回允许重发的间隔秒数。
   Future<SmsCodeSent> sendSmsCode() async {
     final challenge = _requireSmsChallenge();
-    final response = await _ssoTransport.send(
-      GmisRequest(
-        method: 'POST',
-        path: '/api/protected/sms/publicNoToken/sendSmsCode',
-        json: {'phone': challenge.phoneNumber, 'businessNo': '0008'},
-        headers: _jsonHeaders(),
-        followRedirects: false,
-      ),
+    final uri = Uri.parse(
+      '$ssoBase/api/protected/sms/publicNoToken/sendSmsCode',
     );
-    _absorbCookies(_ssoCookies, response);
+    final response = await _postJson(uri, {
+      'phone': challenge.phoneNumber,
+      'businessNo': '0008',
+    });
     final data = _decodeMap(response.body);
     final code = _intOf(data['code']);
     if (response.statusCode != 200 || (code != null && code != 200)) {
@@ -219,115 +227,226 @@ class WebVpnAuthClient {
     if (token.isEmpty) {
       throw const GmisAuthException('请输入短信验证码');
     }
-    final check = await _ssoTransport.send(
-      GmisRequest(
-        method: 'POST',
-        path: '/api/protected/sms/checkToken',
-        json: {
-          'phone': challenge.phoneNumber,
-          'token': token,
-          'delete': false,
-          'trustDevice': false,
-        },
-        headers: _jsonHeaders(),
-        followRedirects: false,
-      ),
+    final check = await _postJson(
+      Uri.parse('$ssoBase/api/protected/sms/checkToken'),
+      {
+        'phone': challenge.phoneNumber,
+        'token': token,
+        'delete': false,
+        'trustDevice': false,
+      },
     );
-    _absorbCookies(_ssoCookies, check);
     final checkData = _decodeMap(check.body);
     final checkCode = _intOf(checkData['code']);
-    if (check.statusCode != 200 || (checkCode != null && checkCode != 200)) {
+    if (check.statusCode != 200 ||
+        (checkCode != null && checkCode != 200)) {
       throw const GmisAuthException('短信验证码不正确');
     }
 
-    final response = await _ssoTransport.send(
-      GmisRequest(
-        method: 'POST',
-        path: '/login',
-        query: const {'service': service},
-        form: {
-          'username': challenge.userId,
-          'password': token,
-          'type': 'smsLogin',
-          '_eventId': 'submit',
-          'geolocation': '',
-          'execution': challenge.execution,
-        },
-        headers: {
-          'Accept':
-              'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-          'Referer': '$ssoBase/login',
-          'Cookie': _cookieHeader(_ssoCookies),
-        },
-        followRedirects: false,
-      ),
+    final response = await _follow(
+      Uri.parse('$ssoBase/login').replace(queryParameters: {'service': service}),
+      method: 'POST',
+      form: {
+        'username': challenge.userId,
+        'password': token,
+        'type': 'smsLogin',
+        '_eventId': 'submit',
+        'geolocation': '',
+        'execution': challenge.execution,
+      },
+      headers: _htmlHeaders(referer: '$ssoBase/login'),
     );
-    _absorbCookies(_ssoCookies, response);
-    final location = response.header('location');
-    if (response.statusCode >= 300 &&
-        response.statusCode < 400 &&
-        location != null &&
-        location.isNotEmpty) {
+    final session = await _trySession(response.tickets);
+    if (session != null) {
       _pendingSms = null;
-      return _exchangeTicket(location);
+      return session;
+    }
+    if (response.tickets.isNotEmpty) {
+      throw const WebVpnAuthException(
+        '短信验证完成，但网页版 VPN 没有生效，请重试或使用网页版登录',
+      );
     }
     final errorCode =
-        _field(response.body, 'login-error-msg') ??
-        _field(response.body, 'login-error-code');
+        _field(response.response.body, 'login-error-msg') ??
+        _field(response.response.body, 'login-error-code');
     if (errorCode != null && errorCode.isNotEmpty) {
       throw const GmisAuthException('短信验证码不正确');
     }
-    if (response.body.contains('验证码有误')) {
+    if (response.response.body.contains('验证码有误')) {
       throw const GmisAuthException('短信验证码不正确');
     }
     throw GmisApiException(
-      '短信验证没有返回跳转（HTTP ${response.statusCode}）',
-      statusCode: response.statusCode,
+      '短信验证没有返回跳转（HTTP ${response.response.statusCode}）',
+      statusCode: response.response.statusCode,
     );
   }
 
-  Future<WebVpnSession> _exchangeTicket(String location) async {
-    var uri = Uri.parse(location);
-    if (!uri.hasScheme) {
-      uri = Uri.parse('https://${WebVpnUrls.host}').resolveUri(uri);
+  /// 依次校验重定向链上的 ticket 候选；只有门户认可的才返回。
+  Future<WebVpnSession?> _trySession(List<(String, String)> candidates) async {
+    if (candidates.isEmpty) return null;
+    final seen = <String>{};
+    var sawOffline = false;
+    for (final candidate in candidates.reversed) {
+      final key = '${candidate.$1}=${candidate.$2}';
+      if (!seen.add(key)) continue;
+      final now = DateTime.now();
+      final credential = WebVpnCredential(
+        ticketName: candidate.$1,
+        ticketValue: candidate.$2,
+        issuedAt: now,
+        lastUsedAt: now,
+        source: WebVpnCredential.sourceNativeSso,
+      );
+      final validation = await _validator.validate(credential);
+      switch (validation.state) {
+        case WebVpnState.valid:
+          return WebVpnSession(
+            credential: credential.copyWith(lastValidatedAt: now),
+          );
+        case WebVpnState.expired:
+          continue;
+        case WebVpnState.offline:
+        case WebVpnState.unknown:
+          sawOffline = true;
+      }
     }
-    final cookies = <String, String>{};
-    for (var hop = 0; hop < 6; hop++) {
-      final response = await _webVpnTransport.send(
+    if (sawOffline) {
+      throw const GmisNetworkException('无法验证网页版 VPN 会话，请检查网络后重试');
+    }
+    return null;
+  }
+
+  /// 手动跟随重定向，支持跨 host，并在每一跳吸收 Set-Cookie。
+  Future<_ChainResult> _follow(
+    Uri start, {
+    String method = 'GET',
+    Map<String, String>? form,
+    Map<String, dynamic>? json,
+    Map<String, String>? headers,
+  }) async {
+    var uri = start;
+    var currentMethod = method;
+    var currentForm = form;
+    var currentJson = json;
+    final tickets = <(String, String)>[];
+    for (var hop = 0; hop < 8; hop++) {
+      _requireAllowedHost(uri);
+      final response = await _transportFor(uri).send(
         GmisRequest(
-          method: 'GET',
-          path: uri.path.isEmpty ? '/' : uri.path,
-          query: uri.queryParameters.isEmpty ? null : uri.queryParameters,
+          method: currentMethod,
+          path: uri.path,
+          absoluteUri: uri,
+          form: currentForm,
+          json: currentJson,
           headers: {
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            if (cookies.isNotEmpty) 'Cookie': _cookieHeader(cookies),
+            ...?headers,
+            if (_cookieHeaderFor(uri).isNotEmpty)
+              'Cookie': _cookieHeaderFor(uri),
           },
           followRedirects: false,
         ),
       );
-      _absorbCookies(cookies, response);
-      final next = response.header('location');
-      if (response.statusCode >= 300 &&
-          response.statusCode < 400 &&
-          next != null &&
-          next.isNotEmpty) {
-        var target = Uri.parse(next);
-        if (!target.hasScheme) {
-          target = uri.resolveUri(target);
-        }
-        uri = target;
-        continue;
+      tickets.addAll(_absorbCookies(uri, response));
+      final status = response.statusCode;
+      if (status < 300 || status >= 400) {
+        return _ChainResult(uri: uri, response: response, tickets: tickets);
       }
-      break;
+      final raw = response.header('location');
+      if (raw == null || raw.isEmpty) {
+        return _ChainResult(uri: uri, response: response, tickets: tickets);
+      }
+      uri = uri.resolve(raw);
+      _requireAllowedHost(uri);
+      // 浏览器在 302/303/307 后都重新发 GET；POST 表单不再重复提交。
+      currentMethod = 'GET';
+      currentForm = null;
+      currentJson = null;
     }
-    final session = WebVpnSession(
-      baseUrl: WebVpnUrls.gmisBase,
-      cookies: cookies,
+    throw const GmisFormatException('统一身份认证跳转次数过多');
+  }
+
+  GmisTransport _transportFor(Uri uri) {
+    if (uri.host == WebVpnUrls.host) return _webVpnTransport;
+    if (uri.host == WebVpnUrls.sidPortalHost) return _ssoTransport;
+    throw GmisFormatException('统一身份认证跳转到了未知地址: ${uri.host}');
+  }
+
+  void _requireAllowedHost(Uri uri) {
+    if (uri.host == WebVpnUrls.host || uri.host == WebVpnUrls.sidPortalHost) {
+      return;
+    }
+    throw GmisFormatException('统一身份认证跳转到了未知地址: ${uri.host}');
+  }
+
+  Future<GmisResponse> _postJson(Uri uri, Map<String, dynamic> data) async {
+    final response = await _transportFor(uri).send(
+      GmisRequest(
+        method: 'POST',
+        path: uri.path,
+        absoluteUri: uri,
+        json: data,
+        headers: _jsonHeaders(uri),
+        followRedirects: false,
+      ),
     );
-    if (!session.hasTicket) {
-      throw const GmisAuthException('统一身份认证成功，但没有拿到网页版 VPN 凭证');
+    _absorbCookies(uri, response);
+    return response;
+  }
+
+  List<(String, String)> _absorbCookies(Uri uri, GmisResponse response) {
+    final tickets = <(String, String)>[];
+    final jar = _cookiesByHost.putIfAbsent(uri.host, () => <String, String>{});
+    for (final raw in response.headers['set-cookie'] ?? const <String>[]) {
+      final first = raw.split(';').first.trim();
+      final index = first.indexOf('=');
+      if (index <= 0) continue;
+      final name = first.substring(0, index).trim();
+      final value = first.substring(index + 1).trim();
+      if (name.isEmpty) continue;
+      if (name.startsWith(webVpnTicketPrefix) && value.isNotEmpty) {
+        tickets.add((name, value));
+      }
+      if (value.isEmpty) {
+        jar.remove(name);
+      } else {
+        jar[name] = value;
+      }
     }
-    return session;
+    return tickets;
+  }
+
+  String _cookieHeaderFor(Uri uri) {
+    final jar = _cookiesByHost[uri.host];
+    if (jar == null || jar.isEmpty) return '';
+    return jar.entries.map((e) => '${e.key}=${e.value}').join('; ');
+  }
+
+  Map<String, String> _htmlHeaders({required String referer}) => {
+    'Accept':
+        'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    'Referer': referer,
+  };
+
+  Map<String, String> _jsonHeaders(Uri uri) {
+    final key = _randomKey();
+    final encoded = base64Encode(utf8.encode(key));
+    final half = encoded.length ~/ 2;
+    final value =
+        encoded.substring(0, half) + encoded + encoded.substring(half);
+    final digest = MD5Digest().process(utf8.encode(value));
+    final md5 = digest
+        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
+        .join();
+    return {
+      'Accept': 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',
+      'Referer': '$ssoBase/login',
+      'sid-language': 'zh_CN',
+      'Csrf-Key': key,
+      'Csrf-Value': md5,
+      if (_cookieHeaderFor(uri).isNotEmpty)
+        'Cookie': _cookieHeaderFor(uri),
+    };
   }
 
   WebVpnSmsChallenge _requireSmsChallenge() {
@@ -352,27 +471,6 @@ class WebVpnAuthClient {
       engine.processBlock(padded, offset, output, offset);
     }
     return base64Encode(output);
-  }
-
-  Map<String, String> _jsonHeaders() {
-    final key = _randomKey();
-    final encoded = base64Encode(utf8.encode(key));
-    final half = encoded.length ~/ 2;
-    final value =
-        encoded.substring(0, half) + encoded + encoded.substring(half);
-    final digest = MD5Digest().process(utf8.encode(value));
-    final md5 = digest
-        .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-        .join();
-    return {
-      'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json',
-      'Referer': '$ssoBase/login',
-      'sid-language': 'zh_CN',
-      'Csrf-Key': key,
-      'Csrf-Value': md5,
-      if (_ssoCookies.isNotEmpty) 'Cookie': _cookieHeader(_ssoCookies),
-    };
   }
 
   static String _randomKey() {
@@ -403,22 +501,4 @@ class WebVpnAuthClient {
     if (value is int) return value;
     return int.tryParse('$value');
   }
-
-  static void _absorbCookies(
-    Map<String, String> target,
-    GmisResponse response,
-  ) {
-    final values = response.headers['set-cookie'] ?? const <String>[];
-    for (final raw in values) {
-      final first = raw.split(';').first.trim();
-      final index = first.indexOf('=');
-      if (index <= 0) continue;
-      target[first.substring(0, index).trim()] = first
-          .substring(index + 1)
-          .trim();
-    }
-  }
-
-  static String _cookieHeader(Map<String, String> cookies) =>
-      cookies.entries.map((e) => '${e.key}=${e.value}').join('; ');
 }

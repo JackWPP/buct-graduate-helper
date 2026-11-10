@@ -16,6 +16,7 @@ class GmisRequest {
     this.headers = const {},
     this.asBytes = false,
     this.followRedirects = false,
+    this.absoluteUri,
   });
 
   final String method;
@@ -26,6 +27,9 @@ class GmisRequest {
   final Map<String, String> headers;
   final bool asBytes;
   final bool followRedirects;
+
+  /// 跨主机重定向时使用；设置后忽略 [path] 和 baseUrl。
+  final Uri? absoluteUri;
 }
 
 class GmisResponse {
@@ -53,26 +57,30 @@ abstract interface class GmisTransport {
 
 /// Dio 实现。默认关闭自动重定向，让 Client 能识别 302 会话过期。
 class DioGmisTransport implements GmisTransport {
-  DioGmisTransport({Dio? dio, String baseUrl = AppConfig.baseUrl})
-    : _dio =
-          dio ??
-          Dio(
-            BaseOptions(
-              baseUrl: baseUrl.endsWith('/') ? baseUrl : '$baseUrl/',
-              connectTimeout: AppConfig.connectTimeout,
-              receiveTimeout: AppConfig.receiveTimeout,
-              sendTimeout: AppConfig.receiveTimeout,
-              followRedirects: false,
-              validateStatus: (_) => true,
-              responseType: ResponseType.plain,
-              headers: {
-                'User-Agent': AppConfig.userAgent,
-                'Accept': 'application/json, text/javascript, */*; q=0.01',
-                'X-Requested-With': 'XMLHttpRequest',
-                'Referer':
-                    '${baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl}/home/stulogin',
-              },
-            ),
+  DioGmisTransport({
+    Dio? dio,
+    String baseUrl = AppConfig.baseUrl,
+    Duration? connectTimeout,
+    Duration? receiveTimeout,
+  }) : _dio =
+           dio ??
+           Dio(
+             BaseOptions(
+               baseUrl: baseUrl.endsWith('/') ? baseUrl : '$baseUrl/',
+               connectTimeout: connectTimeout ?? AppConfig.connectTimeout,
+               receiveTimeout: receiveTimeout ?? AppConfig.receiveTimeout,
+               sendTimeout: receiveTimeout ?? AppConfig.receiveTimeout,
+               followRedirects: false,
+               validateStatus: (_) => true,
+               responseType: ResponseType.plain,
+               headers: {
+                 'User-Agent': AppConfig.userAgent,
+                 'Accept': 'application/json, text/javascript, */*; q=0.01',
+                 'X-Requested-With': 'XMLHttpRequest',
+                 'Referer':
+                     '${baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl}/home/stulogin',
+               },
+             ),
           );
 
   final Dio _dio;
@@ -83,25 +91,38 @@ class DioGmisTransport implements GmisTransport {
       final path = request.path.startsWith('/')
           ? request.path.substring(1)
           : request.path;
-      final response = await _dio.request<dynamic>(
-        path,
-        data: request.json ?? request.form,
-        queryParameters: request.query,
-        options: Options(
-          method: request.method,
-          headers: {...request.headers},
-          responseType: request.asBytes
-              ? ResponseType.bytes
-              : ResponseType.plain,
-          contentType: request.json != null
-              ? 'application/json'
-              : request.form == null
-              ? null
-              : 'application/x-www-form-urlencoded',
-          followRedirects: request.followRedirects,
-          validateStatus: (_) => true,
-        ),
+      final options = Options(
+        method: request.method,
+        headers: {...request.headers},
+        responseType: request.asBytes ? ResponseType.bytes : ResponseType.plain,
+        contentType: request.json != null
+            ? 'application/json'
+            : request.form == null
+            ? null
+            : 'application/x-www-form-urlencoded',
+        followRedirects: request.followRedirects,
+        validateStatus: (_) => true,
       );
+      final absolute = request.absoluteUri;
+      final response = absolute == null
+          ? await _dio.request<dynamic>(
+              path,
+              data: request.json ?? request.form,
+              queryParameters: request.query,
+              options: options,
+            )
+          : await _dio.requestUri<dynamic>(
+              request.query == null
+                  ? absolute
+                  : absolute.replace(
+                      queryParameters: {
+                        ...absolute.queryParameters,
+                        ...request.query!,
+                      },
+                    ),
+              data: request.json ?? request.form,
+              options: options,
+            );
       final raw = response.data;
       final bytes = raw is Uint8List
           ? raw

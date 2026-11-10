@@ -5,11 +5,20 @@ import 'gmis/gmis_api.dart';
 import 'gmis/gmis_exception.dart';
 import 'gmis/live_snapshot_builder.dart';
 import 'storage/secure_session_store.dart';
+import 'webvpn/webvpn_exception.dart';
 import 'snapshot.dart';
 import 'storage/snapshot_cache.dart';
 import 'term_calendar.dart';
 
-enum AppPhase { booting, signedOut, restoring, ready, offline, sessionExpired }
+enum AppPhase {
+  booting,
+  signedOut,
+  restoring,
+  ready,
+  offline,
+  sessionExpired,
+  webVpnExpired,
+}
 
 /// 应用级状态机：登录、恢复会话、刷新真实快照、离线缓存和退出。
 class AppController extends ChangeNotifier {
@@ -18,6 +27,7 @@ class AppController extends ChangeNotifier {
     required this.api,
     required this.sessionStore,
     required this.cache,
+    this.onWebVpnExpired,
     TermCalendar? calendar,
   }) : calendar = calendar ?? const TermCalendar() {
     _builder = LiveSnapshotBuilder(api: api, calendar: this.calendar);
@@ -28,6 +38,9 @@ class AppController extends ChangeNotifier {
   final SecureSessionStore sessionStore;
   final SnapshotCache cache;
   final TermCalendar calendar;
+
+  /// WebVPN ticket 失效时由外层清 ticket、回到统一身份认证。
+  final Future<void> Function()? onWebVpnExpired;
 
   late final LiveSnapshotBuilder _builder;
 
@@ -64,6 +77,8 @@ class AppController extends ChangeNotifier {
     try {
       await gateway.restore(session);
       await _refreshFromLive();
+    } on WebVpnSessionExpired {
+      await _expireWebVpn();
     } on GmisSessionExpired {
       await expireSession();
     } catch (error) {
@@ -88,6 +103,9 @@ class AppController extends ChangeNotifier {
       _captcha = challenge;
       _notify();
       return challenge;
+    } on WebVpnSessionExpired {
+      await _expireWebVpn();
+      return null;
     } catch (error) {
       _error = _messageOf(error);
       _notify();
@@ -112,6 +130,9 @@ class AppController extends ChangeNotifier {
       await sessionStore.write(session);
       await _refreshFromLive();
       return null;
+    } on WebVpnSessionExpired {
+      await _expireWebVpn();
+      return _error;
     } on GmisSessionExpired catch (error) {
       await sessionStore.clear();
       _phase = AppPhase.sessionExpired;
@@ -135,6 +156,8 @@ class AppController extends ChangeNotifier {
     try {
       await _refreshFromLive();
       return true;
+    } on WebVpnSessionExpired {
+      await _expireWebVpn();
     } on GmisSessionExpired catch (error) {
       await sessionStore.clear();
       _phase = AppPhase.sessionExpired;
@@ -165,6 +188,17 @@ class AppController extends ChangeNotifier {
     _notice = null;
     _lastRefreshedAt = null;
     _phase = AppPhase.signedOut;
+    _notify();
+  }
+
+  Future<void> _expireWebVpn() async {
+    try {
+      await onWebVpnExpired?.call();
+    } catch (_) {
+      // 清理失败也要把状态切到需要重新登录，避免卡在错误页。
+    }
+    _phase = AppPhase.webVpnExpired;
+    _error = '校外访问已过期，请重新登录统一身份认证';
     _notify();
   }
 

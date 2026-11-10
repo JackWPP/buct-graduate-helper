@@ -7,6 +7,7 @@ import 'activities/activity_models.dart';
 import 'activities/activity_monitor.dart';
 import 'activities/activity_notifications.dart';
 import 'gmis/gmis_exception.dart';
+import 'webvpn/webvpn_exception.dart';
 import 'theme.dart';
 import 'ui/feedback.dart';
 import 'widgets.dart';
@@ -21,12 +22,14 @@ class ActivityPage extends StatefulWidget {
     required this.kind,
     required this.dataSource,
     this.onSessionExpired,
+    this.onWebVpnExpired,
     this.monitor,
   });
 
   final ActivityKind kind;
   final ActivityDataSource dataSource;
   final Future<void> Function()? onSessionExpired;
+  final Future<void> Function()? onWebVpnExpired;
   final ActivityMonitor? monitor;
 
   @override
@@ -46,6 +49,7 @@ class _ActivityPageState extends State<ActivityPage> {
     _monitor.start(
       widget.dataSource,
       onSessionExpired: widget.onSessionExpired,
+      onWebVpnExpired: widget.onWebVpnExpired,
     );
     unawaited(ActivityNotificationService.instance.requestPermission());
   }
@@ -118,6 +122,8 @@ class _ActivityPageState extends State<ActivityPage> {
         setState(() => _tab = 1);
         await _refresh();
       }
+    } on WebVpnSessionExpired {
+      await widget.onWebVpnExpired?.call();
     } on GmisSessionExpired {
       await widget.onSessionExpired?.call();
     } on GmisException catch (error) {
@@ -157,6 +163,8 @@ class _ActivityPageState extends State<ActivityPage> {
       if (!mounted) return;
       AppFeedback.show(result.ok ? '已取消报名' : result.display, context: context);
       if (result.ok) await _refresh();
+    } on WebVpnSessionExpired {
+      await widget.onWebVpnExpired?.call();
     } on GmisSessionExpired {
       await widget.onSessionExpired?.call();
     } on GmisException catch (error) {

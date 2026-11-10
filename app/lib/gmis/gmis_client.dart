@@ -3,6 +3,8 @@ import 'dart:typed_data';
 
 import '../auth/auth_gateway.dart';
 import '../config/app_config.dart';
+import '../webvpn/webvpn_exception.dart';
+import '../webvpn/webvpn_url.dart';
 import 'gmis_crypto.dart';
 import 'gmis_exception.dart';
 import 'gmis_transport.dart';
@@ -21,15 +23,27 @@ class GmisClient implements AuthGateway {
     required this.transport,
     String baseUrl = AppConfig.baseUrl,
     Map<String, String> initialCookies = const {},
+    this.webVpnTicketHeader,
+    this.onWebVpnTicket,
+    this.viaWebVpn = false,
   }) : _baseUrl = baseUrl.replaceAll(RegExp(r'/+$'), ''),
-       _initialCookies = Map<String, String>.from(initialCookies) {
-    _cookies.addAll(initialCookies);
+       _initialCookies = Map<String, String>.fromEntries(
+         initialCookies.entries.where((entry) => !_isTicketName(entry.key)),
+       ) {
+    _cookies.addAll(_initialCookies);
   }
 
   final GmisTransport transport;
   final String _baseUrl;
   final Map<String, String> _initialCookies;
   final Map<String, String> _cookies = {};
+
+  /// 每次请求现取 ticket，门户轮换后立刻生效；ticket 永不进入 [_cookies]。
+  final String? Function()? webVpnTicketHeader;
+  final void Function(String name, String? value)? onWebVpnTicket;
+
+  /// 当前是否经网页版 VPN 访问；302 分类依赖这个标记。
+  final bool viaWebVpn;
 
   String? _pendingPublicKey;
 
@@ -39,11 +53,10 @@ class GmisClient implements AuthGateway {
   Future<String> fetchLoginPage() async {
     _resetCookiesForLogin();
     _pendingPublicKey = null;
-    final response = await _send(
+    final response = await _sendFollowing(
       const GmisRequest(
         method: 'GET',
         path: '/home/stulogin',
-        followRedirects: true,
         headers: {'Accept': 'text/html,application/xhtml+xml'},
       ),
     );
@@ -162,7 +175,6 @@ class GmisClient implements AuthGateway {
         method: 'POST',
         path: '/home/stulogin_do',
         form: {'json': jsonEncode(payload)},
-        followRedirects: true,
         headers: {'Accept': 'application/json, text/javascript, */*; q=0.01'},
       ),
     );
@@ -172,11 +184,10 @@ class GmisClient implements AuthGateway {
       throw GmisAuthException(message.isEmpty ? '登录失败，请检查学号和密码' : message);
     }
     final url = '${body['url'] ?? 'student/default/index'}';
-    await _send(
+    await _sendFollowing(
       GmisRequest(
         method: 'GET',
         path: url.startsWith('/') ? url : '/$url',
-        followRedirects: true,
         headers: {'Accept': 'text/html,application/xhtml+xml'},
       ),
     );
@@ -192,7 +203,13 @@ class GmisClient implements AuthGateway {
   Future<void> restore(AuthSession session) async {
     _cookies
       ..clear()
-      ..addAll(session.cookies);
+      ..addAll(
+        Map<String, String>.fromEntries(
+          session.cookies.entries.where(
+            (entry) => !_isTicketName(entry.key),
+          ),
+        ),
+      );
   }
 
   @override
@@ -228,31 +245,111 @@ class GmisClient implements AuthGateway {
     return _decodeJson(response.body);
   }
 
-  Future<GmisResponse> _send(GmisRequest request) async {
+  Future<GmisResponse> _send(
+    GmisRequest request, {
+    bool checkStatus = true,
+  }) async {
     final headers = <String, String>{
       'Referer': '$_baseUrl/home/stulogin',
       ...request.headers,
     };
-    if (_cookies.isNotEmpty) {
-      headers['Cookie'] = _cookies.entries
-          .map((entry) => '${entry.key}=${entry.value}')
-          .join('; ');
-    }
+    final ticket = webVpnTicketHeader?.call();
+    final cookieParts = <String>[
+      if (ticket != null && ticket.isNotEmpty) ticket,
+      ..._cookies.entries.map((entry) => '${entry.key}=${entry.value}'),
+    ];
+    if (cookieParts.isNotEmpty) headers['Cookie'] = cookieParts.join('; ');
     final response = await transport.send(
       GmisRequest(
         method: request.method,
         path: request.path,
         query: request.query,
         form: request.form,
+        json: request.json,
         headers: headers,
         asBytes: request.asBytes,
-        followRedirects: request.followRedirects,
+        followRedirects: false,
+        absoluteUri: request.absoluteUri,
       ),
     );
     _absorbCookies(response);
-    _checkStatus(response, request.path);
+    if (checkStatus) {
+      _checkStatus(response, request.absoluteUri?.path ?? request.path);
+    }
     return response;
   }
+
+  /// 手动跟随 302，逐跳分类门户登录和目标登录。
+  ///
+  /// 只用于必须拿到最终页面的 POST 之后的 GET 或登录页；普通 JSON 请求
+  /// 由 [_checkStatus] 直接分流。
+  Future<GmisResponse> _sendFollowing(GmisRequest request) async {
+    final initialPath = request.path.startsWith('/')
+        ? request.path.substring(1)
+        : request.path;
+    var uri =
+        request.absoluteUri ?? Uri.parse('$_baseUrl/$initialPath');
+    if (request.query != null) {
+      uri = uri.replace(
+        queryParameters: {...uri.queryParameters, ...request.query!},
+      );
+    }
+    for (var hop = 0; hop < 6; hop++) {
+      final response = await _send(
+        GmisRequest(
+          method: request.method,
+          path: uri.path,
+          headers: request.headers,
+          asBytes: request.asBytes,
+          followRedirects: false,
+          absoluteUri: uri,
+        ),
+        checkStatus: false,
+      );
+      final status = response.statusCode;
+      if (status < 300 || status >= 400) {
+        _checkStatus(response, uri.path);
+        return response;
+      }
+      final raw = response.header('location');
+      if (raw == null || raw.isEmpty) return response;
+      final next = _resolveRedirect(uri, raw);
+      final kind = WebVpnUrls.classifyRedirect(next, viaWebVpn: viaWebVpn);
+      if (kind == WebVpnRedirectKind.portalLogin) {
+        throw const WebVpnSessionExpired();
+      }
+      if (kind == WebVpnRedirectKind.external) {
+        throw const GmisApiException('接口跳转到了不受信任的地址');
+      }
+      uri = next;
+    }
+    throw const GmisApiException('登录跳转次数过多，请稍后重试');
+  }
+
+  /// WebVPN 代理下，目标站点的绝对路径要保留 `/https/<token>/` 前缀；
+  /// 门户自己的 `/login` 和已经带前缀的 `/https/...` 原样解析。
+  Uri _resolveRedirect(Uri current, String raw) {
+    final parsed = Uri.tryParse(raw);
+    if (parsed == null) return current;
+    if (parsed.hasScheme || raw.startsWith('//')) {
+      return current.resolve(raw);
+    }
+    if (viaWebVpn &&
+        (raw == '/login' ||
+            raw.startsWith('/login?') ||
+            raw.startsWith('/login/'))) {
+      return Uri.parse('https://${WebVpnUrls.host}$raw');
+    }
+    if (viaWebVpn &&
+        raw.startsWith('/') &&
+        !raw.startsWith('/https/')) {
+      return Uri.parse('$_baseUrl$raw');
+    }
+    return current.resolve(raw);
+  }
+
+  static bool _isTicketName(String name) =>
+      name.startsWith('wengine_vpn_ticket');
 
   void _resetCookiesForLogin() {
     _cookies
@@ -269,6 +366,11 @@ class GmisClient implements AuthGateway {
       final name = first.substring(0, index).trim();
       final value = first.substring(index + 1).trim();
       if (name.isEmpty) continue;
+      if (_isTicketName(name)) {
+        // ticket 由 WebVPN 会话层持有，绝不混进目标站点 Cookie。
+        onWebVpnTicket?.call(name, value.isEmpty ? null : value);
+        continue;
+      }
       if (value.isEmpty) {
         _cookies.remove(name);
       } else {
@@ -280,13 +382,26 @@ class GmisClient implements AuthGateway {
   void _checkStatus(GmisResponse response, String path) {
     final status = response.statusCode;
     if (status >= 300 && status < 400) {
-      final location = response.header('location') ?? '';
-      if (location.contains('stulogin') ||
-          location.contains('/login') ||
-          location.contains('w.buct.edu.cn/login')) {
-        throw const GmisSessionExpired();
+      final raw = response.header('location') ?? '';
+      if (raw.isEmpty) {
+        throw GmisApiException('接口发生跳转但没有地址: $path');
       }
-      throw GmisApiException('接口发生跳转: $path -> $location');
+      final base = Uri.tryParse('$_baseUrl/') ?? Uri();
+      final location = base.resolve(raw);
+      final kind = WebVpnUrls.classifyRedirect(
+        location,
+        viaWebVpn: viaWebVpn,
+      );
+      switch (kind) {
+        case WebVpnRedirectKind.portalLogin:
+          throw const WebVpnSessionExpired();
+        case WebVpnRedirectKind.targetLogin:
+          throw const GmisSessionExpired();
+        case WebVpnRedirectKind.external:
+          throw const GmisApiException('接口跳转到了不受信任的地址');
+        case WebVpnRedirectKind.targetPage:
+          throw GmisApiException('接口发生跳转: $path -> ${location.path}');
+      }
     }
     if (status >= 500 && response.body.contains('block incorrect')) {
       throw const GmisAuthException('RSA 公钥与服务器不匹配，请刷新验证码重试');

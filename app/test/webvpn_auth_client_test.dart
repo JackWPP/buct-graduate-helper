@@ -5,6 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:huayan/gmis/gmis_exception.dart';
 import 'package:huayan/gmis/gmis_transport.dart';
 import 'package:huayan/webvpn/webvpn_auth_client.dart';
+import 'package:huayan/webvpn/webvpn_credential.dart';
+import 'package:huayan/webvpn/webvpn_exception.dart';
+import 'package:huayan/webvpn/webvpn_validator.dart';
 
 class _FakeTransport implements GmisTransport {
   _FakeTransport(this.responses);
@@ -17,6 +20,17 @@ class _FakeTransport implements GmisTransport {
   Future<GmisResponse> send(GmisRequest request) async {
     requests.add(request);
     return responses[_index++];
+  }
+}
+
+class _FakeValidator implements WebVpnValidator {
+  _FakeValidator(this.state);
+
+  final WebVpnState state;
+
+  @override
+  Future<WebVpnValidation> validate(WebVpnCredential credential) async {
+    return WebVpnValidation(state);
   }
 }
 
@@ -67,14 +81,18 @@ void main() {
       _response(200, body: '<html>ok</html>'),
     ]);
 
-    final client = WebVpnAuthClient(ssoTransport: sso, webVpnTransport: webVpn);
+    final client = WebVpnAuthClient(
+      ssoTransport: sso,
+      webVpnTransport: webVpn,
+      validator: _FakeValidator(WebVpnState.valid),
+    );
     final result = await client.login(userId: '2026000001', password: 'secret');
     expect(result.needsSms, isFalse);
     final session = result.session!;
 
     expect(session.baseUrl, contains('w.buct.edu.cn/https/'));
     expect(session.hasTicket, isTrue);
-    expect(session.cookies['wengine_vpn_ticketw_buct_edu_cn'], 'ticket-1');
+    expect(session.credential.ticketValue, 'ticket-1');
     expect(sso.requests, hasLength(2));
     final form = sso.requests.last.form!;
     expect(form['type'], 'UsernamePassword');
@@ -102,6 +120,7 @@ void main() {
     final client = WebVpnAuthClient(
       ssoTransport: sso,
       webVpnTransport: _FakeTransport([]),
+      validator: _FakeValidator(WebVpnState.valid),
     );
 
     expect(
@@ -169,7 +188,11 @@ void main() {
       ),
       _response(200, body: '<html>ok</html>'),
     ]);
-    final client = WebVpnAuthClient(ssoTransport: sso, webVpnTransport: webVpn);
+    final client = WebVpnAuthClient(
+      ssoTransport: sso,
+      webVpnTransport: webVpn,
+      validator: _FakeValidator(WebVpnState.valid),
+    );
 
     final first = await client.login(userId: '2026000001', password: 'secret');
     expect(first.needsSms, isTrue);
@@ -184,9 +207,81 @@ void main() {
 
     final session = await client.verifySmsCode('123456');
     expect(session.hasTicket, isTrue);
-    expect(session.cookies['wengine_vpn_ticketw_buct_edu_cn'], 'ticket-2');
+    expect(session.credential.ticketValue, 'ticket-2');
     expect(sso.requests[4].form!['type'], 'smsLogin');
     expect(sso.requests[4].form!['password'], '123456');
     expect(sso.requests[4].form!['execution'], 'flow-2');
+  });
+
+  test('匿名 ticket 不能当登录成功', () async {
+    final sso = _FakeTransport([
+      _response(
+        200,
+        body:
+            '<p id="login-croypto">AAAAAAAAAAAAAAAAAAAAAA==</p>'
+            '<p id="login-page-flowkey">flow-1</p>',
+      ),
+      _response(
+        302,
+        headers: {
+          'location': [
+            'https://w.buct.edu.cn/login?cas_login=true&ticket=ST-invalid',
+          ],
+        },
+      ),
+    ]);
+    final webVpn = _FakeTransport([
+      _response(
+        200,
+        body: '<title>统一身份认证平台</title>',
+        headers: {
+          'set-cookie': [
+            'wengine_vpn_ticketw_buct_edu_cn=anonymous; Path=/; Secure; HttpOnly',
+          ],
+        },
+      ),
+    ]);
+    final client = WebVpnAuthClient(
+      ssoTransport: sso,
+      webVpnTransport: webVpn,
+      validator: _FakeValidator(WebVpnState.expired),
+    );
+
+    expect(
+      () => client.login(userId: '2026000001', password: 'secret'),
+      throwsA(isA<WebVpnAuthException>()),
+    );
+  });
+
+  test('已登录时 GET 直接拿到有效 ticket 就不再提交密码', () async {
+    final sso = _FakeTransport([
+      _response(
+        302,
+        headers: {
+          'location': [
+            'https://w.buct.edu.cn/login?cas_login=true&ticket=ST-existing',
+          ],
+        },
+      ),
+    ]);
+    final webVpn = _FakeTransport([
+      _response(
+        200,
+        headers: {
+          'set-cookie': [
+            'wengine_vpn_ticketw_buct_edu_cn=ticket-existing; Path=/; Secure; HttpOnly',
+          ],
+        },
+      ),
+    ]);
+    final client = WebVpnAuthClient(
+      ssoTransport: sso,
+      webVpnTransport: webVpn,
+      validator: _FakeValidator(WebVpnState.valid),
+    );
+
+    final result = await client.login(userId: '2026000001', password: 'secret');
+    expect(result.session!.credential.ticketValue, 'ticket-existing');
+    expect(sso.requests, hasLength(1));
   });
 }

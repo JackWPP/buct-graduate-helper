@@ -58,6 +58,14 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
   }
 
   @override
+  void didUpdateWidget(covariant SsoLoginPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.notice != oldWidget.notice && (widget.notice ?? '').isNotEmpty) {
+      setState(() => _error = widget.notice!);
+    }
+  }
+
+  @override
   void dispose() {
     _resendTimer?.cancel();
     _codeFocus.dispose();

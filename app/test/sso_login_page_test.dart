@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:huayan/auth/login_flow.dart';
 import 'package:huayan/webvpn/sso_login_page.dart';
 import 'package:huayan/webvpn/webvpn_auth_client.dart';
+import 'package:huayan/webvpn/webvpn_credential.dart';
 import 'package:huayan/webvpn/webvpn_session.dart';
 
 class _FakeSsoClient extends WebVpnAuthClient {
@@ -30,9 +31,14 @@ class _FakeSsoClient extends WebVpnAuthClient {
 
   @override
   Future<WebVpnSession> verifySmsCode(String code) async {
-    return const WebVpnSession(
+    return WebVpnSession(
       baseUrl: 'https://w.buct.edu.cn/https/token/',
-      cookies: {'wengine_vpn_ticketw_buct_edu_cn': 'ticket'},
+      credential: WebVpnCredential(
+        ticketName: 'wengine_vpn_ticketw_buct_edu_cn',
+        ticketValue: 'ticket',
+        issuedAt: DateTime(2026, 11, 10),
+        lastUsedAt: DateTime(2026, 11, 10),
+      ),
     );
   }
 }

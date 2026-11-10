@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'gmis/gmis_exception.dart';
+import 'webvpn/webvpn_exception.dart';
 import 'icons.dart';
 import 'theme.dart';
 import 'widgets.dart';
@@ -32,6 +33,7 @@ class RemoteListPage extends StatefulWidget {
     this.intro = '',
     this.emptyText = '学校暂未返回记录。',
     this.onSessionExpired,
+    this.onWebVpnExpired,
   });
 
   final String title;
@@ -39,6 +41,7 @@ class RemoteListPage extends StatefulWidget {
   final String emptyText;
   final RemoteRows load;
   final VoidCallback? onSessionExpired;
+  final VoidCallback? onWebVpnExpired;
 
   @override
   State<RemoteListPage> createState() => _RemoteListPageState();
@@ -117,8 +120,12 @@ class _RemoteListPageState extends State<RemoteListPage> {
   }
 
   void _notifySession(Object? error) {
-    if (_sessionNotified || error is! GmisSessionExpired) return;
-    final callback = widget.onSessionExpired;
+    if (_sessionNotified) return;
+    final callback = error is WebVpnSessionExpired
+        ? widget.onWebVpnExpired
+        : error is GmisSessionExpired
+        ? widget.onSessionExpired
+        : null;
     if (callback == null) return;
     _sessionNotified = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => callback());
@@ -139,6 +146,7 @@ class RemoteInfoPage extends StatefulWidget {
     required this.fields,
     this.intro = '',
     this.onSessionExpired,
+    this.onWebVpnExpired,
   });
 
   final String title;
@@ -146,6 +154,7 @@ class RemoteInfoPage extends StatefulWidget {
   final RemoteMap load;
   final List<(String, String)> fields;
   final VoidCallback? onSessionExpired;
+  final VoidCallback? onWebVpnExpired;
 
   @override
   State<RemoteInfoPage> createState() => _RemoteInfoPageState();
@@ -229,8 +238,12 @@ class _RemoteInfoPageState extends State<RemoteInfoPage> {
   }
 
   void _notifySession(Object? error) {
-    if (_sessionNotified || error is! GmisSessionExpired) return;
-    final callback = widget.onSessionExpired;
+    if (_sessionNotified) return;
+    final callback = error is WebVpnSessionExpired
+        ? widget.onWebVpnExpired
+        : error is GmisSessionExpired
+        ? widget.onSessionExpired
+        : null;
     if (callback == null) return;
     _sessionNotified = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => callback());

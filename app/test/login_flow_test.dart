@@ -1,15 +1,21 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:huayan/auth/login_flow.dart';
+import 'package:huayan/webvpn/webvpn_credential.dart';
 import 'package:huayan/webvpn/webvpn_session.dart';
 
 void main() {
   test('SSO prefill is kept in memory until login completes', () {
     final state = LoginFlowState();
     state.acceptSso(
-      const SsoLoginSuccess(
+      SsoLoginSuccess(
         session: WebVpnSession(
           baseUrl: 'https://w.buct.edu.cn/https/token/',
-          cookies: {'wengine_vpn_ticketw_buct_edu_cn': 'ticket'},
+          credential: WebVpnCredential(
+            ticketName: 'wengine_vpn_ticketw_buct_edu_cn',
+            ticketValue: 'ticket',
+            issuedAt: DateTime(2026, 11, 10),
+            lastUsedAt: DateTime(2026, 11, 10),
+          ),
         ),
         prefill: LoginPrefill(userId: '2026000001', password: 'dummy-secret'),
       ),

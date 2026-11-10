@@ -4,6 +4,7 @@ import 'package:webview_flutter/webview_flutter.dart';
 
 import '../config/app_config.dart';
 import '../theme.dart';
+import 'webvpn_credential.dart';
 import 'webvpn_session.dart';
 import 'webvpn_url.dart';
 
@@ -24,7 +25,7 @@ class _WebVpnLoginPageState extends State<WebVpnLoginPage> {
   var _loading = true;
   var _checking = false;
   String? _error;
-  String _currentUrl = 'https://${WebVpnUrls.host}/login';
+  WebVpnCredential? _ticket;
 
   @override
   void initState() {
@@ -34,17 +35,43 @@ class _WebVpnLoginPageState extends State<WebVpnLoginPage> {
       ..setUserAgent(AppConfig.userAgent)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onPageStarted: (url) {
-            _currentUrl = url;
+          onPageStarted: (_) {
             if (mounted) setState(() => _loading = true);
           },
-          onPageFinished: (url) {
-            _currentUrl = url;
+          onPageFinished: (_) {
             if (mounted) setState(() => _loading = false);
+            _refreshTicket();
           },
         ),
       )
       ..loadRequest(Uri.parse('https://${WebVpnUrls.host}/login'));
+  }
+
+  Future<WebVpnCredential?> _readTicket() async {
+    final raw = await _channel.invokeMethod<String>('getCookies', {
+      'url': 'https://${WebVpnUrls.host}/',
+    });
+    final ticket = credentialFromCookieHeader(raw);
+    if (mounted) setState(() => _ticket = ticket);
+    return ticket;
+  }
+
+  Future<void> _refreshTicket() async {
+    try {
+      await _readTicket();
+    } on MissingPluginException {
+      // 平台不支持时保留现有错误提示。
+    } catch (_) {
+      // 页面跳转期间 CookieManager 偶尔读不到，下一次完成再试。
+    }
+  }
+
+  Future<void> _clearCookies() async {
+    try {
+      await _channel.invokeMethod<void>('clearCookies');
+    } catch (_) {
+      // 清理失败不影响已取到的内存凭证。
+    }
   }
 
   Future<void> _checkAndClose() async {
@@ -54,27 +81,13 @@ class _WebVpnLoginPageState extends State<WebVpnLoginPage> {
       _error = null;
     });
     try {
-      final raw = await _channel.invokeMethod<String>('getCookies', {
-        'url': 'https://${WebVpnUrls.host}/',
-      });
-      final path = Uri.tryParse(_currentUrl)?.path ?? '';
-      if (path.contains('/login')) {
-        throw const _WebVpnNotReady('当前还在统一身份认证页，请先完成登录。');
-      }
-      final title = await _web.runJavaScriptReturningResult('document.title');
-      if ('$title'.contains('统一身份认证')) {
-        throw const _WebVpnNotReady('当前还在统一身份认证页，请先完成登录。');
-      }
-      final cookies = parseCookieHeader(raw);
-      final session = WebVpnSession(
-        baseUrl: WebVpnUrls.gmisBase,
-        cookies: cookies,
-      );
-      if (!session.hasTicket) {
+      final ticket = await _readTicket();
+      if (ticket == null) {
         throw const _WebVpnNotReady('还没有检测到网页版 VPN 登录状态，请先完成统一身份认证。');
       }
+      await _clearCookies();
       if (!mounted) return;
-      Navigator.of(context).pop(session);
+      Navigator.of(context).pop(ticket);
     } on MissingPluginException {
       if (!mounted) return;
       setState(() {
@@ -133,6 +146,18 @@ class _WebVpnLoginPageState extends State<WebVpnLoginPage> {
                       color: HuayanColors.sub,
                     ),
                   ),
+                  if (_ticket != null) ...[
+                    const SizedBox(height: 6),
+                    const Text(
+                      '已检测到网页版 VPN 登录状态，可以继续。',
+                      key: Key('webvpn-ticket-ready'),
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: HuayanColors.ok,
+                      ),
+                    ),
+                  ],
                   if (_error != null) ...[
                     const SizedBox(height: 8),
                     Text(

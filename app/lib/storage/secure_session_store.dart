@@ -1,25 +1,24 @@
 import 'dart:convert';
 
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../auth/auth_gateway.dart';
+import 'secure_key_value_store.dart';
 
 /// Cookie 和学号用系统安全存储保存；密码永远不在这里。
 class SecureSessionStore {
-  SecureSessionStore({FlutterSecureStorage? storage, String? key})
-    : _storage = storage ?? const FlutterSecureStorage(),
+  SecureSessionStore({SecureKeyValueStore? store, String? key})
+    : _store = store ?? FlutterSecureKeyValueStore(),
       _key = key ?? directKey;
 
   static const directKey = 'huayan_gmis_session';
   static const webVpnKey = 'huayan_gmis_webvpn_session';
   static const webVpnTicketKey = 'huayan_webvpn_ticket';
 
-  final FlutterSecureStorage _storage;
+  final SecureKeyValueStore _store;
   final String _key;
 
   Future<AuthSession?> read() async {
     try {
-      final raw = await _storage.read(key: _key);
+      final raw = await _store.read(_key);
       if (raw == null || raw.isEmpty) return null;
       return AuthSession.fromJson(jsonDecode(raw) as Map<String, dynamic>);
     } catch (_) {
@@ -30,8 +29,8 @@ class SecureSessionStore {
   }
 
   Future<void> write(AuthSession session) {
-    return _storage.write(key: _key, value: jsonEncode(session.toJson()));
+    return _store.write(_key, jsonEncode(session.toJson()));
   }
 
-  Future<void> clear() => _storage.delete(key: _key);
+  Future<void> clear() => _store.delete(_key);
 }

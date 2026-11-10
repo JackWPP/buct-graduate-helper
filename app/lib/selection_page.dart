@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import 'gmis/gmis_api.dart';
 import 'gmis/gmis_exception.dart';
+import 'webvpn/webvpn_exception.dart';
 import 'snapshot.dart';
 import 'theme.dart';
 import 'ui/feedback.dart';
@@ -21,6 +22,7 @@ class SelectionPage extends StatefulWidget {
     required this.snap,
     this.onChanged,
     this.onSessionExpired,
+    this.onWebVpnExpired,
   });
 
   final GmisApi api;
@@ -29,6 +31,7 @@ class SelectionPage extends StatefulWidget {
   /// 提交成功后回调，让外层刷新快照（课表、学分跟着变）。
   final Future<void> Function()? onChanged;
   final VoidCallback? onSessionExpired;
+  final VoidCallback? onWebVpnExpired;
 
   @override
   State<SelectionPage> createState() => _SelectionPageState();
@@ -87,6 +90,10 @@ class _SelectionPageState extends State<SelectionPage> {
         _windowClosed = closed;
         _loading = false;
       });
+    } on WebVpnSessionExpired {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      widget.onWebVpnExpired?.call();
     } on GmisSessionExpired {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -235,6 +242,8 @@ class _SelectionPageState extends State<SelectionPage> {
         await widget.onChanged?.call();
         await _load();
       }
+    } on WebVpnSessionExpired {
+      widget.onWebVpnExpired?.call();
     } on GmisSessionExpired {
       widget.onSessionExpired?.call();
     } on GmisException catch (error) {

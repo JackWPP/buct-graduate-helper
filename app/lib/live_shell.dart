@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'academics_page.dart';
@@ -33,7 +35,12 @@ import 'ui/feedback.dart';
 import 'ui/startup_pages.dart';
 import 'webvpn/sso_login_page.dart';
 import 'webvpn/webvpn_login_page.dart';
+import 'webvpn/webvpn_credential.dart';
+import 'webvpn/webvpn_credential_store.dart';
 import 'webvpn/webvpn_session.dart';
+import 'webvpn/webvpn_session_manager.dart';
+import 'webvpn/webvpn_validator.dart';
+import 'webvpn/webview_cookies.dart';
 import 'widgets.dart';
 
 /// 真实模式的外壳：登录、会话恢复、刷新和 5 个主 Tab。
@@ -53,6 +60,9 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   final _settings = AppSettings();
   final _flow = LoginFlowState();
   AppController? _controller;
+  WebVpnSessionManager? _webVpn;
+  String? _webVpnNotice;
+  bool _webVpnExpiryHandled = false;
   PrefsStore? _store;
   int _tab = 0;
   bool _onboarded = false;
@@ -92,46 +102,104 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     }
     _lastResumeRefresh = now;
     controller.refresh();
+    unawaited(_validateWebVpnOnResume());
   }
 
   Future<void> _boot() async {
     final store = await PrefsStore.tryOpen();
     store?.apply(_settings);
     if (mounted) setState(() => _bootStage = '正在读取本机会话');
-    final webVpnStore = SecureSessionStore(key: SecureSessionStore.webVpnKey);
-    final ticketStore = SecureSessionStore(
-      key: SecureSessionStore.webVpnTicketKey,
+
+    final manager = WebVpnSessionManager(
+      store: WebVpnCredentialStore(),
+      validator: HttpWebVpnValidator(),
+    );
+    _webVpn = manager;
+    final gmisWebVpnStore = SecureSessionStore(
+      key: SecureSessionStore.webVpnKey,
     );
     final directStore = SecureSessionStore(key: SecureSessionStore.directKey);
-    final storedWebVpn = await webVpnStore.read();
-    final storedTicket = await ticketStore.read();
+    final storedWebVpn = await gmisWebVpnStore.read();
     final storedDirect = await directStore.read();
-    final webVpnSession = storedWebVpn?.baseUrl != null
-        ? WebVpnSession(
-            baseUrl: storedWebVpn!.baseUrl!,
-            cookies: storedWebVpn.cookies,
+
+    if (AppConfig.useWebVpnByDefault) {
+      if (mounted) setState(() => _bootStage = '正在检查校外访问会话');
+      try {
+        await manager.restore();
+      } catch (_) {
+        // 安全存储/网络异常按未校验处理，不阻塞启动。
+      }
+
+      // 旧版本把 ticket 混在 GMIS 会话 Cookie 里；启动时迁移并从 GMIS
+      // 会话中剔除，避免把 bearer token 当成普通 Cookie 保存。
+      if (storedWebVpn != null) {
+        try {
+          final legacy = WebVpnCredential.fromLegacySession(
+            storedWebVpn.toJson(),
+          );
+          if (legacy != null) {
+            if (!manager.hasCredential) {
+              await manager.adopt(legacy, state: WebVpnState.unknown);
+              await manager.validate(force: true);
+            }
+            final cleanedCookies = Map<String, String>.from(
+              storedWebVpn.cookies,
+            )..removeWhere(
+                (name, _) => name.startsWith(webVpnTicketPrefix),
+              );
+            await gmisWebVpnStore.write(
+              AuthSession(
+                userId: storedWebVpn.userId,
+                cookies: cleanedCookies,
+                savedAt: storedWebVpn.savedAt,
+                baseUrl: storedWebVpn.baseUrl,
+              ),
+            );
+          }
+        } catch (_) {
+          // 迁移失败按没有旧 ticket 处理，不影响本次启动。
+        }
+      }
+    }
+
+    final hasGmisSession = storedWebVpn?.baseUrl != null;
+    final route = AppConfig.useWebVpnByDefault
+        ? decideStartup(
+            webVpn: manager.state,
+            hasCredential: manager.hasCredential,
+            hasGmisSession: hasGmisSession,
+            hasDirectSession: storedDirect != null,
+            defaultWebVpn: true,
           )
-        : storedTicket?.baseUrl != null
-        ? WebVpnSession(
-            baseUrl: storedTicket!.baseUrl!,
-            cookies: storedTicket.cookies,
-          )
+        : WebVpnStartupRoute.direct;
+
+    final webVpnSession = manager.hasCredential
+        ? WebVpnSession(credential: manager.credential!)
         : null;
+
     if (mounted) setState(() => _bootStage = '正在恢复登录状态');
     final controller = _createController(
       store: store,
-      webVpnSession: webVpnSession,
+      webVpnSession: route == WebVpnStartupRoute.ssoLogin
+          ? null
+          : webVpnSession,
     );
     if (!mounted) return;
     setState(() {
       _store = store;
       _onboarded = store?.onboarded ?? false;
       _controller = controller;
-      _usingWebVpn = webVpnSession != null;
+      _usingWebVpn =
+          webVpnSession != null && route != WebVpnStartupRoute.ssoLogin;
       _needsWebVpnLogin =
-          webVpnSession == null &&
-          storedDirect == null &&
-          AppConfig.useWebVpnByDefault;
+          route == WebVpnStartupRoute.ssoLogin ||
+          (route == WebVpnStartupRoute.offline && !hasGmisSession);
+      _webVpnNotice = manager.state == WebVpnState.expired
+          ? '校外访问会话已过期，请重新登录统一身份认证'
+          : route == WebVpnStartupRoute.offline
+          ? '暂时无法校验校外访问会话，请检查网络后重试'
+          : null;
+      _webVpnExpiryHandled = false;
     });
     await controller.bootstrap();
   }
@@ -141,44 +209,68 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     WebVpnSession? webVpnSession,
   }) {
     final baseUrl = webVpnSession?.baseUrl ?? AppConfig.baseUrl;
+    final usingWebVpn = webVpnSession != null;
     final client = GmisClient(
       transport: DioGmisTransport(baseUrl: baseUrl),
       baseUrl: baseUrl,
-      initialCookies: webVpnSession?.cookies ?? const {},
+      webVpnTicketHeader: usingWebVpn ? () => _webVpn?.ticketHeader : null,
+      onWebVpnTicket: usingWebVpn
+          ? (name, value) {
+              final manager = _webVpn;
+              if (manager != null) {
+                unawaited(manager.updateTicket(name, value));
+              }
+            }
+          : null,
+      viaWebVpn: usingWebVpn,
     );
     final controller = AppController(
       gateway: client,
       api: GmisApi(client),
       sessionStore: SecureSessionStore(
-        key: webVpnSession == null
-            ? SecureSessionStore.directKey
-            : SecureSessionStore.webVpnKey,
+        key: usingWebVpn
+            ? SecureSessionStore.webVpnKey
+            : SecureSessionStore.directKey,
       ),
       cache: SnapshotCache(),
       calendar: TermCalendar(prefs: store),
+      onWebVpnExpired: _handleWebVpnExpired,
     );
     controller.addListener(_onController);
     return controller;
   }
 
   Future<void> _openWebVpnLogin() async {
-    final session = await Navigator.of(context).push<WebVpnSession>(
+    final credential = await Navigator.of(context).push<WebVpnCredential>(
       MaterialPageRoute(builder: (_) => const WebVpnLoginPage()),
     );
-    if (session == null || !mounted) return;
-    await _acceptWebVpnSession(session);
+    if (credential == null || !mounted) return;
+    final manager = _webVpn;
+    if (manager == null) return;
+    await manager.adopt(credential, state: WebVpnState.unknown);
+    final state = await manager.validate(force: true);
+    if (!mounted) return;
+    if (state != WebVpnState.valid) {
+      setState(() {
+        _needsWebVpnLogin = true;
+        _webVpnNotice = state == WebVpnState.expired
+            ? '网页版 VPN 登录没有生效，请重新登录统一身份认证'
+            : '暂时无法校验网页版 VPN 会话，请检查网络后重试';
+      });
+      return;
+    }
+    await _acceptWebVpnSession(
+      WebVpnSession(credential: manager.credential!),
+    );
   }
 
   Future<void> _acceptSsoLogin(SsoLoginSuccess result) async {
     _flow.acceptSso(result);
-    await SecureSessionStore(key: SecureSessionStore.webVpnTicketKey).write(
-      AuthSession(
-        userId: result.prefill.userId,
-        cookies: result.session.cookies,
-        savedAt: DateTime.now(),
-        baseUrl: result.session.baseUrl,
-      ),
-    );
+    try {
+      await _webVpn?.adopt(result.session.credential);
+    } catch (_) {
+      // ticket 仍在内存里，本次可以用；下次启动重新 SSO。
+    }
     if (!mounted) return;
     await _acceptWebVpnSession(result.session);
   }
@@ -194,6 +286,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       _controller = controller;
       _usingWebVpn = true;
       _needsWebVpnLogin = false;
+      _webVpnNotice = null;
+      _webVpnExpiryHandled = false;
       _lastNotice = null;
     });
     await controller.bootstrap();
@@ -210,6 +304,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       _controller = controller;
       _usingWebVpn = false;
       _needsWebVpnLogin = false;
+      _webVpnNotice = null;
+      _webVpnExpiryHandled = false;
       _lastNotice = null;
     });
     await controller.bootstrap();
@@ -240,10 +336,16 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     if (controller.phase == AppPhase.sessionExpired) {
       _flow.recordTab(_tab);
     }
+    if (controller.phase == AppPhase.webVpnExpired) {
+      unawaited(_handleWebVpnExpired());
+    }
     if (controller.phase == AppPhase.ready) {
+      _flow.markLoginComplete();
+      _webVpnExpiryHandled = false;
       ActivityMonitor.instance.start(
         controller.api,
         onSessionExpired: _handleSessionExpired,
+        onWebVpnExpired: _handleWebVpnExpired,
       );
       _scheduleRemind();
     }
@@ -333,6 +435,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     ActivityMonitor.instance.stop();
     Navigator.of(context).popUntil((route) => route.isFirst);
     await _controller?.logout();
+    await _webVpn?.clear();
+    await WebViewCookies.clear();
     await SecureSessionStore(key: SecureSessionStore.directKey).clear();
     await SecureSessionStore(key: SecureSessionStore.webVpnKey).clear();
     await SecureSessionStore(key: SecureSessionStore.webVpnTicketKey).clear();
@@ -342,6 +446,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       _tab = 0;
       _usingWebVpn = false;
       _needsWebVpnLogin = AppConfig.useWebVpnByDefault;
+      _webVpnNotice = null;
+      _webVpnExpiryHandled = false;
       _lastNotice = null;
     });
   }
@@ -355,10 +461,45 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     Navigator.of(context).popUntil((route) => route.isFirst);
     await controller.expireSession();
     if (!mounted) return;
+    _flow.markLoginComplete();
     setState(() {
       _needsWebVpnLogin = _usingWebVpn ? false : AppConfig.useWebVpnByDefault;
+      _webVpnNotice = null;
       _lastNotice = null;
     });
+  }
+
+  /// WebVPN ticket 失效：保留快照/Tab，清 ticket，回统一身份认证。
+  Future<void> _handleWebVpnExpired() async {
+    if (_webVpnExpiryHandled) return;
+    _webVpnExpiryHandled = true;
+    ActivityMonitor.instance.stop();
+    _flow.recordTab(_tab);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    try {
+      await _webVpn?.invalidate();
+      await WebViewCookies.clear();
+    } catch (_) {
+      // 清理失败也要回到 SSO 页面。
+    }
+    if (!mounted) return;
+    _flow.markLoginComplete();
+    setState(() {
+      _usingWebVpn = false;
+      _needsWebVpnLogin = true;
+      _webVpnNotice = '校外访问已过期，请重新登录统一身份认证';
+      _lastNotice = null;
+    });
+  }
+
+  Future<void> _validateWebVpnOnResume() async {
+    final manager = _webVpn;
+    if (manager == null || !manager.hasCredential || !_usingWebVpn) return;
+    final state = await manager.validate();
+    if (!mounted || !_usingWebVpn) return;
+    if (state == WebVpnState.expired) {
+      await _handleWebVpnExpired();
+    }
   }
 
   Future<void> _openActivities() async {
@@ -408,6 +549,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
         kind: kind,
         dataSource: api,
         onSessionExpired: _handleSessionExpired,
+        onWebVpnExpired: _handleWebVpnExpired,
       ),
     );
   }
@@ -471,6 +613,9 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
               api: _controller?.api,
               onChanged: _refreshAfterChange,
               onSessionExpired: _handleSessionExpired,
+              onWebVpnExpired: () {
+                unawaited(_handleWebVpnExpired());
+              },
             ),
           );
         }
@@ -552,6 +697,9 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
                 api: _controller?.api,
                 onChanged: _refreshAfterChange,
                 onSessionExpired: _handleSessionExpired,
+                onWebVpnExpired: () {
+                  unawaited(_handleWebVpnExpired());
+                },
               ),
             );
         }
@@ -578,12 +726,13 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
         onSkip: _finishGuide,
       );
     }
-    if (_needsWebVpnLogin) {
+    if (_needsWebVpnLogin || controller.phase == AppPhase.webVpnExpired) {
       return SsoLoginPage(
         initialSid: _store?.sid ?? '',
         onUserId: (sid) => _store?.setSid(sid),
         onSuccess: _acceptSsoLogin,
         onDirect: _useDirectLogin,
+        notice: _webVpnNotice,
       );
     }
     if (controller.phase == AppPhase.booting) {

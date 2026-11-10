@@ -124,7 +124,7 @@ void main() {
   test('auth session json keeps the optional WebVPN base URL', () {
     final session = AuthSession(
       userId: '2026000001',
-      cookies: const {'wengine_vpn_ticketw_buct_edu_cn': 'abc'},
+      cookies: const {'ASP.NET_SessionId': 'abc'},
       savedAt: DateTime(2026, 11, 7, 12),
       baseUrl: 'https://w.buct.edu.cn/https/token/',
     );
@@ -134,7 +134,7 @@ void main() {
       ),
     );
     expect(restored.baseUrl, 'https://w.buct.edu.cn/https/token/');
-    expect(restored.cookies['wengine_vpn_ticketw_buct_edu_cn'], 'abc');
+    expect(restored.cookies['ASP.NET_SessionId'], 'abc');
   });
 
   test(

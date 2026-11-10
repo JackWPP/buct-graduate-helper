@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../gmis/gmis_exception.dart';
+import '../webvpn/webvpn_exception.dart';
 import '../ui/feedback.dart';
 import 'activity_models.dart';
 import 'activity_notifications.dart';
@@ -28,6 +29,7 @@ class ActivityMonitor extends ChangeNotifier {
   final Set<ActivityKind> _seededKinds = <ActivityKind>{};
   ActivityDataSource? _api;
   Future<void> Function()? _onSessionExpired;
+  Future<void> Function()? _onWebVpnExpired;
   Timer? _timer;
   bool _polling = false;
   bool _paused = false;
@@ -40,10 +42,12 @@ class ActivityMonitor extends ChangeNotifier {
   void start(
     ActivityDataSource api, {
     Future<void> Function()? onSessionExpired,
+    Future<void> Function()? onWebVpnExpired,
   }) {
     final changed = !identical(_api, api);
     _api = api;
     _onSessionExpired = onSessionExpired;
+    _onWebVpnExpired = onWebVpnExpired;
     if (changed) {
       _knownKeys.clear();
       _scheduledKeys.clear();
@@ -76,6 +80,7 @@ class ActivityMonitor extends ChangeNotifier {
     _timer = null;
     _api = null;
     _onSessionExpired = null;
+    _onWebVpnExpired = null;
     _paused = false;
   }
 
@@ -147,6 +152,14 @@ class ActivityMonitor extends ChangeNotifier {
           unawaited(ActivityNotificationService.instance.scheduleFor(item));
         }
       }
+    } on WebVpnSessionExpired {
+      _feeds[kind] = feed(kind).copyWith(
+        loading: false,
+        error: '校外访问已过期，请重新登录统一身份认证',
+      );
+      notifyListeners();
+      final callback = _onWebVpnExpired;
+      if (callback != null) unawaited(callback());
     } on GmisSessionExpired {
       _feeds[kind] = feed(kind).copyWith(loading: false, error: '登录已过期，请重新登录');
       notifyListeners();
