@@ -34,22 +34,28 @@
 `app/` 是项目主线，Android 优先，iOS 共用同一套 Flutter 代码。
 
 - **入口**：`app/lib/live_shell.dart` 负责引导、登录、5 Tab 和页面路由。
-- **状态机**：`app/lib/app_controller.dart` 管理 `booting / signedOut / restoring / ready / offline / sessionExpired`。
-- **GMIS 适配层**：`app/lib/gmis/gmis_client.dart` 负责登录、Cookie、302 会话过期和 JSON 解析；`gmis_api.dart` 封装业务接口。
+- **状态机**：`app/lib/app_controller.dart` 管理 `booting / signedOut / restoring / ready / offline / sessionExpired / webVpnExpired`。
+- **GMIS 适配层**：`app/lib/gmis/gmis_client.dart` 负责登录、GMIS Cookie、JSON 解析和 302 分类；`gmis_api.dart` 封装业务接口。WebVPN ticket 由 `app/lib/webvpn/` 单独注入，不进入 GMIS Cookie。
 - **数据装配**：`app/lib/gmis/live_snapshot_builder.dart` 把学生卡、已选课、培养计划、成绩、评教、通知、考场、选课列表和服务菜单装配成 `Snapshot`（schemaVersion=2）。
-- **缓存**：`app/lib/storage/snapshot_cache.dart` 写应用支持目录；`secure_session_store.dart` 用 `flutter_secure_storage` 存会话。
-- **登录**：`app/lib/webvpn/` 负责网页版 VPN 和统一身份认证（含短信 2FA）；`live_login_page.dart` 负责 GMIS 验证码登录。SSO 成功后学号/密码只保留在内存并预填，用户只补图形验证码。
+- **缓存**：`app/lib/storage/snapshot_cache.dart` 写应用支持目录；`secure_session_store.dart` 用 `flutter_secure_storage` 存 GMIS 会话；`webvpn_credential_store.dart` 只存 WebVPN ticket 和元数据。
+- **登录**：`app/lib/webvpn/` 负责网页版 VPN、统一身份认证（含短信 2FA）、ticket 校验和会话状态；`live_login_page.dart` 负责 GMIS 验证码登录。SSO 成功后学号/密码只保留在内存并预填，用户只补图形验证码。
 
 ## 登录链路
 
 ```text
 启动
   → 读取 PrefsStore（引导/学号/设置）
-  → 读取 SecureSessionStore（是否有 WebVPN / GMIS 会话）
+  → 读取 WebVpnCredentialStore（ticket + 元数据）
+  → 有 ticket：请求受保护页面做轻量校验
+       ├─ 200 / 302 目标页 → ticket 有效
+       ├─ 302 门户 /login  → ticket 过期，清 ticket，进入 SSO
+       └─ 网络错误         → 保留 ticket，进入离线
+  → 有有效 ticket 且 GMIS 会话存在 → 先显示缓存，再后台刷新
+  → 有有效 ticket 但没有 GMIS 会话 → 直接进入 GMIS 验证码登录
   → 默认进入原生统一身份认证
        ├─ 学号 + 密码（AES-128-ECB 加密）
        ├─ 若学校要求：短信验证码二次认证
-       └─ CAS ticket → wengine_vpn_ticket
+       └─ 重定向链上的 ticket 候选 → 逐个校验，匿名 ticket 不接受
   → GMIS 验证码登录（RSA 加密密码；SSO 学号/密码仅内存预填）
   → GmisClient 拉取接口
   → LiveSnapshotBuilder 生成 Snapshot v2
@@ -62,7 +68,10 @@
 
 - 没有登录会话时**不展示缓存**，避免未登录看到课表。
 - 有会话时先显示缓存，再后台刷新；刷新失败保留缓存并提示。
-- 退出登录会清空会话和缓存。
+- WebVPN 过期只清 ticket 和 WebView Cookie，保留 GMIS 会话与快照，回统一身份认证。
+- GMIS 过期只清 GMIS 会话，保留 ticket，回 GMIS 验证码登录。
+- 网络错误不清 ticket；恢复后重新校验。
+- 退出登录会清空 WebVPN ticket、GMIS 会话、缓存和 WebView Cookie。
 - `TermCalendar` 内置 55 学期 = `2026-08-31`；未知学期会提示周次可能不准，用户选择的第 1 周周一优先。
 
 ## 网页预览

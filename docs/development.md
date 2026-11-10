@@ -63,7 +63,7 @@ flutter analyze
 node --test web/js/schedule.test.mjs
 ```
 
-当前基线：`flutter test` 63 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试通过。完整的检查顺序、模拟器冒烟和真机回归清单见 [测试与冒烟 SOP](testing.md)。
+当前基线：`flutter test` 93 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试通过。完整的检查顺序、模拟器冒烟和真机回归清单见 [测试与冒烟 SOP](testing.md)。
 
 ## CI
 
@@ -94,6 +94,14 @@ docs/                产品说明、架构、开发与发布文档
 ### 手机提示“网络连接失败，请检查网络后重试”
 
 先确认手机能访问 `w.buct.edu.cn`；校外访问走网页版 VPN。校内直连需要校园网或 SSL VPN 能解析 `gmis.buct.edu.cn`。
+
+### 提示“校外访问已过期，请重新登录统一身份认证”
+
+WebVPN ticket 失效，应用会清 ticket 但保留 GMIS 会话和课表缓存。重新完成统一身份认证后，如果 GMIS Cookie 还有效会直接回到首页；否则只需再补一次 GMIS 验证码。
+
+### 提示“登录已过期，请重新登录”
+
+这是 GMIS 会话过期，WebVPN ticket 仍然有效；不要重新做统一身份认证，直接输入 GMIS 验证码即可。两种提示不要混为一谈。
 
 ### release APK 安装时提示签名不一致
 

@@ -11,9 +11,9 @@
 | L2 网页规则 | 课表几何/颜色与 `web/` 预览一致 | `node --test web/js/schedule.test.mjs` | 改课表规则时 |
 | L3 构建 | Android 编译、资源、签名回退 | `cd app && flutter build apk --debug` | 合并前 |
 | L4 模拟器冒烟 | 应用能启动、5 Tab 可渲染、无 FATAL、截图可查 | `scripts/android_smoke.sh smoke` | UI/启动链路改动 |
-| L5 真机回归 | 真实账号、验证码、VPN、插件、通知 | 人工按第 5 节清单 | 发版前/接口改动 |
+| L5 真机回归 | 真实账号、验证码、VPN、插件、通知 | 人工按第 6 节清单 | 发版前/接口改动 |
 
-`flutter test` 当前基线是 63 个用例；`flutter analyze` 必须零问题。
+`flutter test` 当前基线是 93 个用例；`flutter analyze` 必须零问题。
 
 ## 2. 环境要求
 
@@ -140,7 +140,64 @@ scripts/android_smoke.sh back           # 返回上一页
 - `UI_PREVIEW` 绕过了真实登录，不能验证验证码、Cookie、WebVPN、安全存储和通知权限。
 - TCG 下渲染和启动都慢，动画类断言不适合放在这一层。
 
-## 5. 真机回归清单（M0）
+## 5. WebVPN 回归
+
+WebVPN 的问题不能只靠“能打开首页”判断。以下三层都要跑。
+
+### 5.1 单测覆盖
+
+```bash
+cd app
+flutter test test/webvpn_credential_test.dart
+flutter test test/webvpn_url_test.dart
+flutter test test/webvpn_validator_test.dart
+flutter test test/webvpn_session_manager_test.dart
+flutter test test/webvpn_auth_client_test.dart
+flutter test test/app_controller_webvpn_test.dart
+flutter test test/gmis_client_test.dart
+```
+
+必须覆盖：
+
+- 无效 CAS 返回 200 但只下发匿名 ticket → 登录抛 `WebVpnAuthException`，不生成会话。
+- 有效 ticket + 最终 404 → 校验为 valid，登录成功。
+- 门户 `/login`、`/https/<sidportal-token>/login` → `WebVpnSessionExpired`。
+- 目标 `/home/stulogin`、`/https/<gmis-token>/home/stulogin` → `GmisSessionExpired`。
+- ticket 只在 ticket 存储；`GmisClient` 的 GMIS Cookie 不含 `wengine_vpn_ticket*`。
+- 旧 AuthSession 混存 ticket → 启动迁移并清理。
+- 启动矩阵：valid/expired/offline/unknown × 有无 GMIS/直连会话。
+- 门户轮换 ticket → 后续请求使用新值。
+
+### 5.2 无凭据的真实门户探测
+
+只发公开请求，不登录、不提交 cookie：
+
+```bash
+# 无效 CAS ticket 会返回 200，并下发匿名 ticket；不能以最终状态码判断成功
+curl -sD - -o /dev/null \
+  'https://w.buct.edu.cn/login?cas_login=true&ticket=ST-invalid'
+
+# 拿匿名 ticket 访问受保护页面，应当 302 回门户 /login
+curl -sD - -o /dev/null \
+  'https://w.buct.edu.cn/https/<gmis-token>/home/stulogin'
+```
+
+判断顺序：先看响应是否 302 到门户登录；再看目标页是否可达。**不要以“有 Set-Cookie”当作登录成功。**
+
+### 5.3 真机人工回归
+
+- [ ] 真实账号 + 短信二次认证完成 SSO，GMIS 验证码登录成功。
+- [ ] 杀进程重启：ticket 有效时不再要求 SSO，直接恢复/刷新。
+- [ ] 让 GMIS 会话失效：只出现 GMIS 登录，不出现 SSO。
+- [ ] 让 ticket 失效：自动回 SSO，不出现“GMIS 登录反复失败”。
+- [ ] 飞行模式启动：ticket 保留，显示缓存/离线提示，恢复网络后可刷新。
+- [ ] WebView 兜底登录成功后重启仍复用 ticket。
+- [ ] 退出登录后 WebView Cookie、secure storage、缓存均清理。
+- [ ] 日志/截图/存储中不出现 ticket 值、密码、短信码、学号。
+
+真实登录涉及密码和短信，只能由本人在设备上完成；自动化只做安装、截图和 logcat。
+
+## 6. 真机回归清单（M0）
 
 准备：校园网或网页版 VPN、真实账号、能接收短信二次认证。
 
@@ -157,7 +214,7 @@ scripts/android_smoke.sh back           # 返回上一页
 
 真机登录涉及密码和短信，自动化只做安装、截图和 logcat；登录动作由本人在设备上完成。
 
-## 6. 发版检查单
+## 7. 发版检查单
 
 1. `pubspec.yaml` 升版本号，`appVersionLabel` 同步。
 2. 更新 `docs/releases/` 与 `docs/roadmap.md`。
@@ -168,7 +225,7 @@ scripts/android_smoke.sh back           # 返回上一页
 7. 提交、推 `main`，确认 GitHub Actions 的 `flutter` 与 `web` 都绿。
 8. 打 tag、写 Release 说明、上传 APK（不提交 keystore/密码）。
 
-## 7. 常见问题
+## 8. 常见问题
 
 | 现象 | 处理 |
 | --- | --- |
@@ -180,7 +237,7 @@ scripts/android_smoke.sh back           # 返回上一页
 | `uiautomator dump` 找不到文字 | Flutter 语义节点可能未暴露；用截图+坐标点击兜底 |
 | Gradle 首次构建卡住 | 依赖在下载；国内可给 Gradle/Flutter 配镜像或代理 |
 
-## 8. 数据与凭据
+## 9. 数据与凭据
 
 - 不把密码、Cookie、验证码、证件号、电话、住址、邮箱写入代码、快照、文档、提交或截图。
 - 自动化只用 `UI_PREVIEW` 演示数据；真实登录只在真机上人工完成。
