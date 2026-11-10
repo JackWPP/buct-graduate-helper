@@ -13,7 +13,7 @@
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square">
   <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Native-12A05C?style=flat-square">
   <img alt="Services" src="https://img.shields.io/badge/Services-49-7C5CFF?style=flat-square">
-  <img alt="Version" src="https://img.shields.io/badge/Version-1.7.0-555?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/Version-1.7.1-555?style=flat-square">
   <a href="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml/badge.svg?branch=main"></a>
 </p>
 
@@ -76,7 +76,7 @@
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `1.7.0+8` |
+| 当前版本 | `1.7.1+9` |
 | 主线 | Android / Flutter；iOS 共用代码，尚未出包 |
 | 业务页面 | 全原生；WebView 仅保留为 WebVPN 认证页兜底 |
 | 登录 | 网页版 VPN + 原生统一身份认证（含短信 2FA）+ GMIS 验证码（SSO 凭据仅内存预填） |
@@ -121,7 +121,8 @@ cd web && python3 -m http.server 8899
 | [产品说明](docs/product.md) | 为什么做、给谁用、核心体验、页面地图、产品边界 |
 | [架构说明](docs/architecture.md) | Android 主线、登录链路、缓存会话与安全边界 |
 | [开发与构建](docs/development.md) | 环境要求、Android/网页构建、测试与常见问题 |
-| [1.7.0 发布说明](docs/releases/v1.7.0.md) | 本版亮点、安装方式、验证情况、已知限制 |
+| [1.7.1 发布说明](docs/releases/v1.7.1.md) | 第二天登录修复、静默续签、安装方式、验证情况 |
+| [1.7.0 发布说明](docs/releases/v1.7.0.md) | 上一版亮点与验证记录 |
 | [视觉素材](docs/assets/README.md) | README 首图、Release 图、功能图与社媒海报 |
 
 ## 安全边界

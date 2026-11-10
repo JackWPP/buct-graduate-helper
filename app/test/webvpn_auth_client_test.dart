@@ -107,6 +107,67 @@ void main() {
     expect(webVpn.requests, hasLength(2));
   });
 
+  test('用留存 SSO Cookie 静默换新 ticket', () async {
+    final sso = _FakeTransport([
+      _response(
+        302,
+        headers: {
+          'location': [
+            'https://w.buct.edu.cn/login?cas_login=true&ticket=ST-9',
+          ],
+        },
+      ),
+    ]);
+    final webVpn = _FakeTransport([
+      _response(
+        302,
+        headers: {
+          'location': ['https://w.buct.edu.cn/'],
+          'set-cookie': [
+            'wengine_vpn_ticketw_buct_edu_cn=ticket-9; Path=/; Secure; HttpOnly',
+          ],
+        },
+      ),
+      _response(200, body: '<html>ok</html>'),
+    ]);
+    final client = WebVpnAuthClient(
+      ssoTransport: sso,
+      webVpnTransport: webVpn,
+      validator: _FakeValidator(WebVpnState.valid),
+    );
+
+    final session = await client.renewSilently(
+      ssoCookies: const {'SOURCEID_TGC': 'tgc-1'},
+    );
+    expect(session, isNotNull);
+    expect(session!.credential.ticketValue, 'ticket-9');
+    expect(
+      sso.requests.single.headers['Cookie'],
+      contains('SOURCEID_TGC=tgc-1'),
+    );
+    expect(webVpn.requests, hasLength(2));
+  });
+
+  test('SSO 会话失效时静默续签返回 null', () async {
+    final sso = _FakeTransport([
+      _response(200, body: '<p id="login-page-flowkey">flow-2</p>'),
+    ]);
+    final client = WebVpnAuthClient(
+      ssoTransport: sso,
+      webVpnTransport: _FakeTransport([]),
+      validator: _FakeValidator(WebVpnState.valid),
+    );
+
+    final session = await client.renewSilently(
+      ssoCookies: const {'SOURCEID_TGC': 'stale'},
+    );
+    expect(session, isNull);
+    expect(
+      sso.requests.single.headers['Cookie'],
+      contains('SOURCEID_TGC=stale'),
+    );
+  });
+
   test('错误凭证显示统一身份认证错误码', () async {
     final sso = _FakeTransport([
       _response(

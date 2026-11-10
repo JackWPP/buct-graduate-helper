@@ -16,14 +16,22 @@ class LoginPrefill {
 
 /// 统一身份认证成功后的结果：WebVPN 会话 + 本次登录的临时凭据。
 class SsoLoginSuccess {
-  const SsoLoginSuccess({required this.session, required this.prefill});
+  const SsoLoginSuccess({
+    required this.session,
+    required this.prefill,
+    this.ssoCookies = const {},
+  });
 
   final WebVpnSession session;
   final LoginPrefill prefill;
 
+  /// 统一身份认证的长期会话 Cookie，只允许写安全存储。
+  final Map<String, String> ssoCookies;
+
   @override
   String toString() =>
-      'SsoLoginSuccess(baseUrl: ${session.baseUrl}, prefill: $prefill)';
+      'SsoLoginSuccess(baseUrl: ${session.baseUrl}, prefill: $prefill, '
+      'ssoCookies: ${ssoCookies.length})';
 }
 
 /// 登录流程里需要跨页面保留的少量状态。

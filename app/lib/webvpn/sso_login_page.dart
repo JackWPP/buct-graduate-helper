@@ -113,6 +113,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
         SsoLoginSuccess(
           session: session,
           prefill: LoginPrefill(userId: sid, password: pwd),
+          ssoCookies: _client.ssoCookies,
         ),
       );
     } on GmisException catch (error) {
@@ -207,6 +208,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
         SsoLoginSuccess(
           session: session,
           prefill: LoginPrefill(userId: userId, password: password),
+          ssoCookies: _client.ssoCookies,
         ),
       );
     } on GmisException catch (error) {

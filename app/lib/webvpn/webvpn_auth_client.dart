@@ -187,6 +187,35 @@ class WebVpnAuthClient {
     );
   }
 
+  /// 本次登录后 `sidportal` 的 Cookie（TGC/SESSION），供之后静默续签。
+  ///
+  /// 只应写入安全存储；调用方不得打印或写入普通日志。
+  Map<String, String> get ssoCookies =>
+      Map.unmodifiable(_cookiesByHost[WebVpnUrls.sidPortalHost] ?? const {});
+
+  /// 用留存的 SSO Cookie 静默换一张新的 WebVPN ticket。
+  ///
+  /// SSO 会话仍有效时，`/login?service=...` 会直接 302 回门户并下发新
+  /// ticket；会话失效则返回登录页，[tickets] 为空，此时返回 null。
+  /// 网络错误继续抛出，让调用方区分“离线”和“需要重新认证”。
+  Future<WebVpnSession?> renewSilently({
+    required Map<String, String> ssoCookies,
+  }) async {
+    if (ssoCookies.isEmpty) return null;
+    _cookiesByHost
+      ..clear()
+      ..[WebVpnUrls.sidPortalHost] = Map<String, String>.from(ssoCookies);
+    _pendingSms = null;
+    final loginUri = Uri.parse(
+      '$ssoBase/login',
+    ).replace(queryParameters: {'service': service});
+    final page = await _follow(
+      loginUri,
+      headers: _htmlHeaders(referer: '$ssoBase/login'),
+    );
+    return _trySession(page.tickets);
+  }
+
   /// 向当前短信挑战的手机号发送验证码，返回允许重发的间隔秒数。
   Future<SmsCodeSent> sendSmsCode() async {
     final challenge = _requireSmsChallenge();

@@ -1,5 +1,7 @@
+import '../gmis/gmis_exception.dart';
 import 'webvpn_credential.dart';
 import 'webvpn_credential_store.dart';
+import 'webvpn_session.dart';
 import 'webvpn_validator.dart';
 
 /// 启动时的路由决策，独立成纯函数方便测试。
@@ -38,12 +40,16 @@ class WebVpnSessionManager {
   WebVpnSessionManager({
     required this.store,
     required this.validator,
+    this.renew,
     DateTime Function()? clock,
     this.validationTtl = const Duration(minutes: 5),
   }) : _clock = clock ?? DateTime.now;
 
   final WebVpnCredentialStore store;
   final WebVpnValidator validator;
+
+  /// ticket 失效时用留存 SSO 会话静默换新 ticket；null 表示没有该能力。
+  final Future<WebVpnSession?> Function()? renew;
   final DateTime Function() _clock;
   final Duration validationTtl;
 
@@ -59,9 +65,34 @@ class WebVpnSessionManager {
     _credential = await store.read();
     if (_credential == null) {
       _state = WebVpnState.unknown;
+      await _tryRenew();
       return _state;
     }
-    return validate(force: true);
+    final state = await validate(force: true);
+    if (state == WebVpnState.expired) {
+      await _tryRenew();
+    }
+    return _state;
+  }
+
+  /// 运行时遇到 WebVPN 过期时，先尝试静默续签再回 SSO。
+  Future<bool> renewSilently() => _tryRenew();
+
+  Future<bool> _tryRenew() async {
+    final renew = this.renew;
+    if (renew == null) return false;
+    try {
+      final session = await renew();
+      if (session == null) return false;
+      await adopt(session.credential, state: WebVpnState.valid);
+      _state = WebVpnState.valid;
+      return true;
+    } on GmisNetworkException {
+      _state = WebVpnState.offline;
+      return false;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<WebVpnState> validate({bool force = false}) async {

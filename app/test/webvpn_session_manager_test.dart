@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:huayan/storage/secure_key_value_store.dart';
 import 'package:huayan/webvpn/webvpn_credential.dart';
 import 'package:huayan/webvpn/webvpn_credential_store.dart';
+import 'package:huayan/webvpn/webvpn_session.dart';
 import 'package:huayan/webvpn/webvpn_session_manager.dart';
 import 'package:huayan/webvpn/webvpn_validator.dart';
 
@@ -74,6 +75,43 @@ void main() {
     expect(await manager.restore(), WebVpnState.expired);
     expect(await store.read(), isNull);
     expect(manager.credential, isNull);
+  });
+
+  test('expired ticket silently renews with the stored SSO session', () async {
+    final memory = _MemoryStore();
+    final store = WebVpnCredentialStore(store: memory);
+    await store.write(credential());
+    var renewCalls = 0;
+    final manager = WebVpnSessionManager(
+      store: store,
+      validator: _FakeValidator([WebVpnState.expired]),
+      renew: () async {
+        renewCalls++;
+        return WebVpnSession(credential: credential(value: 'ticket-2'));
+      },
+      clock: () => now,
+    );
+
+    expect(await manager.restore(), WebVpnState.valid);
+    expect(renewCalls, 1);
+    expect(manager.ticketHeader, '$ticketName=ticket-2');
+    expect((await store.read())?.ticketValue, 'ticket-2');
+  });
+
+  test('failed silent renewal leaves the session expired', () async {
+    final memory = _MemoryStore();
+    final store = WebVpnCredentialStore(store: memory);
+    await store.write(credential());
+    final manager = WebVpnSessionManager(
+      store: store,
+      validator: _FakeValidator([WebVpnState.expired]),
+      renew: () async => null,
+      clock: () => now,
+    );
+
+    expect(await manager.restore(), WebVpnState.expired);
+    expect(manager.credential, isNull);
+    expect(await store.read(), isNull);
   });
 
   test('offline validation keeps the ticket', () async {

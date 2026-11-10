@@ -37,7 +37,9 @@ import 'webvpn/sso_login_page.dart';
 import 'webvpn/webvpn_login_page.dart';
 import 'webvpn/webvpn_credential.dart';
 import 'webvpn/webvpn_credential_store.dart';
+import 'webvpn/sso_session_store.dart';
 import 'webvpn/webvpn_session.dart';
+import 'webvpn/webvpn_silent_login.dart';
 import 'webvpn/webvpn_session_manager.dart';
 import 'webvpn/webvpn_validator.dart';
 import 'webvpn/webview_cookies.dart';
@@ -61,8 +63,10 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   final _flow = LoginFlowState();
   AppController? _controller;
   WebVpnSessionManager? _webVpn;
+  WebVpnSilentLogin? _silentLogin;
   String? _webVpnNotice;
   bool _webVpnExpiryHandled = false;
+  bool _webVpnRenewing = false;
   PrefsStore? _store;
   int _tab = 0;
   bool _onboarded = false;
@@ -110,9 +114,12 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     store?.apply(_settings);
     if (mounted) setState(() => _bootStage = '正在读取本机会话');
 
+    final silentLogin = WebVpnSilentLogin(store: SsoSessionStore());
+    _silentLogin = silentLogin;
     final manager = WebVpnSessionManager(
       store: WebVpnCredentialStore(),
       validator: HttpWebVpnValidator(),
+      renew: silentLogin.renew,
     );
     _webVpn = manager;
     final gmisWebVpnStore = SecureSessionStore(
@@ -270,6 +277,11 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       await _webVpn?.adopt(result.session.credential);
     } catch (_) {
       // ticket 仍在内存里，本次可以用；下次启动重新 SSO。
+    }
+    try {
+      await _silentLogin?.remember(result.ssoCookies);
+    } catch (_) {
+      // 留存失败只影响下次静默续签，不阻塞本次登录。
     }
     if (!mounted) return;
     await _acceptWebVpnSession(result.session);
@@ -436,6 +448,7 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     Navigator.of(context).popUntil((route) => route.isFirst);
     await _controller?.logout();
     await _webVpn?.clear();
+    await _silentLogin?.clear();
     await WebViewCookies.clear();
     await SecureSessionStore(key: SecureSessionStore.directKey).clear();
     await SecureSessionStore(key: SecureSessionStore.webVpnKey).clear();
@@ -469,11 +482,27 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     });
   }
 
-  /// WebVPN ticket 失效：保留快照/Tab，清 ticket，回统一身份认证。
+  /// WebVPN ticket 失效：先用留存 SSO 静默续签，失败才回统一身份认证。
   Future<void> _handleWebVpnExpired() async {
-    if (_webVpnExpiryHandled) return;
-    _webVpnExpiryHandled = true;
+    if (_webVpnExpiryHandled || _webVpnRenewing) return;
     ActivityMonitor.instance.stop();
+    final manager = _webVpn;
+    var renewed = false;
+    _webVpnRenewing = true;
+    try {
+      renewed = manager != null && await manager.renewSilently();
+    } finally {
+      _webVpnRenewing = false;
+    }
+    if (!mounted) return;
+    if (renewed) {
+      final credential = manager.credential;
+      if (credential != null) {
+        await _acceptWebVpnSession(WebVpnSession(credential: credential));
+        return;
+      }
+    }
+    _webVpnExpiryHandled = true;
     _flow.recordTab(_tab);
     Navigator.of(context).popUntil((route) => route.isFirst);
     try {
