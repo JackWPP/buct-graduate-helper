@@ -63,7 +63,7 @@ flutter analyze
 node --test web/js/schedule.test.mjs
 ```
 
-当前基线：`flutter test` 93 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试通过。完整的检查顺序、模拟器冒烟和真机回归清单见 [测试与冒烟 SOP](testing.md)。
+当前基线：`flutter test` 94 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试通过。完整的检查顺序、模拟器冒烟和真机回归清单见 [测试与冒烟 SOP](testing.md)。
 
 ## CI
 

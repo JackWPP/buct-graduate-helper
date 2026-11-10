@@ -78,6 +78,19 @@ class HttpWebVpnValidator implements WebVpnValidator {
           detail: 'portal-login-page',
         );
       }
+      // 门户对失效 ticket 也可能回 200（短错误页/跳转页）。只有 GMIS
+      // 登录页的标记才算真正拿到目标页面。
+      final looksLikeGmisLogin =
+          response.body.contains('pubkey') ||
+          response.body.contains('stulogin') ||
+          response.body.contains('研究生管理系统');
+      if (!looksLikeGmisLogin) {
+        return WebVpnValidation(
+          WebVpnState.expired,
+          statusCode: status,
+          detail: 'unexpected-200',
+        );
+      }
       return WebVpnValidation(WebVpnState.valid, statusCode: status);
     }
     if (status >= 300 && status < 400) {

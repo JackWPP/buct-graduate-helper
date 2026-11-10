@@ -149,7 +149,7 @@ class _WebVpnLoginPageState extends State<WebVpnLoginPage> {
                   if (_ticket != null) ...[
                     const SizedBox(height: 6),
                     const Text(
-                      '已检测到网页版 VPN 登录状态，可以继续。',
+                      '已检测到网页版 VPN 凭证，点下面按钮校验后继续。',
                       key: Key('webvpn-ticket-ready'),
                       style: TextStyle(
                         fontSize: 12,

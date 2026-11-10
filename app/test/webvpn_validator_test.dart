@@ -41,7 +41,9 @@ void main() {
   }
 
   test('200 from the target page means the ticket is valid', () async {
-    final result = await validatorWith(_response(200)).validate(credential);
+    final result = await validatorWith(
+      _response(200, body: '<input id="pubkey" />'),
+    ).validate(credential);
     expect(result.state, WebVpnState.valid);
   });
 
@@ -91,6 +93,13 @@ void main() {
     );
     final result = await validator.validate(credential);
     expect(result.state, WebVpnState.offline);
+  });
+
+  test('200 without a target-page marker is not valid', () async {
+    final result = await validatorWith(
+      _response(200, body: '登录已过期'),
+    ).validate(credential);
+    expect(result.state, WebVpnState.expired);
   });
 
   test('http 500 is unknown, not expired', () async {
