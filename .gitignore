@@ -61,3 +61,6 @@ research/scraped/pages_all/student__grgl__zpxxhd.html
 /web/timetable_pull.py
 /web/test_timetable_pull.py
 /.cursor/
+
+# 本地测试产物（截图、logcat、模拟器日志）
+.artifacts/
