@@ -204,7 +204,7 @@ class GuidePage extends StatelessWidget {
                     ],
                     Text(
                       live
-                          ? '登录后从学校系统同步课表、成绩和通知。密码只用于登录，不保存在本机。'
+                          ? '登录后从学校系统同步课表、成绩和通知。可选择加密保存登录密码，用于下次预填和自动重连；密码只保存在系统安全存储，可在设置里关闭。'
                           : '数据来自 $when导出的学校快照。演示版不保存密码，也不连接学校服务器。',
                       style: const TextStyle(
                         fontSize: 12,

@@ -12,6 +12,11 @@ if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.inputStream().use { keystoreProperties.load(it) }
 }
 
+// 只允许在明确放行时产出 debug 签名的 release 包，用于本机冒烟。
+// 日常开发仍应使用 app/android/key.properties 的正式 keystore。
+val allowDebugReleaseSigning =
+    (project.findProperty("allowDebugReleaseSigning") as String?)?.toBoolean() ?: false
+
 android {
     namespace = "edu.buct.graduate.huayan"
     compileSdk = flutter.compileSdkVersion
@@ -51,15 +56,32 @@ android {
 
     buildTypes {
         release {
-            // 正式发布必须提供 app/android/key.properties；缺省时回退 debug
-            // 签名，仅用于内部测试，避免本地 release 构建阻断。
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                logger.warn("key.properties not found: release APK is signed with the debug key")
-                signingConfigs.getByName("debug")
+            // 正式发布必须提供 app/android/key.properties；缺省时只在显式放行的情况下
+            // 回退 debug 签名，否则 release 任务会在下面的 taskGraph 校验中失败。
+            signingConfig = when {
+                keystorePropertiesFile.exists() -> signingConfigs.getByName("release")
+                allowDebugReleaseSigning -> {
+                    logger.warn(
+                        "key.properties not found: release APK is signed with the debug key " +
+                            "because allowDebugReleaseSigning=true"
+                    )
+                    signingConfigs.getByName("debug")
+                }
+                else -> signingConfigs.getByName("debug")
             }
         }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    val hasReleaseTask = allTasks.any { it.name.contains("release", ignoreCase = true) }
+    if (hasReleaseTask && !keystorePropertiesFile.exists() && !allowDebugReleaseSigning) {
+        throw GradleException(
+            "Release signing is not configured. Create app/android/key.properties " +
+                "with a release keystore, or set " +
+                "ORG_GRADLE_PROJECT_allowDebugReleaseSigning=true for a debug-signed " +
+                "local test build."
+        )
     }
 }
 

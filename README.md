@@ -13,7 +13,7 @@
   <img alt="Flutter" src="https://img.shields.io/badge/Flutter-3.47-02569B?style=flat-square">
   <img alt="GMIS" src="https://img.shields.io/badge/GMIS-Native-12A05C?style=flat-square">
   <img alt="Services" src="https://img.shields.io/badge/Services-49-7C5CFF?style=flat-square">
-  <img alt="Version" src="https://img.shields.io/badge/Version-1.8.0-555?style=flat-square">
+  <img alt="Version" src="https://img.shields.io/badge/Version-1.9.0-555?style=flat-square">
   <a href="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/JackWPP/buct-graduate-helper/actions/workflows/ci.yml/badge.svg?branch=main"></a>
 </p>
 
@@ -22,7 +22,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JackWPP/buct-graduate-helper/releases/latest"><b>下载最新 Android 测试版 →</b></a>
+  <a href="https://github.com/JackWPP/buct-graduate-helper/releases/latest"><b>下载最新 Android 正式版 →</b></a>
 </p>
 
 ---
@@ -34,7 +34,8 @@
 - **打开就看今天**：首页直接显示当前教学周、今日课程、下一节课、评教提醒和培养进度。
 - **课表像手机应用，不像网页**：周视图、左右滑换周、长课名折行、课程详情、提醒、ICS 分享；“日程”视图把已报名活动、本地待办和空闲时间放到同一周里。
 - **49 项服务一个入口**：搜索、分组筛选，点开即用，不跳系统浏览器。
-- **原生体验，真能登录**：默认网页版 VPN + 原生统一身份认证（含短信二次认证）；SSO 成功后学号/密码先带入 GMIS 登录页；勾选“保持登录”后密码加密保存，下次只补图形验证码。
+- **原生体验，真能登录**：默认网页版 VPN + 原生统一身份认证（含短信二次认证）；SSO 成功后学号/密码先带入 GMIS 登录页；勾选“保持登录”后密码加密保存，下次只补图形验证码。会话过期可先静默续签，SSO 过期时自动尝试保存的密码。
+- **本机多账号**：保存多个账号并快速切换；每个账号的登录状态、课表、活动、待办和通知各自隔离，重启恢复上次账号。
 - **校外也能访问**：默认走学校网页版 VPN，统一身份认证在应用内完成，不需要额外打开浏览器。
 - **选课可以直接完成**：二次确认 + 选课验证码，提交后刷新课表与学分。
 - **学术报告 / 劳动实践不再错过**：可报名 / 待进行 / 我的报名、活动详情、周几时间、报名/取消和独立验证码；登录后自动监测新活动与名额，报名开始/截止前发本地提醒。活动详情还能直接看到与课表的冲突和当天空闲。
@@ -66,23 +67,25 @@
 | 看课表 | 周视图、左右滑/箭头换周、课程详情、单课提醒、ICS 分享；“日程”视图看已报名活动 + 本地待办 + 空闲 |
 | 看学业 | 培养进度、成绩、已修课程、评教、考试与调课、申请列表 |
 | 办事 | 49 项服务扁平目录，搜索 + 分组筛选，全部应用内打开 |
-| 登录 | 网页版 VPN → 原生统一身份认证（含短信二次认证）→ 自动带入 GMIS 登录页（只补验证码） |
+| 登录 | 网页版 VPN → 原生统一身份认证（含短信二次认证）→ 自动带入 GMIS 登录页（只补验证码）；SSO 过期可自动尝试保存密码 |
 | 选课 | 筛选、余量/冲突提示、二次确认、选课验证码、提交/退课 |
 | 活动报名 | 学术报告 / 劳动实践：可报名 / 待进行 / 我的报名、详情、周几、课表冲突、当天空闲、报名/取消、自动监测、本地提醒 |
 | 离线 | 本机快照缓存；有会话时先显示缓存再刷新 |
-| 我的 | 个人资料、培养进度、申请、成绩单、设置、退出登录 |
+| 我的 | 个人资料、培养进度、申请、成绩单、设置、账号管理/切换、退出当前账号 |
 
 ## 产品状态
 
 | 项目 | 状态 |
 | --- | --- |
-| 当前版本 | `1.8.0+11` |
+| 当前版本 | `1.9.0+12` |
+| 签名 | 正式 release 签名（v1.9.0 起） |
 | 主线 | Android / Flutter；iOS 共用代码，尚未出包 |
 | 业务页面 | 全原生；WebView 仅保留为 WebVPN 认证页兜底 |
-| 登录 | 网页版 VPN + 原生统一身份认证（含短信 2FA）+ GMIS 验证码；SSO 会话可静默续签，GMIS 密码可选加密保存 |
+| 登录 | 网页版 VPN + 原生统一身份认证（含短信 2FA）+ GMIS 验证码；SSO 会话可静默续签，GMIS 密码可选加密保存；SSO 过期可自动重连 |
+| 账号 | 本机保存多个账号并快速切换；会话/缓存/密码/待办/通知按账号隔离 |
 | 数据 | 真实 GMIS 接口；快照缓存，登录 Cookie 存系统安全存储 |
 | 选课 | 可提交/退课（二次确认 + 选课验证码） |
-| 尚未完成 | 活动监测的系统级后台常驻、深色模式、正式 release 签名、iOS 打包、部分复杂服务表单 |
+| 尚未完成 | 活动监测的系统级后台常驻、深色模式、多账号后台监测/应用锁、iOS 打包、部分复杂服务表单 |
 
 ## 快速开始
 
@@ -122,6 +125,7 @@ cd web && python3 -m http.server 8899
 | [架构说明](docs/architecture.md) | Android 主线、登录链路、缓存与会话 |
 | [发版 SOP](docs/release-sop.md) | 版本、图片、Release、README 与文档的更新清单 |
 | [开发与构建](docs/development.md) | 环境要求、Android/网页构建、测试与常见问题 |
+| [1.9.0 发布说明](docs/releases/v1.9.0.md) | 无感重登录、本机多账号、正式签名版、下载方式 |
 | [1.8.0 发布说明](docs/releases/v1.8.0.md) | 活动与课表联动、日程/待办、真实界面截图、下载方式 |
 | [1.7.2 发布说明](docs/releases/v1.7.2.md) | 回来就能继续、真实界面截图、下载方式 |
 | [1.7.1 发布说明](docs/releases/v1.7.1.md) | 上一版：会话续签与卡缓存修复 |

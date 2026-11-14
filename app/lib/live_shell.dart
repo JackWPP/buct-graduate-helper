@@ -1,21 +1,24 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
+import 'accounts/account_models.dart';
+import 'accounts/account_session.dart';
+import 'accounts/account_storage.dart';
+import 'accounts/accounts_page.dart';
+import 'accounts/add_account_page.dart';
 import 'academics_page.dart';
 import 'activities/activity_models.dart';
+import 'activities/activity_notifications.dart';
 import 'activity_page.dart';
 import 'activities/activity_monitor.dart';
 import 'app_controller.dart';
-import 'auth/auth_gateway.dart';
 import 'auth/gmis_password_vault.dart';
 import 'auth/login_flow.dart';
 import 'config/app_config.dart';
 import 'course_sheet.dart';
 import 'gate.dart';
-import 'gmis/gmis_api.dart';
-import 'gmis/gmis_client.dart';
-import 'gmis/gmis_transport.dart';
 import 'home_page.dart';
 import 'live_login_page.dart';
 import 'me_page.dart';
@@ -29,10 +32,7 @@ import 'schedule.dart';
 import 'services_page.dart';
 import 'settings.dart';
 import 'snapshot.dart';
-import 'storage/secure_session_store.dart';
-import 'storage/snapshot_cache.dart';
 import 'subpages.dart';
-import 'term_calendar.dart';
 import 'theme.dart';
 import 'timetable_page.dart';
 import 'ui/feedback.dart';
@@ -40,10 +40,7 @@ import 'ui/startup_pages.dart';
 import 'webvpn/sso_login_page.dart';
 import 'webvpn/webvpn_login_page.dart';
 import 'webvpn/webvpn_credential.dart';
-import 'webvpn/webvpn_credential_store.dart';
-import 'webvpn/sso_session_store.dart';
 import 'webvpn/webvpn_session.dart';
-import 'webvpn/webvpn_silent_login.dart';
 import 'webvpn/webvpn_session_manager.dart';
 import 'webvpn/webvpn_validator.dart';
 import 'webvpn/webview_cookies.dart';
@@ -51,11 +48,20 @@ import 'widgets.dart';
 
 /// 真实模式的外壳：登录、会话恢复、刷新和 5 个主 Tab。
 class LiveShell extends StatefulWidget {
-  const LiveShell({super.key, this.now, this.initialTab, this.openCourseName});
+  const LiveShell({
+    super.key,
+    this.now,
+    this.initialTab,
+    this.openCourseName,
+    this.cacheDirectory,
+  });
 
   final DateTime? now;
   final int? initialTab;
   final String? openCourseName;
+
+  /// 测试/预览可注入缓存目录；生产为空，走应用支持目录。
+  final Directory? cacheDirectory;
 
   @override
   State<LiveShell> createState() => _LiveShellState();
@@ -68,25 +74,54 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   TodoController? _todos;
   String _todoProfile = '';
   final _flow = LoginFlowState();
-  AppController? _controller;
-  WebVpnSessionManager? _webVpn;
-  WebVpnSilentLogin? _silentLogin;
-  GmisPasswordVault? _passwordVault;
-  SavedGmisLogin? _savedLogin;
-  String? _webVpnNotice;
-  bool _webVpnExpiryHandled = false;
-  bool _webVpnRenewing = false;
+  AccountStore? _accountStore;
+  AccountBook? _accounts;
+  AccountProfile? _activeAccount;
+  AccountSession? _session;
+  bool _switchingAccount = false;
+  AccountSession? _draftSession;
+  String? _autoSsoPassword;
   PrefsStore? _store;
   int _tab = 0;
   bool _onboarded = false;
   bool _guide = false;
   bool _sheetQueued = false;
   bool _reminded = false;
-  bool _needsWebVpnLogin = AppConfig.useWebVpnByDefault;
-  bool _usingWebVpn = false;
   String? _lastNotice;
   String _bootStage = '正在启动';
   DateTime? _lastResumeRefresh;
+
+  AppController? get _controller => _session?.controller;
+  WebVpnSessionManager? get _webVpn => _session?.webVpn;
+  GmisPasswordVault? get _passwordVault => _session?.passwordVault;
+  SavedGmisLogin? get _savedLogin => _session?.savedLogin;
+  bool get _needsWebVpnLogin =>
+      _session?.needsWebVpnLogin ?? AppConfig.useWebVpnByDefault;
+  bool get _usingWebVpn => _session?.usingWebVpn ?? false;
+  String? get _webVpnNotice => _session?.webVpnNotice;
+  bool get _webVpnExpiryHandled => _session?.webVpnExpiryHandled ?? false;
+  set _webVpnExpiryHandled(bool value) {
+    final session = _session;
+    if (session != null) session.webVpnExpiryHandled = value;
+  }
+
+  bool get _webVpnRenewing => _session?.webVpnRenewing ?? false;
+  set _webVpnRenewing(bool value) {
+    final session = _session;
+    if (session != null) session.webVpnRenewing = value;
+  }
+
+  set _savedLogin(SavedGmisLogin? value) {
+    final session = _session;
+    if (session != null) session.savedLogin = value;
+  }
+
+  String get _notificationAccountLabel {
+    if ((_accounts?.accounts.length ?? 0) < 2) return '';
+    final account = _activeAccount;
+    if (account == null) return '';
+    return account.name.isNotEmpty ? account.name : account.id;
+  }
 
   @override
   void initState() {
@@ -129,145 +164,197 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   Future<void> _boot() async {
     final store = await PrefsStore.tryOpen();
     store?.apply(_settings);
+    _store = store;
     if (mounted) setState(() => _bootStage = '正在读取本机会话');
 
-    final passwordVault = GmisPasswordVault();
-    _passwordVault = passwordVault;
+    final accountStore = AccountStore();
+    _accountStore = accountStore;
+    AccountBook? book;
     try {
-      _savedLogin = await passwordVault.read();
+      book = await accountStore.load();
     } catch (_) {
-      _savedLogin = null;
+      book = null;
     }
-
-    final silentLogin = WebVpnSilentLogin(store: SsoSessionStore());
-    _silentLogin = silentLogin;
-    final manager = WebVpnSessionManager(
-      store: WebVpnCredentialStore(),
-      validator: HttpWebVpnValidator(),
-      renew: silentLogin.renew,
-    );
-    _webVpn = manager;
-    final gmisWebVpnStore = SecureSessionStore(
-      key: SecureSessionStore.webVpnKey,
-    );
-    final directStore = SecureSessionStore(key: SecureSessionStore.directKey);
-    final storedWebVpn = await gmisWebVpnStore.read();
-    final storedDirect = await directStore.read();
-
-    if (AppConfig.useWebVpnByDefault) {
-      if (mounted) setState(() => _bootStage = '正在检查校外访问会话');
-      try {
-        await manager.restore();
-      } catch (_) {
-        // 安全存储/网络异常按未校验处理，不阻塞启动。
-      }
-
-      // 旧版本把 ticket 混在 GMIS 会话 Cookie 里；启动时迁移并从 GMIS
-      // 会话中剔除，避免把 bearer token 当成普通 Cookie 保存。
-      if (storedWebVpn != null) {
+    if (book == null) {
+      book = await _buildLegacyBook();
+      if (book != null) {
         try {
-          final legacy = WebVpnCredential.fromLegacySession(
-            storedWebVpn.toJson(),
-          );
-          if (legacy != null) {
-            if (!manager.hasCredential) {
-              await manager.adopt(legacy, state: WebVpnState.unknown);
-              await manager.validate(force: true);
-            }
-            final cleanedCookies = Map<String, String>.from(
-              storedWebVpn.cookies,
-            )..removeWhere((name, _) => name.startsWith(webVpnTicketPrefix));
-            await gmisWebVpnStore.write(
-              AuthSession(
-                userId: storedWebVpn.userId,
-                cookies: cleanedCookies,
-                savedAt: storedWebVpn.savedAt,
-                baseUrl: storedWebVpn.baseUrl,
-              ),
-            );
-          }
+          await accountStore.save(book);
         } catch (_) {
-          // 迁移失败按没有旧 ticket 处理，不影响本次启动。
+          // 安全存储不可用时只在本次运行使用内存账号，不阻塞登录。
         }
       }
     }
 
-    final hasGmisSession = storedWebVpn?.baseUrl != null;
-    final route = AppConfig.useWebVpnByDefault
-        ? decideStartup(
-            webVpn: manager.state,
-            hasCredential: manager.hasCredential,
-            hasGmisSession: hasGmisSession,
-            hasDirectSession: storedDirect != null,
-            defaultWebVpn: true,
-          )
-        : WebVpnStartupRoute.direct;
+    if (book == null || book.isEmpty) {
+      final sid = store?.sid ?? '';
+      final provisional = AccountProfile(
+        id: sid,
+        name: '',
+        college: '',
+        major: '',
+        storageKey: legacyAccountStorageKey,
+        addedAt: DateTime.now(),
+        lastUsedAt: DateTime.now(),
+      );
+      _activeAccount = provisional;
+      _accounts = const AccountBook();
+    } else {
+      final active = book.active ?? book.accounts.first;
+      _accounts = book;
+      _activeAccount = active;
+    }
 
-    final webVpnSession = manager.hasCredential
-        ? WebVpnSession(credential: manager.credential!)
-        : null;
+    final active = _activeAccount;
+    if (active == null) {
+      if (mounted) setState(() => _bootStage = '正在准备登录');
+      return;
+    }
 
-    if (mounted) setState(() => _bootStage = '正在恢复登录状态');
-    final controller = _createController(
-      store: store,
-      webVpnSession: route == WebVpnStartupRoute.ssoLogin
-          ? null
-          : webVpnSession,
-    );
+    final session = _createSession(active);
+    _session = session;
+    try {
+      await session.boot();
+    } catch (error) {
+      if (mounted) setState(() => _bootStage = '启动失败，请检查网络');
+      debugPrint('启动账号会话失败: $error');
+    }
+    _attachController();
+    _prepareAutoSso();
     if (!mounted) return;
     setState(() {
-      _store = store;
       _onboarded = store?.onboarded ?? false;
-      _controller = controller;
-      _usingWebVpn =
-          webVpnSession != null && route != WebVpnStartupRoute.ssoLogin;
-      _needsWebVpnLogin =
-          route == WebVpnStartupRoute.ssoLogin ||
-          (route == WebVpnStartupRoute.offline && !hasGmisSession);
-      _webVpnNotice = manager.state == WebVpnState.expired
-          ? '校外访问会话已过期，请重新登录统一身份认证'
-          : route == WebVpnStartupRoute.offline
-          ? '暂时无法校验校外访问会话，请检查网络后重试'
-          : null;
-      _webVpnExpiryHandled = false;
     });
-    await controller.bootstrap();
+    _onController();
   }
 
-  AppController _createController({
-    PrefsStore? store,
-    WebVpnSession? webVpnSession,
-  }) {
-    final baseUrl = webVpnSession?.baseUrl ?? AppConfig.baseUrl;
-    final usingWebVpn = webVpnSession != null;
-    final client = GmisClient(
-      transport: DioGmisTransport(baseUrl: baseUrl),
-      baseUrl: baseUrl,
-      webVpnTicketHeader: usingWebVpn ? () => _webVpn?.ticketHeader : null,
-      onWebVpnTicket: usingWebVpn
-          ? (name, value) {
-              final manager = _webVpn;
-              if (manager != null) {
-                unawaited(manager.updateTicket(name, value));
-              }
-            }
-          : null,
-      viaWebVpn: usingWebVpn,
+  AccountSession _createSession(AccountProfile profile) {
+    final storage = AccountStorage(
+      profile: profile,
+      cacheDirectory: widget.cacheDirectory,
     );
-    final controller = AppController(
-      gateway: client,
-      api: GmisApi(client),
-      sessionStore: SecureSessionStore(
-        key: usingWebVpn
-            ? SecureSessionStore.webVpnKey
-            : SecureSessionStore.directKey,
-      ),
-      cache: SnapshotCache(),
-      calendar: TermCalendar(prefs: store),
+    return AccountSession(
+      profile: profile,
+      storage: storage,
+      prefs: _store,
       onWebVpnExpired: _handleWebVpnExpired,
+      onStage: (stage) {
+        if (!mounted) return;
+        setState(() => _bootStage = stage);
+      },
     );
+  }
+
+  Future<AccountBook?> _buildLegacyBook() async {
+    final provisional = AccountProfile(
+      id: '',
+      name: '',
+      college: '',
+      major: '',
+      storageKey: legacyAccountStorageKey,
+      addedAt: DateTime.now(),
+      lastUsedAt: DateTime.now(),
+    );
+    final storage = AccountStorage(
+      profile: provisional,
+      cacheDirectory: widget.cacheDirectory,
+    );
+    try {
+      return await migrateLegacyAccountBook(
+        vault: storage.passwordVault,
+        cache: storage.snapshotCache,
+        directSession: storage.sessionStore(),
+        webVpnSession: storage.sessionStore(webVpn: true),
+        prefs: _store,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  void _attachController() {
+    final controller = _controller;
+    if (controller == null) return;
+    controller.removeListener(_onController);
     controller.addListener(_onController);
-    return controller;
+  }
+
+  void _detachController() {
+    _controller?.removeListener(_onController);
+  }
+
+  bool _canAutoSso() {
+    final session = _session;
+    final saved = session?.savedLogin;
+    if (session == null || saved == null) return false;
+    if (!_settings.autoReconnect) return false;
+    if (session.route == WebVpnStartupRoute.offline) return false;
+    if (!saved.canAutoSso) return false;
+    if (saved.autoFailedRecently(DateTime.now())) return false;
+    final active = _activeAccount;
+    if (active != null && active.id.isNotEmpty && saved.userId != active.id) {
+      return false;
+    }
+    return true;
+  }
+
+  void _prepareAutoSso() {
+    _autoSsoPassword = null;
+    final session = _session;
+    if (session == null || session.route != WebVpnStartupRoute.ssoLogin) {
+      return;
+    }
+    if (!_canAutoSso()) return;
+    _autoSsoPassword = session.savedLogin?.password;
+  }
+
+  Future<void> _onAutoSsoFailed() async {
+    _autoSsoPassword = null;
+    try {
+      await _passwordVault?.markAutoFailure();
+    } catch (_) {
+      // 冷却写入失败只影响下一次自动尝试；本次仍保留预填页。
+    }
+    final session = _session;
+    if (session != null) {
+      session.webVpnNotice = '自动登录没有成功，请检查密码后重试';
+    }
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _syncAccountProfile() async {
+    final snap = _controller?.snapshot;
+    if (snap == null) return;
+    final id = snap.student.id.trim();
+    if (id.isEmpty) return;
+    final existing = _activeAccount;
+    if (existing != null &&
+        existing.id == id &&
+        existing.name == snap.student.name &&
+        existing.college == snap.student.college &&
+        existing.major == snap.student.major) {
+      return;
+    }
+    final now = DateTime.now();
+    final profile = AccountProfile(
+      id: id,
+      name: snap.student.name,
+      college: snap.student.college,
+      major: snap.student.major,
+      storageKey: existing?.storageKey ?? legacyAccountStorageKey,
+      addedAt: existing?.addedAt ?? now,
+      lastUsedAt: now,
+    );
+    final book = (_accounts ?? const AccountBook()).upsert(profile);
+    _accounts = book;
+    _activeAccount = book.active;
+    try {
+      await _store?.setSid(id);
+      await _accountStore?.save(book);
+    } catch (_) {
+      // 账号册写入失败时仍可用当前会话，下次启动再尝试。
+    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _openWebVpnLogin() async {
@@ -275,73 +362,63 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       MaterialPageRoute(builder: (_) => const WebVpnLoginPage()),
     );
     if (credential == null || !mounted) return;
-    final manager = _webVpn;
-    if (manager == null) return;
+    final session = _session;
+    final manager = session?.webVpn;
+    if (session == null || manager == null) return;
     await manager.adopt(credential, state: WebVpnState.unknown);
     final state = await manager.validate(force: true);
     if (!mounted) return;
     if (state != WebVpnState.valid) {
-      setState(() {
-        _needsWebVpnLogin = true;
-        _webVpnNotice = state == WebVpnState.expired
-            ? '网页版 VPN 登录没有生效，请重新登录统一身份认证'
-            : '暂时无法校验网页版 VPN 会话，请检查网络后重试';
-      });
+      session.needsWebVpnLogin = true;
+      session.webVpnNotice = state == WebVpnState.expired
+          ? '网页版 VPN 登录没有生效，请重新登录统一身份认证'
+          : '暂时无法校验网页版 VPN 会话，请检查网络后重试';
+      setState(() {});
       return;
     }
     await _acceptWebVpnSession(WebVpnSession(credential: manager.credential!));
   }
 
   Future<void> _acceptSsoLogin(SsoLoginSuccess result) async {
+    final session = _session;
+    if (session == null) return;
+    _autoSsoPassword = null;
     _flow.acceptSso(result);
-    try {
-      await _webVpn?.adopt(result.session.credential);
-    } catch (_) {
-      // ticket 仍在内存里，本次可以用；下次启动重新 SSO。
-    }
-    try {
-      await _silentLogin?.remember(result.ssoCookies);
-    } catch (_) {
-      // 留存失败只影响下次静默续签，不阻塞本次登录。
-    }
+    _detachController();
+    await session.acceptSso(result);
+    _attachController();
     if (!mounted) return;
-    await _acceptWebVpnSession(result.session);
+    setState(() {
+      _lastNotice = null;
+    });
+    _onController();
   }
 
   Future<void> _acceptWebVpnSession(WebVpnSession session) async {
-    final old = _controller;
-    if (old != null) {
-      old.removeListener(_onController);
-      old.dispose();
-    }
-    final controller = _createController(store: _store, webVpnSession: session);
+    final accountSession = _session;
+    if (accountSession == null) return;
+    _detachController();
+    await accountSession.acceptWebVpnSession(session);
+    _attachController();
+    if (!mounted) return;
     setState(() {
-      _controller = controller;
-      _usingWebVpn = true;
-      _needsWebVpnLogin = false;
-      _webVpnNotice = null;
-      _webVpnExpiryHandled = false;
       _lastNotice = null;
     });
-    await controller.bootstrap();
+    _onController();
   }
 
   Future<void> _useDirectLogin() async {
-    final old = _controller;
-    if (old != null) {
-      old.removeListener(_onController);
-      old.dispose();
-    }
-    final controller = _createController(store: _store);
+    final session = _session;
+    if (session == null) return;
+    _autoSsoPassword = null;
+    _detachController();
+    await session.useDirectLogin();
+    _attachController();
+    if (!mounted) return;
     setState(() {
-      _controller = controller;
-      _usingWebVpn = false;
-      _needsWebVpnLogin = false;
-      _webVpnNotice = null;
-      _webVpnExpiryHandled = false;
       _lastNotice = null;
     });
-    await controller.bootstrap();
+    _onController();
   }
 
   @override
@@ -352,8 +429,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     _todos?.removeListener(_onTodosChanged);
     _todos?.dispose();
     _flow.clear();
-    _controller?.removeListener(_onController);
-    _controller?.dispose();
+    _detachController();
+    _session?.dispose();
     super.dispose();
   }
 
@@ -380,6 +457,373 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     _todoProfile = profile;
     _todos = controller..addListener(_onTodosChanged);
     unawaited(controller.load());
+  }
+
+  Future<void> _stopMonitoringAndNotifications() async {
+    ActivityMonitor.instance.stop();
+    await ActivityNotificationService.instance.cancelAll();
+  }
+
+  Future<void> _openAccounts() async {
+    final book = _accounts;
+    if (book == null || book.accounts.isEmpty) {
+      _openAddAccount();
+      return;
+    }
+    await Navigator.of(context).push(
+      huayanRoute<void>(
+        AccountsPage(
+          accounts: book.accounts,
+          activeId: _activeAccount?.id,
+          switching: _switchingAccount,
+          onSwitch: (account) => unawaited(_switchAccount(account)),
+          onAdd: _openAddAccount,
+          onRemove: _removeAccount,
+        ),
+      ),
+    );
+  }
+
+  void _openAddAccount() {
+    unawaited(
+      Navigator.of(context).push(
+        huayanRoute<void>(
+          AddAccountPage(
+            existingIds: {
+              for (final account
+                  in _accounts?.accounts ?? const <AccountProfile>[])
+                account.id,
+            },
+            onContinue: (sid) async {
+              Navigator.of(context).pop();
+              await _startAddAccount(sid);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _switchAccount(AccountProfile account) async {
+    if (_switchingAccount) return;
+    if (_activeAccount?.id == account.id && _session != null) return;
+    await _activateAccount(account);
+  }
+
+  Future<void> _activateAccount(AccountProfile account) async {
+    if (_switchingAccount || !mounted) return;
+    setState(() => _switchingAccount = true);
+    await _stopMonitoringAndNotifications();
+    if (!mounted) return;
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    _detachController();
+    final old = _session;
+    final session = _createSession(account);
+    _session = session;
+    _activeAccount = account;
+    final current = _accounts ?? const AccountBook();
+    final book = current.byId(account.id) == null
+        ? current.upsert(account)
+        : current.activate(account.id);
+    _accounts = book;
+    _autoSsoPassword = null;
+    _flow.clear();
+    try {
+      await session.boot();
+    } catch (error) {
+      debugPrint('切换账号启动失败: $error');
+    }
+    old?.dispose();
+    _attachController();
+    _prepareAutoSso();
+    try {
+      await _store?.setSid(account.id);
+      if (book.accounts.isNotEmpty) await _accountStore?.save(book);
+    } catch (_) {
+      // 账号册写入失败不阻塞本次切换。
+    }
+    if (!mounted) return;
+    setState(() {
+      _switchingAccount = false;
+      _tab = 0;
+      _lastNotice = null;
+      _todoProfile = '';
+    });
+    _onController();
+  }
+
+  Future<void> _startAddAccount(String rawSid) async {
+    final sid = rawSid.trim();
+    if (sid.isEmpty) return;
+    final existing = _accounts?.byId(sid);
+    if (existing != null) {
+      await _switchAccount(existing);
+      return;
+    }
+    final now = DateTime.now();
+    final profile = AccountProfile(
+      id: sid,
+      name: '',
+      college: '',
+      major: '',
+      storageKey: accountStorageKeyFor(sid),
+      addedAt: now,
+      lastUsedAt: now,
+    );
+    final session = _createSession(profile);
+    _draftSession = session;
+    try {
+      await session.boot();
+    } catch (error) {
+      debugPrint('准备新账号登录失败: $error');
+      await _discardDraft(session);
+      if (mounted) AppFeedback.show('暂时无法准备新账号登录，请检查网络');
+      return;
+    }
+
+    var direct = false;
+    SsoLoginSuccess? ssoResult;
+    if (session.needsWebVpnLogin) {
+      if (!mounted) return;
+      ssoResult = await Navigator.of(context).push<SsoLoginSuccess>(
+        huayanRoute<SsoLoginSuccess>(
+          SsoLoginPage(
+            initialSid: sid,
+            notice: session.webVpnNotice,
+            onSuccess: (result) => Navigator.of(context).pop(result),
+            onDirect: () {
+              direct = true;
+              unawaited(
+                session.useDirectLogin().then((_) {
+                  if (mounted) Navigator.of(context).pop();
+                }),
+              );
+            },
+          ),
+        ),
+      );
+      if (ssoResult != null) {
+        await session.acceptSso(ssoResult);
+      } else if (!direct) {
+        await _discardDraft(session);
+        return;
+      }
+    }
+
+    final controller = session.controller;
+    if (controller == null) {
+      await _discardDraft(session);
+      if (mounted) AppFeedback.show('登录页准备失败，请重试');
+      return;
+    }
+    if (!mounted) return;
+    _autoSsoPassword = null;
+    final navigator = Navigator.of(context);
+    final ssoPassword = ssoResult?.prefill.password;
+    final completed = await navigator.push<bool>(
+      huayanRoute<bool>(
+        LiveLoginPage(
+          controller: controller,
+          initialSid: sid,
+          initialPassword: ssoPassword,
+          fromSso: ssoPassword != null,
+          allowWebVpn: false,
+          onSuccess: (loggedSid, remember, password) {
+            unawaited(
+              _finishAddAccount(
+                session: session,
+                sid: loggedSid,
+                password: password,
+                source: ssoPassword != null
+                    ? SavedCredentialSource.sso
+                    : SavedCredentialSource.gmis,
+                navigator: navigator,
+              ),
+            );
+          },
+        ),
+      ),
+    );
+    if (completed != true && identical(_draftSession, session)) {
+      await _discardDraft(session);
+    }
+  }
+
+  Future<void> _finishAddAccount({
+    required AccountSession session,
+    required String sid,
+    required String? password,
+    required SavedCredentialSource source,
+    required NavigatorState navigator,
+  }) async {
+    final snap = session.controller?.snapshot;
+    if (snap == null) {
+      AppFeedback.show('登录后还没有拿到数据，请稍后重试');
+      return;
+    }
+    if (snap.student.id.trim() != sid.trim()) {
+      AppFeedback.show('登录学号和课表数据不一致，请重新登录');
+      await _discardDraft(session);
+      navigator.pop(false);
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+      return;
+    }
+    try {
+      if (password == null) {
+        await session.passwordVault.clear();
+      } else {
+        await session.passwordVault.write(sid, password, source: source);
+      }
+    } catch (_) {
+      // 密码保存失败不影响账号登录，只是下次要手动输入。
+    }
+    final now = DateTime.now();
+    final profile = AccountProfile(
+      id: sid,
+      name: snap.student.name,
+      college: snap.student.college,
+      major: snap.student.major,
+      storageKey: session.profile.storageKey,
+      addedAt: now,
+      lastUsedAt: now,
+    );
+    await _stopMonitoringAndNotifications();
+    _detachController();
+    final old = _session;
+    _session = session;
+    _activeAccount = profile;
+    final book = (_accounts ?? const AccountBook())
+        .upsert(profile)
+        .activate(sid);
+    _accounts = book;
+    _draftSession = null;
+    _autoSsoPassword = null;
+    _flow.clear();
+    try {
+      await _store?.setSid(sid);
+      await _accountStore?.save(book);
+    } catch (_) {
+      // 账号册写入失败时先完成本次切换，下次启动再尝试。
+    }
+    old?.dispose();
+    _attachController();
+    _todoProfile = '';
+    if (mounted) {
+      setState(() {
+        _tab = 0;
+        _lastNotice = null;
+        _switchingAccount = false;
+      });
+    }
+    navigator.pop(true);
+    if (mounted) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+    _onController();
+  }
+
+  Future<void> _discardDraft(AccountSession session) async {
+    if (identical(_draftSession, session)) _draftSession = null;
+    try {
+      await session.wipe();
+    } catch (_) {
+      // 清理失败时至少释放运行时。
+    }
+    session.dispose();
+  }
+
+  Future<void> _removeAccount(AccountProfile account) async {
+    final active = account.id == _activeAccount?.id;
+    final book = (_accounts ?? const AccountBook()).remove(account.id);
+    if (active) {
+      await _stopMonitoringAndNotifications();
+      _detachController();
+      try {
+        await _session?.wipe();
+      } catch (_) {
+        // 远端已不可用时仍然完成本地移除。
+      }
+      _session?.dispose();
+      _session = null;
+      _activeAccount = null;
+    } else {
+      try {
+        final storage = AccountStorage(
+          profile: account,
+          cacheDirectory: widget.cacheDirectory,
+        );
+        await storage.clearSessionData();
+        await _store?.clearTermStarts(accountId: account.storageKey);
+      } catch (_) {
+        // 旧账号数据清理失败不阻塞账号册更新。
+      }
+    }
+    try {
+      await PrefsTodoStore(profileKey: account.id).clear();
+    } catch (_) {
+      // 待办清理失败不影响账号移除。
+    }
+    _accounts = book;
+    try {
+      await _accountStore?.save(book);
+    } catch (_) {
+      // 账号册写入失败仍允许本次移除。
+    }
+
+    if (book.accounts.isEmpty) {
+      await _store?.setSid(null);
+      final now = DateTime.now();
+      final provisional = AccountProfile(
+        id: '',
+        name: '',
+        college: '',
+        major: '',
+        storageKey: legacyAccountStorageKey,
+        addedAt: now,
+        lastUsedAt: now,
+      );
+      _activeAccount = provisional;
+      final session = _createSession(provisional);
+      _session = session;
+      try {
+        await session.boot();
+      } catch (_) {
+        // 启动失败时至少回到登录页。
+      }
+      _attachController();
+      _prepareAutoSso();
+      if (mounted) {
+        setState(() {
+          _switchingAccount = false;
+          _tab = 0;
+          _lastNotice = null;
+        });
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
+      _onController();
+      return;
+    }
+
+    if (active || _session == null) {
+      final next = book.active ?? book.accounts.first;
+      await _activateAccount(next);
+      return;
+    }
+    if (mounted) {
+      setState(() {});
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    }
+    final controller = _controller;
+    if (controller != null && controller.phase == AppPhase.ready) {
+      ActivityMonitor.instance.start(
+        controller.api,
+        accountLabel: _notificationAccountLabel,
+        onSessionExpired: _handleSessionExpired,
+        onWebVpnExpired: _handleWebVpnExpired,
+      );
+    }
   }
 
   List<ActivityItem> _appliedActivities() {
@@ -416,8 +860,11 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     if (controller.phase == AppPhase.ready) {
       _flow.markLoginComplete();
       _webVpnExpiryHandled = false;
+      _autoSsoPassword = null;
+      unawaited(_syncAccountProfile());
       ActivityMonitor.instance.start(
         controller.api,
+        accountLabel: _notificationAccountLabel,
         onSessionExpired: _handleSessionExpired,
         onWebVpnExpired: _handleWebVpnExpired,
       );
@@ -503,13 +950,20 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
           await vault.clear();
           _savedLogin = null;
         } else {
-          await vault.write(sid, password);
+          await vault.write(
+            sid,
+            password,
+            source: _flow.prefill != null
+                ? SavedCredentialSource.sso
+                : SavedCredentialSource.gmis,
+          );
           _savedLogin = await vault.read();
         }
       } catch (_) {
         // 保存失败只影响下次预填，不阻塞登录。
       }
     }
+    _autoSsoPassword = null;
     await _store?.setOnboarded();
     _flow.markLoginComplete();
     final resumeTab = _flow.resumeTab;
@@ -525,25 +979,22 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
   }
 
   Future<void> _logout() async {
-    ActivityMonitor.instance.stop();
+    await _stopMonitoringAndNotifications();
+    if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
-    await _controller?.logout();
-    await _webVpn?.clear();
-    await _silentLogin?.clear();
-    await _passwordVault?.clear();
-    _savedLogin = null;
-    await WebViewCookies.clear();
-    await SecureSessionStore(key: SecureSessionStore.directKey).clear();
-    await SecureSessionStore(key: SecureSessionStore.webVpnKey).clear();
-    await SecureSessionStore(key: SecureSessionStore.webVpnTicketKey).clear();
+    final session = _session;
+    await session?.logout();
+    _autoSsoPassword = null;
     _flow.clear();
+    if (session != null) {
+      session.usingWebVpn = false;
+      session.needsWebVpnLogin = AppConfig.useWebVpnByDefault;
+      session.webVpnNotice = null;
+      session.webVpnExpiryHandled = false;
+    }
     if (!mounted) return;
     setState(() {
       _tab = 0;
-      _usingWebVpn = false;
-      _needsWebVpnLogin = AppConfig.useWebVpnByDefault;
-      _webVpnNotice = null;
-      _webVpnExpiryHandled = false;
       _lastNotice = null;
     });
   }
@@ -558,17 +1009,24 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     await controller.expireSession();
     if (!mounted) return;
     _flow.markLoginComplete();
+    final session = _session;
+    if (session != null) {
+      session.needsWebVpnLogin = session.usingWebVpn
+          ? false
+          : AppConfig.useWebVpnByDefault;
+      session.webVpnNotice = null;
+    }
     setState(() {
-      _needsWebVpnLogin = _usingWebVpn ? false : AppConfig.useWebVpnByDefault;
-      _webVpnNotice = null;
       _lastNotice = null;
     });
   }
 
-  /// WebVPN ticket 失效：先用留存 SSO 静默续签，失败才回统一身份认证。
+  /// WebVPN ticket 失效：先用留存 SSO 静默续签，失败后用保存密码自动
+  /// 尝试 SSO；自动失败才停在预填页面让用户补短信/密码。
   Future<void> _handleWebVpnExpired() async {
     if (_webVpnExpiryHandled || _webVpnRenewing) return;
     ActivityMonitor.instance.stop();
+    final session = _session;
     final manager = _webVpn;
     var renewed = false;
     _webVpnRenewing = true;
@@ -585,9 +1043,20 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
         return;
       }
     }
-    _webVpnExpiryHandled = true;
     _flow.recordTab(_tab);
     Navigator.of(context).popUntil((route) => route.isFirst);
+    final canAuto = _canAutoSso();
+    if (session != null && canAuto) {
+      _autoSsoPassword = session.savedLogin?.password;
+      session.webVpnExpiryHandled = true;
+      session.usingWebVpn = false;
+      session.needsWebVpnLogin = true;
+      session.webVpnNotice = null;
+      _flow.markLoginComplete();
+      if (mounted) setState(() => _lastNotice = null);
+      return;
+    }
+    _webVpnExpiryHandled = true;
     try {
       await _webVpn?.invalidate();
       await WebViewCookies.clear();
@@ -596,10 +1065,12 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
     }
     if (!mounted) return;
     _flow.markLoginComplete();
+    if (session != null) {
+      session.usingWebVpn = false;
+      session.needsWebVpnLogin = true;
+      session.webVpnNotice = '校外访问已过期，请重新登录统一身份认证';
+    }
     setState(() {
-      _usingWebVpn = false;
-      _needsWebVpnLogin = true;
-      _webVpnNotice = '校外访问已过期，请重新登录统一身份认证';
       _lastNotice = null;
     });
   }
@@ -825,6 +1296,9 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    if (_switchingAccount) {
+      return const SplashPage(message: '正在切换账号');
+    }
     final controller = _controller;
     if (controller == null) {
       return SplashPage(message: _bootStage);
@@ -843,9 +1317,19 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
         onSkip: _finishGuide,
       );
     }
+    final session = _session;
+    if (session == null) {
+      return SplashPage(message: _bootStage);
+    }
     if (_needsWebVpnLogin || controller.phase == AppPhase.webVpnExpired) {
+      final autoPassword = _autoSsoPassword;
+      final saved = session.savedLogin;
+      final prefillPassword = autoPassword ?? saved?.password;
       return SsoLoginPage(
-        initialSid: _store?.sid ?? '',
+        initialSid: session.initialSid,
+        initialPassword: prefillPassword,
+        autoSubmit: autoPassword != null,
+        onAutoLoginFailed: () => unawaited(_onAutoSsoFailed()),
         onUserId: (sid) => _store?.setSid(sid),
         onSuccess: _acceptSsoLogin,
         onDirect: _useDirectLogin,
@@ -856,9 +1340,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
       return SplashPage(message: _bootStage);
     }
     final prefill = _flow.prefill;
-    final savedLogin = _savedLogin;
-    final initialSid =
-        prefill?.userId ?? _store?.sid ?? savedLogin?.userId ?? '';
+    final savedLogin = session.savedLogin;
+    final initialSid = prefill?.userId ?? session.initialSid;
     final initialPassword =
         prefill?.password ??
         (savedLogin != null && savedLogin.userId == initialSid
@@ -1013,6 +1496,8 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
                   MePage(
                     snap: snap,
                     onRefresh: _refresh,
+                    onAccounts: _openAccounts,
+                    accountCount: _accounts?.accounts.length ?? 1,
                     lastRefreshedAt: _controller?.lastRefreshedAt,
                     onProfile: () => _push(ProfilePage(student: snap.student)),
                     onProgress: () => _push(ProgressPage(snap: snap)),
@@ -1047,10 +1532,15 @@ class _LiveShellState extends State<LiveShell> with WidgetsBindingObserver {
                         onClearSavedPassword: _clearSavedPassword,
                         onRefresh: _controller?.refresh,
                         termCode: snap.termCode,
+                        accountCount: _accounts?.accounts.length ?? 1,
+                        onManageAccounts: _openAccounts,
                         onTermStart: (firstMonday) async {
                           await _store?.setTermStart(
                             snap.termCode,
                             firstMonday,
+                            accountId:
+                                _activeAccount?.storageKey ??
+                                legacyAccountStorageKey,
                           );
                           await _controller?.refresh();
                         },

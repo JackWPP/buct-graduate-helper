@@ -5,9 +5,14 @@ import 'secure_key_value_store.dart';
 
 /// Cookie 和学号用系统安全存储保存；密码永远不在这里。
 class SecureSessionStore {
-  SecureSessionStore({SecureKeyValueStore? store, String? key})
-    : _store = store ?? FlutterSecureKeyValueStore(),
-      _key = key ?? directKey;
+  SecureSessionStore({
+    SecureKeyValueStore? store,
+    String? key,
+    String namespace = '',
+  }) : _store = store ?? FlutterSecureKeyValueStore(),
+       _key =
+           '${key ?? directKey}'
+           '${namespace.isEmpty ? '' : '_$namespace'}';
 
   static const directKey = 'huayan_gmis_session';
   static const webVpnKey = 'huayan_gmis_webvpn_session';
@@ -15,6 +20,8 @@ class SecureSessionStore {
 
   final SecureKeyValueStore _store;
   final String _key;
+
+  String get storageKey => _key;
 
   Future<AuthSession?> read() async {
     try {

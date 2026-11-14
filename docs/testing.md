@@ -60,7 +60,8 @@ flutter build apk --debug
 flutter build apk --release
 ```
 
-产物在 `app/build/app/outputs/flutter-apk/`。release 包在没有 `android/key.properties` 时回退 Android Debug 签名，只能测试安装，不能正式分发。
+产物在 `app/build/app/outputs/flutter-apk/`。release 包必须配置 `android/key.properties` 使用正式签名；没有配置时 release 构建会直接失败，避免再产出只能测试安装的 debug 签名包。仅本机冒烟可显式放行：
+`ORG_GRADLE_PROJECT_allowDebugReleaseSigning=true flutter build apk --release`。
 
 ## 4. 模拟器冒烟
 
@@ -252,6 +253,37 @@ curl -sD - -o /dev/null \
 - 未提交真实报名、未点“立即报名”，未验证系统通知和名额释放真实触发。
 - 测试后清除应用数据和真实账号截图；不在测试记录里保存账号、姓名或活动个人信息。
 
+### 5.7 2026-11-14 无感重登录 + 多账号（开发验证）
+
+自动化已覆盖：
+
+- 密码保险箱 v2：v1 兼容、滚动 180 天过期、source（sso/gmis/unknown）、15 分钟自动失败冷却、namespace key。
+- 账号册/命名空间：账号模型、账号册增删/活跃账号、旧单账号迁移、密码/SSO/ticket/会话/快照按账号隔离。
+- SSO 自动登录：预填保存密码、只自动提交一次、短信二次认证保留密码、认证失败回调冷却一次、网络异常不写冷却；自动失败后的提示能更新到预填页。
+- 账号管理页：列表/当前标记/切换/添加/移除二次确认。
+- 账号运行层：`AccountSession` 空存储冷启动路由、savedLogin/source 读取、账号间密码隔离、`useDirectLogin`/`acceptWebVpnSession` 重建 controller。
+- 添加账号页：空学号校验、已有账号提示、等待回调 loading、失败提示。
+- 设置页：账号管理入口/账号数文案、自动重连开关写回、退出当前账号确认与保留资料说明。
+- 通知隔离：账号标签进入标题、不同账号通知 id 不同、`cancelAll` 清理旧账号通知。
+- 全量：`flutter test` 174 个用例通过；`flutter analyze` 无问题；`flutter build apk --debug` 成功。
+
+真实账号模拟器回归（2026-11-14，单账号）：
+
+- [x] 有效会话冷启动直接首页；杀进程后重启恢复上次活跃账号。
+- [x] “退出当前账号”保留账号资料和待办；移除最后一个账号会清本机快照、密码/SSO/ticket/GMIS 会话和学期开始日，重新登录可重建账号。
+- [x] 真实课表/日程、活动页数据和通知权限正常；测试中未提交报名/取消。
+- [x] 添加已存在账号会提示并直接返回，不重复添加。
+
+仍待真机/真实账号回归：
+
+- [ ] GMIS 会话过期：只回 GMIS 登录页，学号/密码预填，只补图形验证码。
+- [ ] 只清 ticket 留 SSO：静默续签成功，不要求重新输密码。
+- [ ] SSO 也过期且开启自动重连：自动提交保存密码一次；成功回首页，失败停在 SSO 预填页并进入 15 分钟冷却。
+- [ ] 触发短信二次认证：自动提交后只停在短信码页面，不重复自动尝试。
+- [ ] 关闭“自动重连校外访问”：SSO 过期只预填，不自动提交。
+- [ ] 添加第二账号并切换：课表/活动/待办/通知不串号；重启后仍是最后活跃账号（当前只有一个真实账号，未验证第二账号）。
+- [ ] 自动重连失败后的日志/截图不含密码、短信码、ticket。
+
 ## 6. 真机回归清单（M0）
 
 准备：校园网或网页版 VPN、真实账号、能接收短信二次认证。
@@ -279,7 +311,7 @@ curl -sD - -o /dev/null \
 4. 更新 README 的版本 badge、当前版本、发布说明链接和文档表；README 不再保留 `## 安全边界`。
 5. `flutter analyze`、`flutter test`、`node --test` 全绿。
 6. `flutter build apk --debug` 与 `--release` 成功。
-7. release 使用正式 keystore；确认 `android/key.properties` 只在本机。
+7. release 使用正式 keystore；`apksigner verify --print-certs app/build/app/outputs/flutter-apk/app-release.apk` 不能显示 `CN=Android Debug`；确认 `android/key.properties` 只在本机。
 8. 真机回归清单通过。
 9. 提交、推 `main`，确认 GitHub Actions 的 `flutter` 与 `web` 都绿。
 10. 写 SHA-256、建 tag、建 GitHub Release、上传 APK 与 `.sha256`；打开 Release 页面确认图片正常显示。
@@ -301,5 +333,5 @@ curl -sD - -o /dev/null \
 
 - 不把密码、Cookie、验证码、证件号、电话、住址、邮箱写入代码、快照、文档、提交或截图。
 - 自动化只用 `UI_PREVIEW` 演示数据；真实登录只在真机上人工完成。
-- `cookies.json`、`web/data/live.json`、`android/key.properties`、keystore 保持在 `.gitignore` 之外的本机路径。
+- `cookies.json`、`web/data/live.json`、`android/key.properties`、keystore 保持在仓库之外的本机路径。
 - logcat 和截图先落 `.artifacts/`，确认不含敏感信息后再决定是否对外提供。

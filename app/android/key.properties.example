@@ -1,7 +1,13 @@
-# 复制为 app/android/key.properties 后填写，不要提交 key.properties 或 keystore。
-# 生成自己的 keystore：
-#   keytool -genkeypair -v -keystore ~/huayan-release.jks -keyalg RSA \
-#     -keysize 2048 -validity 10000 -alias huayan
+# 复制为 app/android/key.properties 后填写。
+# key.properties、keystore 和密码都不能提交到仓库，也不要发到聊天/截图里。
+#
+# 只需生成一次，然后立即备份 keystore 和本文件到密码管理器或加密离线存储。
+# 生成自己的 release keystore（示例）：
+#   keytool -genkeypair -v \
+#     -keystore ~/huayan-release.jks -storetype JKS \
+#     -alias huayan -keyalg RSA -keysize 4096 -validity 10000
+#
+# storeFile 建议写绝对路径；相对路径会按 app/android/app 解析。
 storeFile=/absolute/path/to/huayan-release.jks
 storePassword=change-me
 keyAlias=huayan

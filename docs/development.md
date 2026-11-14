@@ -38,12 +38,32 @@ flutter build apk --debug --dart-define=UI_PREVIEW=true
 
 ### 签名
 
-`app/android/app/build.gradle.kts` 会读取 `app/android/key.properties`：
+release 包必须使用正式 keystore；`app/android/app/build.gradle.kts` 会读取 `app/android/key.properties`：
 
-- 有 `key.properties`：使用正式 release 签名
-- 没有：release 回退 debug 签名并打警告
+- 有 `key.properties`：使用正式 release 签名。
+- 没有：release 任务直接失败并提示配置签名。仅本机冒烟可显式放行 debug 签名：
+  `ORG_GRADLE_PROJECT_allowDebugReleaseSigning=true flutter build apk --release`。
 
-生成 keystore 的示例见 `app/android/key.properties.example`。正式分发前必须换成自己的密钥。
+生成 release keystore（只做一次，命令和密码不要出现在提交/截图里）：
+
+```bash
+keytool -genkeypair -v \
+  -keystore ~/huayan-release.jks -storetype JKS \
+  -alias huayan -keyalg RSA -keysize 4096 -validity 10000
+```
+
+然后把绝对路径和密码写进 `app/android/key.properties`（参考 `app/android/key.properties.example`）。`key.properties` 已被 `.gitignore` 忽略；keystore 建议放在仓库外。两者都必须立即备份到密码管理器或加密离线存储。
+
+构建后必须校验签名，确认不是 `CN=Android Debug`：
+
+```bash
+APKSIGNER="${ANDROID_HOME:-$HOME/Android/Sdk}/build-tools/36.0.0/apksigner"
+"$APKSIGNER" verify --print-certs app/build/app/outputs/flutter-apk/app-release.apk
+```
+
+**签名迁移**：v1.8.0 及更早的 Release 使用 debug 签名。换成正式 keystore 后，旧安装不能覆盖升级，第一次需要卸载旧版再安装（会清掉本机待办、登录状态和缓存）；之后同签名的版本可以正常覆盖升级。keystore 丢失或泄露都会导致同样的迁移成本，务必先备份。
+
+如果在 CI 出 release 包，把 keystore 和口令放进 GitHub Actions Secrets，在构建前还原成 `app/android/key.properties`，不要把密钥写进仓库或 workflow 文件。
 
 ## 网页预览
 
@@ -63,7 +83,7 @@ flutter analyze
 node --test web/js/schedule.test.mjs
 ```
 
-当前基线：`flutter test` 94 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试通过。完整的检查顺序、模拟器冒烟和真机回归清单见 [测试与冒烟 SOP](testing.md)。
+当前基线：`flutter test` 174 个测试通过，`flutter analyze` 无问题；网页课表规则 9 个测试通过。完整的检查顺序、模拟器冒烟和真机回归清单见 [测试与冒烟 SOP](testing.md)。
 
 ## CI
 

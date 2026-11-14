@@ -19,6 +19,9 @@ class SsoLoginPage extends StatefulWidget {
     this.onDirect,
     this.onUserId,
     this.initialSid = '',
+    this.initialPassword,
+    this.autoSubmit = false,
+    this.onAutoLoginFailed,
     this.notice,
     this.client,
   });
@@ -27,6 +30,13 @@ class SsoLoginPage extends StatefulWidget {
   final VoidCallback? onDirect;
   final ValueChanged<String>? onUserId;
   final String initialSid;
+  final String? initialPassword;
+
+  /// 有保存密码时只自动尝试一次，失败后停在可编辑的预填页。
+  final bool autoSubmit;
+
+  /// 自动尝试遇到认证失败时调用，用于写入 15 分钟冷却。
+  final VoidCallback? onAutoLoginFailed;
   final String? notice;
   final WebVpnAuthClient? client;
 
@@ -50,11 +60,25 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
   Timer? _resendTimer;
   var _resendSeconds = 0;
   final _codeFocus = FocusNode();
+  var _autoSubmitted = false;
+  var _autoFailureReported = false;
 
   @override
   void initState() {
     super.initState();
     _error = widget.notice ?? '';
+    final password = widget.initialPassword;
+    if (password != null && password.isNotEmpty) {
+      _pwd.text = password;
+    }
+    if (widget.autoSubmit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _autoSubmitted) return;
+        if (_sid.text.trim().isEmpty || _pwd.text.isEmpty) return;
+        _autoSubmitted = true;
+        unawaited(_submit());
+      });
+    }
   }
 
   @override
@@ -122,6 +146,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
         _loading = false;
         _error = error.message;
       });
+      _reportAutoFailure();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -129,6 +154,12 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
         _error = '统一身份认证失败，请稍后重试';
       });
     }
+  }
+
+  void _reportAutoFailure() {
+    if (!widget.autoSubmit || _autoFailureReported) return;
+    _autoFailureReported = true;
+    widget.onAutoLoginFailed?.call();
   }
 
   Future<void> _sendCode() async {
@@ -454,7 +485,7 @@ class _SsoLoginPageState extends State<SsoLoginPage> {
               ),
             const SizedBox(height: 8),
             const Text(
-              '统一身份认证密码只用于换取网页版 VPN 凭证，不会保存，也不会写入日志。',
+              '统一身份认证密码只用于换取网页版 VPN 凭证；如选择保存，会加密存在本机用于自动重连，不会写入日志。',
               style: TextStyle(
                 fontSize: 12,
                 height: 1.5,

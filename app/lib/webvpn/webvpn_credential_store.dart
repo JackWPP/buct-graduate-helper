@@ -9,16 +9,20 @@ import 'webvpn_credential.dart';
 /// 旧版本把 ticket 混在 `AuthSession` JSON 里，read() 会识别并迁移成
 /// [WebVpnCredential]；迁移失败按“没有 ticket”处理，不影响启动。
 class WebVpnCredentialStore {
-  WebVpnCredentialStore({SecureKeyValueStore? store})
-    : _store = store ?? FlutterSecureKeyValueStore();
+  WebVpnCredentialStore({SecureKeyValueStore? store, String namespace = ''})
+    : _store = store ?? FlutterSecureKeyValueStore(),
+      _key = namespace.isEmpty ? key : '${key}_$namespace';
 
   static const key = SecureSessionStore.webVpnTicketKey;
 
   final SecureKeyValueStore _store;
+  final String _key;
+
+  String get storageKey => _key;
 
   Future<WebVpnCredential?> read() async {
     try {
-      final raw = await _store.read(key);
+      final raw = await _store.read(_key);
       if (raw == null || raw.isEmpty) return null;
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return null;
@@ -45,8 +49,8 @@ class WebVpnCredentialStore {
   }
 
   Future<void> write(WebVpnCredential credential) {
-    return _store.write(key, jsonEncode(credential.toJson()));
+    return _store.write(_key, jsonEncode(credential.toJson()));
   }
 
-  Future<void> clear() => _store.delete(key);
+  Future<void> clear() => _store.delete(_key);
 }

@@ -168,7 +168,7 @@ void main() {
     await tester.ensureVisible(find.byKey(const Key('logout-button')));
     await tester.tap(find.byKey(const Key('logout-button')));
     await tester.pumpAndSettle();
-    expect(find.text('退出登录？'), findsOneWidget);
+    expect(find.text('退出当前账号？'), findsOneWidget);
     await tester.tap(find.text('退出'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('login-sid')), findsOneWidget);

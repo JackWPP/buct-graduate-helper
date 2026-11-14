@@ -12,18 +12,23 @@ class SsoSessionStore {
     SecureKeyValueStore? store,
     DateTime Function()? clock,
     this.maxAge = const Duration(days: 30),
+    String namespace = '',
   }) : _store = store ?? FlutterSecureKeyValueStore(),
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? DateTime.now,
+       _key = namespace.isEmpty ? key : '${key}_$namespace';
 
   static const key = 'huayan_sso_session';
 
   final SecureKeyValueStore _store;
   final DateTime Function() _clock;
   final Duration maxAge;
+  final String _key;
+
+  String get storageKey => _key;
 
   Future<SsoSession?> read() async {
     try {
-      final raw = await _store.read(key);
+      final raw = await _store.read(_key);
       if (raw == null || raw.isEmpty) return null;
       final decoded = jsonDecode(raw);
       if (decoded is! Map) return null;
@@ -43,8 +48,8 @@ class SsoSessionStore {
   }
 
   Future<void> write(SsoSession session) {
-    return _store.write(key, jsonEncode(session.toJson()));
+    return _store.write(_key, jsonEncode(session.toJson()));
   }
 
-  Future<void> clear() => _store.delete(key);
+  Future<void> clear() => _store.delete(_key);
 }

@@ -82,12 +82,19 @@ class ActivityNotificationService {
     }
   }
 
-  Future<void> showNewActivity(ActivityItem item) async {
+  String _title(String title, String accountLabel) {
+    return accountLabel.isEmpty ? title : '$title（$accountLabel）';
+  }
+
+  Future<void> showNewActivity(
+    ActivityItem item, {
+    String accountLabel = '',
+  }) async {
     try {
       await ensureInitialized();
       await _plugin.show(
-        id: _stableId('${item.stableKey}:new'),
-        title: '发现新的${item.kind.label}活动',
+        id: _stableId('$accountLabel:${item.stableKey}:new'),
+        title: _title('发现新的${item.kind.label}活动', accountLabel),
         body:
             item.title +
             (item.signupStart != null
@@ -102,7 +109,10 @@ class ActivityNotificationService {
   }
 
   /// 为活动安排报名开始、报名截止、活动开始三个提醒（只安排未来时间）。
-  Future<void> scheduleFor(ActivityItem item) async {
+  Future<void> scheduleFor(
+    ActivityItem item, {
+    String accountLabel = '',
+  }) async {
     try {
       await ensureInitialized();
       final now = DateTime.now();
@@ -125,8 +135,8 @@ class ActivityNotificationService {
       for (final (label, at, body) in events) {
         if (!at.isAfter(now)) continue;
         await _plugin.zonedSchedule(
-          id: _stableId('${item.stableKey}:$label'),
-          title: label,
+          id: _stableId('$accountLabel:${item.stableKey}:$label'),
+          title: _title(label, accountLabel),
           body: body,
           scheduledDate: tz.TZDateTime.from(at, tz.local),
           notificationDetails: _details(),
@@ -140,21 +150,34 @@ class ActivityNotificationService {
   }
 
   /// 已满的活动空出名额时提醒一次；调用方负责去重。
-  Future<void> showSlotAvailable(ActivityItem item) async {
+  Future<void> showSlotAvailable(
+    ActivityItem item, {
+    String accountLabel = '',
+  }) async {
     try {
       await ensureInitialized();
       final deadline = item.signupEnd == null
           ? ''
           : '，${activityDateTimeText(item.signupEnd!)} 截止';
       await _plugin.show(
-        id: _stableId('${item.stableKey}:slot'),
-        title: '有名额了',
+        id: _stableId('$accountLabel:${item.stableKey}:slot'),
+        title: _title('有名额了', accountLabel),
         body: '${item.title} 现在可以报名了$deadline',
         notificationDetails: _details(),
         payload: item.stableKey,
       );
     } catch (error) {
       debugPrint('ActivityNotificationService slot skipped: $error');
+    }
+  }
+
+  /// 切换/退出账号时取消旧账号的提醒，避免把 A 的活动通知给 B。
+  Future<void> cancelAll() async {
+    try {
+      await ensureInitialized();
+      await _plugin.cancelAll();
+    } catch (error) {
+      debugPrint('ActivityNotificationService cancelAll skipped: $error');
     }
   }
 

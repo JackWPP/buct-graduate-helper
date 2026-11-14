@@ -29,6 +29,7 @@ class ActivityMonitor extends ChangeNotifier {
   final Set<String> _releasedKeys = <String>{};
   final Set<ActivityKind> _seededKinds = <ActivityKind>{};
   ActivityDataSource? _api;
+  String _accountLabel = '';
   Future<void> Function()? _onSessionExpired;
   Future<void> Function()? _onWebVpnExpired;
   Timer? _timer;
@@ -42,11 +43,13 @@ class ActivityMonitor extends ChangeNotifier {
 
   void start(
     ActivityDataSource api, {
+    String accountLabel = '',
     Future<void> Function()? onSessionExpired,
     Future<void> Function()? onWebVpnExpired,
   }) {
     final changed = !identical(_api, api);
     _api = api;
+    _accountLabel = accountLabel;
     _onSessionExpired = onSessionExpired;
     _onWebVpnExpired = onWebVpnExpired;
     if (changed) {
@@ -152,12 +155,22 @@ class ActivityMonitor extends ChangeNotifier {
       notifyListeners();
       if (notifyNew && hadData) {
         for (final item in newItems) {
-          unawaited(ActivityNotificationService.instance.showNewActivity(item));
+          unawaited(
+            ActivityNotificationService.instance.showNewActivity(
+              item,
+              accountLabel: _accountLabel,
+            ),
+          );
           AppFeedback.show('发现新的${kind.label}：${item.title}');
         }
       }
       for (final item in released) {
-        unawaited(ActivityNotificationService.instance.showSlotAvailable(item));
+        unawaited(
+          ActivityNotificationService.instance.showSlotAvailable(
+            item,
+            accountLabel: _accountLabel,
+          ),
+        );
         AppFeedback.show('有名额了：${item.title}');
       }
       for (final item in available) {
@@ -168,7 +181,12 @@ class ActivityMonitor extends ChangeNotifier {
           item.activityStart?.millisecondsSinceEpoch,
         ].join(':');
         if (_scheduledKeys.add(scheduleKey)) {
-          unawaited(ActivityNotificationService.instance.scheduleFor(item));
+          unawaited(
+            ActivityNotificationService.instance.scheduleFor(
+              item,
+              accountLabel: _accountLabel,
+            ),
+          );
         }
       }
     } on WebVpnSessionExpired {

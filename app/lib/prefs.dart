@@ -35,11 +35,33 @@ class PrefsStore {
     return _prefs.setString(sidKey, value);
   }
 
-  String? termStart(String termCode) =>
-      _prefs.getString('$termStartPrefix$termCode');
+  String? termStart(String termCode, {String accountId = ''}) =>
+      _prefs.getString(_termStartKey(termCode, accountId));
 
-  Future<void> setTermStart(String termCode, String firstMonday) =>
-      _prefs.setString('$termStartPrefix$termCode', firstMonday);
+  Future<void> setTermStart(
+    String termCode,
+    String firstMonday, {
+    String accountId = '',
+  }) => _prefs.setString(_termStartKey(termCode, accountId), firstMonday);
+
+  String _termStartKey(String termCode, String accountId) {
+    final suffix = accountId.isEmpty ? '' : '${accountId}_';
+    return '$termStartPrefix$suffix$termCode';
+  }
+
+  /// 移除账号时清掉该账号在本机补充过的学期开始日；旧账号清空后缀版本。
+  Future<void> clearTermStarts({String accountId = ''}) async {
+    final prefix = accountId.isEmpty
+        ? termStartPrefix
+        : '$termStartPrefix${accountId}_';
+    final keys = _prefs
+        .getKeys()
+        .where((key) => key.startsWith(prefix))
+        .toList();
+    for (final key in keys) {
+      await _prefs.remove(key);
+    }
+  }
 
   void apply(AppSettings settings) {
     final raw = _prefs.getString(settingsKey);

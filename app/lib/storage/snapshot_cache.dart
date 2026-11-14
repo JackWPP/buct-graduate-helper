@@ -8,16 +8,30 @@ import '../snapshot.dart';
 
 /// 最近一次成功的快照。缓存只写学业字段，不写密码、Cookie、验证码。
 class SnapshotCache {
-  SnapshotCache({this.directory});
+  SnapshotCache({this.directory, String namespace = ''})
+    : _namespace = _sanitizeNamespace(namespace);
 
   static const _fileName = 'snapshot_v2.json';
 
   final Directory? directory;
+  final String _namespace;
+
+  String get fileName {
+    if (_namespace.isEmpty) return _fileName;
+    return 'snapshot_v2_$_namespace.json';
+  }
+
+  static String _sanitizeNamespace(String value) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) return '';
+    final safe = trimmed.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    return safe.length <= 64 ? safe : safe.substring(0, 64);
+  }
 
   Future<File> _file() async {
     final dir = directory ?? await getApplicationSupportDirectory();
     await dir.create(recursive: true);
-    return File('${dir.path}/$_fileName');
+    return File('${dir.path}/$fileName');
   }
 
   Future<Snapshot?> load() async {

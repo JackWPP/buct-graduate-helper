@@ -19,6 +19,8 @@ class MePage extends StatelessWidget {
     required this.onExams,
     required this.onNotices,
     required this.onSettings,
+    this.onAccounts,
+    this.accountCount = 1,
     this.onRefresh,
     this.lastRefreshedAt,
   });
@@ -33,6 +35,8 @@ class MePage extends StatelessWidget {
   final VoidCallback onExams;
   final VoidCallback onNotices;
   final VoidCallback onSettings;
+  final VoidCallback? onAccounts;
+  final int accountCount;
   final Future<void> Function()? onRefresh;
   final DateTime? lastRefreshedAt;
 
@@ -94,6 +98,12 @@ class MePage extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onAccounts != null)
+                TextButton(
+                  key: const Key('me-accounts'),
+                  onPressed: onAccounts,
+                  child: Text(accountCount > 1 ? '切换' : '账号'),
+                ),
             ],
           ),
         ),
@@ -226,6 +236,13 @@ class MePage extends StatelessWidget {
               value: snap.notices == 0 ? '暂无通知' : '${snap.notices} 条',
               onTap: onNotices,
             ),
+            if (onAccounts != null)
+              _MenuRow(
+                key: const Key('me-account-manage'),
+                title: '账号管理',
+                value: accountCount > 1 ? '$accountCount 个账号' : '添加账号',
+                onTap: onAccounts!,
+              ),
             _MenuRow(
               key: const Key('me-settings'),
               title: '设置',

@@ -1,5 +1,6 @@
 class AppSettings {
   bool reminder = true;
+  bool autoReconnect = true;
   int reminderMin = 15;
   bool deadline = true;
   bool dnd = true;
@@ -17,6 +18,7 @@ class AppSettings {
 
   void reset() {
     reminder = true;
+    autoReconnect = true;
     reminderMin = 15;
     deadline = true;
     dnd = true;
@@ -28,6 +30,7 @@ class AppSettings {
 
   Map<String, Object> toJson() => {
     'reminder': reminder,
+    'autoReconnect': autoReconnect,
     'reminderMin': reminderMin,
     'deadline': deadline,
     'dnd': dnd,
@@ -40,6 +43,7 @@ class AppSettings {
   void applyJson(Object? raw) {
     if (raw is! Map) return;
     reminder = raw['reminder'] as bool? ?? reminder;
+    autoReconnect = raw['autoReconnect'] as bool? ?? autoReconnect;
     final minutes = raw['reminderMin'];
     if (minutes is num) reminderMin = minutes.toInt();
     deadline = raw['deadline'] as bool? ?? deadline;

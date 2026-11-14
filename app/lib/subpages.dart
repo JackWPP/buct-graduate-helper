@@ -1099,6 +1099,8 @@ class SettingsPage extends StatefulWidget {
     this.onRefresh,
     this.termCode,
     this.onTermStart,
+    this.accountCount = 1,
+    this.onManageAccounts,
   });
 
   final Snapshot snap;
@@ -1110,6 +1112,8 @@ class SettingsPage extends StatefulWidget {
 
   /// 本机是否保存了 GMIS 密码（只影响设置里的清除入口）。
   final bool hasSavedPassword;
+  final int accountCount;
+  final VoidCallback? onManageAccounts;
   final Future<void> Function()? onClearSavedPassword;
   final Future<bool> Function()? onRefresh;
   final String? termCode;
@@ -1147,8 +1151,10 @@ class _SettingsPageState extends State<SettingsPage> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('退出登录？'),
-        content: const Text('需要重新输入验证码才能回来。记住的学号会留下，加密保存的密码会一并清除。'),
+        title: const Text('退出当前账号？'),
+        content: const Text(
+          '会清除这个账号的登录状态和加密保存的密码，账号资料和本机待办保留，可以随时切换回来。要删除账号请用“账号管理”。',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -1230,6 +1236,28 @@ class _SettingsPageState extends State<SettingsPage> {
                   Navigator.of(context)
                       .push(huayanRoute<void>(ProfilePage(student: student))),
             ),
+            if (widget.onManageAccounts != null)
+              ListTile(
+                key: const Key('settings-accounts'),
+                contentPadding: EdgeInsets.zero,
+                title: const Text('账号管理'),
+                subtitle: Text(
+                  widget.accountCount > 1
+                      ? '本机保存了 ${widget.accountCount} 个账号，可快速切换'
+                      : '添加另一个账号，登录后可随时切换',
+                ),
+                trailing: const HuayanChevron(),
+                onTap: widget.onManageAccounts,
+              ),
+            if (widget.isLive)
+              _SwitchRow(
+                title: '自动重连校外访问',
+                subtitle: '统一身份认证过期时用加密保存的密码自动尝试；短信验证仍会提示。',
+                value: settings.autoReconnect,
+                switchKey: const Key('switch-auto-reconnect'),
+                onChanged: (value) =>
+                    _toggle(() => settings.autoReconnect = value),
+              ),
             ListTile(
               contentPadding: EdgeInsets.zero,
               title: const Text('登录状态', style: TextStyle(fontSize: 15)),
@@ -1254,8 +1282,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   }
                 },
               ),
-            if (widget.hasSavedPassword &&
-                widget.onClearSavedPassword != null)
+            if (widget.hasSavedPassword && widget.onClearSavedPassword != null)
               ListTile(
                 key: const Key('clear-saved-password'),
                 contentPadding: EdgeInsets.zero,
@@ -1289,7 +1316,7 @@ class _SettingsPageState extends State<SettingsPage> {
               key: const Key('logout-button'),
               contentPadding: EdgeInsets.zero,
               title: const Text(
-                '退出登录',
+                '退出当前账号',
                 style: TextStyle(color: HuayanColors.danger, fontSize: 15),
               ),
               onTap: _confirmLogout,
